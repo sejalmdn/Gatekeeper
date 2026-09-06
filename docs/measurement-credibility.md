@@ -3,8 +3,9 @@
 ## Frozen, aligned measurement
 
 Gatekeeper measures a candidate: an application version plus its runtime configuration. Each
-evaluation freezes the candidate, immutable scenario-dataset release, versioned evaluator and
-scoring configuration, thresholds, severity weights, and repeated-run policy. A comparison is
+evaluation freezes the candidate, immutable scenario-dataset release, and immutable, versioned
+evaluator/scoring configuration release with its thresholds, severity weights, and repeated-run
+policy. A comparison is
 credible only when these are aligned for all candidates.
 
 Outcome is primary. Model responses, tool observations, and trajectories are diagnostic
@@ -50,8 +51,9 @@ as a candidate scenario dataset. Calibration is not current scope.
 
 Reports preserve machine-readable reasons, evidence references, and provenance. They report
 per-scenario score, stability, tool-evidence level, flakiness, severity-weighted suite score,
-and prominent blocking failures. Severity weights and pass thresholds are versioned frozen
-configuration; `10/5/2/1` is an example, not a fixed scheme. Comparisons use aligned buckets:
+and prominent blocking failures. Severity weights and pass thresholds belong to immutable,
+versioned frozen configuration releases; `10/5/2/1` is an example, not a fixed scheme.
+Comparisons use aligned buckets:
 regressions, improvements, and stable.
 
 Keep workflow, evaluator, infrastructure, and insufficient-evidence failures separate. An

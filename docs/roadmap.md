@@ -9,11 +9,12 @@ persists; do not create contracts or schemas for unrealized capabilities.
 
 - Deliver projects and candidates, with each candidate defined as an application version plus
   runtime configuration.
-- Deliver immutable scenario-dataset releases and frozen references to candidates, datasets,
-  evaluator/scoring configuration, thresholds, severity weights, and repeated-run policy.
+- Deliver immutable scenario-dataset releases and immutable, versioned evaluator/scoring
+  configuration releases, with frozen references to candidates, datasets, thresholds, severity
+  weights, and repeated-run policy.
 
-Acceptance: a created evaluation can reference only immutable, versioned inputs, while expected
-outcomes, required/forbidden behavior, evaluator/scoring configuration, and holdout status remain
+Acceptance: a created evaluation can reference only immutable, versioned inputs, while expected outcomes,
+required/forbidden behavior, evaluator/scoring configuration, and holdout status remain
 private to Gatekeeper.
 
 ## Stage 2: offline evaluation lifecycle
@@ -61,7 +62,8 @@ candidate result.
 - Deliver asynchronous proxy sampling and online evaluation that never delays, alters, blocks, or
   otherwise intervenes in a user response.
 - Deliver aligned comparisons that classify results as regressions, improvements, or stable only
-  under matching frozen datasets, evaluator/scoring configuration, and repeated-run policy.
+  under matching frozen datasets, immutable evaluator/scoring configuration releases, and
+  repeated-run policy.
 - Deliver human review, redaction, and promotion of approved online failures into new versioned
   offline dataset releases, with private reviewer-supplied rules and linked source-trace
   provenance.

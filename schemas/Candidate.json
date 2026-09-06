@@ -1,0 +1,49 @@
+{
+  "$defs": {
+    "JsonValue": {}
+  },
+  "additionalProperties": false,
+  "properties": {
+    "application_version": {
+      "minLength": 1,
+      "title": "Application Version",
+      "type": "string"
+    },
+    "runtime_configuration": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "title": "Runtime Configuration",
+      "type": "object"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "format": "uuid",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "runtime_configuration_digest": {
+      "title": "Runtime Configuration Digest",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "application_version",
+    "runtime_configuration",
+    "id",
+    "project_id",
+    "runtime_configuration_digest",
+    "created_at"
+  ],
+  "title": "Candidate",
+  "type": "object"
+}

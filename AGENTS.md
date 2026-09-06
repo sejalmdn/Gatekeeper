@@ -6,6 +6,27 @@ Gatekeeper is a Python 3.12 FastAPI hosted control plane and frontend for credib
 
 ## Project Structure & Module Organization
 
+```text
+src/gatekeeper/
+├── app.py                  # FastAPI application wiring only
+├── api/                    # HTTP routers and shared request dependencies
+├── contracts/              # Pydantic API and persisted-boundary contracts
+├── persistence/            # SQLite lifecycle, scoping, and row mapping
+└── utils/                  # Shared pure utility functions
+tests/                      # Fixtures plus contract, API, and schema tests
+schemas/                    # Published JSON Schema artifacts
+```
+
+`app.py` constructs the application, initializes storage, registers routers, and exposes the
+module-level ASGI application. It must not contain contracts, routes, or storage logic.
+`contracts/` owns Pydantic models; `api/` owns endpoint behavior; `persistence/` owns database
+access and database-to-contract mapping; and `utils/` owns reusable pure helpers. Import each
+responsibility from its owning module rather than re-exporting it through `gatekeeper.app`.
+
+Place one concise `#` comment immediately before every module section, class, function, and router
+group. Do not add repetitive comments before internal conditionals, context managers, exception
+handlers, loops, or validators; use the enclosing unit's comment and clear names instead.
+
 
 ## Build, Test, and Development Commands
 

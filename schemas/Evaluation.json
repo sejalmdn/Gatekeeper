@@ -1,0 +1,289 @@
+{
+  "$defs": {
+    "Candidate": {
+      "additionalProperties": false,
+      "properties": {
+        "application_version": {
+          "minLength": 1,
+          "title": "Application Version",
+          "type": "string"
+        },
+        "runtime_configuration": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Runtime Configuration",
+          "type": "object"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "format": "uuid",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "runtime_configuration_digest": {
+          "title": "Runtime Configuration Digest",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "application_version",
+        "runtime_configuration",
+        "id",
+        "project_id",
+        "runtime_configuration_digest",
+        "created_at"
+      ],
+      "title": "Candidate",
+      "type": "object"
+    },
+    "Config": {
+      "additionalProperties": false,
+      "properties": {
+        "settings": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Settings",
+          "type": "object"
+        },
+        "thresholds": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "propertyNames": {
+            "minLength": 1
+          },
+          "title": "Thresholds",
+          "type": "object"
+        },
+        "weights": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "propertyNames": {
+            "minLength": 1
+          },
+          "title": "Weights",
+          "type": "object"
+        },
+        "default_attempts": {
+          "title": "Default Attempts",
+          "type": "integer"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "format": "uuid",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "digest": {
+          "title": "Digest",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "settings",
+        "thresholds",
+        "weights",
+        "default_attempts",
+        "name",
+        "version",
+        "id",
+        "project_id",
+        "digest",
+        "created_at"
+      ],
+      "title": "Config",
+      "type": "object"
+    },
+    "DatasetRelease": {
+      "additionalProperties": false,
+      "properties": {
+        "dataset_name": {
+          "minLength": 1,
+          "title": "Dataset Name",
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        },
+        "scenarios": {
+          "items": {
+            "$ref": "#/$defs/Scenario"
+          },
+          "title": "Scenarios",
+          "type": "array"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "format": "uuid",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "content_digest": {
+          "title": "Content Digest",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "dataset_name",
+        "version",
+        "scenarios",
+        "id",
+        "project_id",
+        "content_digest",
+        "created_at"
+      ],
+      "title": "DatasetRelease",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "Scenario": {
+      "additionalProperties": false,
+      "properties": {
+        "scenario_id": {
+          "minLength": 1,
+          "title": "Scenario Id",
+          "type": "string"
+        },
+        "input": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Input",
+          "type": "object"
+        }
+      },
+      "required": [
+        "scenario_id",
+        "input"
+      ],
+      "title": "Scenario",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "candidate_id": {
+      "format": "uuid",
+      "title": "Candidate Id",
+      "type": "string"
+    },
+    "dataset_release_id": {
+      "format": "uuid",
+      "title": "Dataset Release Id",
+      "type": "string"
+    },
+    "config_id": {
+      "format": "uuid",
+      "title": "Config Id",
+      "type": "string"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "format": "uuid",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "candidate_digest": {
+      "title": "Candidate Digest",
+      "type": "string"
+    },
+    "dataset_release_digest": {
+      "title": "Dataset Release Digest",
+      "type": "string"
+    },
+    "config_digest": {
+      "title": "Config Digest",
+      "type": "string"
+    },
+    "candidate_snapshot": {
+      "$ref": "#/$defs/Candidate"
+    },
+    "dataset_release_snapshot": {
+      "$ref": "#/$defs/DatasetRelease"
+    },
+    "config_snapshot": {
+      "$ref": "#/$defs/Config"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "candidate_id",
+    "dataset_release_id",
+    "config_id",
+    "id",
+    "project_id",
+    "candidate_digest",
+    "dataset_release_digest",
+    "config_digest",
+    "candidate_snapshot",
+    "dataset_release_snapshot",
+    "config_snapshot",
+    "created_at"
+  ],
+  "title": "Evaluation",
+  "type": "object"
+}

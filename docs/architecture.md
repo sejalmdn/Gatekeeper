@@ -43,7 +43,8 @@ sequenceDiagram
 ## Components and boundaries
 
 - **Frontend and control plane:** manages projects, candidates, immutable dataset releases,
-  frozen evaluation configuration, offline runs, online sampling policy, reports, and aligned
+  immutable, versioned evaluator/scoring configuration releases, offline runs, online sampling
+  policy, reports, and aligned
   comparisons. It also supports human review and redacted promotion of failed online traces
   into new offline dataset releases.
 - **Runner:** starts offline work, obtains and supplies one scenario at a time, and invokes the
@@ -70,11 +71,12 @@ label observed tool evidence as `tool_requested` or `tool_result_reported`. It m
 
 ## Evaluation semantics
 
-An evaluation freezes the candidate, dataset release, evaluator/scoring configuration,
+An evaluation freezes the candidate, dataset release, immutable evaluator/scoring configuration
+release,
 thresholds, severity weights, and repeated-run policy. Reports expose per-scenario score,
 stability, tool-evidence level, flakiness, severity-weighted suite score, and blocking failures.
-Comparisons only align matching frozen configuration and classify results as regressions,
-improvements, or stable.
+Comparisons only align matching frozen evaluator/scoring configuration releases and classify
+results as regressions, improvements, or stable.
 
 
 Gatekeeper evaluates online samples asynchronously and remains observational. It does not use

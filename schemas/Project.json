@@ -1,0 +1,27 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "id",
+    "created_at"
+  ],
+  "title": "Project",
+  "type": "object"
+}

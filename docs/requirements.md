@@ -7,9 +7,9 @@ candidate is an application version plus its runtime configuration, including it
 model, prompt, tool, and environment versions. Applications run in customer environments;
 Gatekeeper is not an agent runtime, production orchestrator, or release gate.
 
-An evaluation freezes a candidate, immutable scenario-dataset release, and versioned evaluator
-and scoring configuration. Comparisons use the same frozen dataset, evaluator/scoring
-configuration, and repeated-run policy for every candidate.
+An evaluation freezes a candidate, immutable scenario-dataset release, and immutable, versioned
+evaluator/scoring configuration release. Comparisons use the same frozen dataset,
+evaluator/scoring configuration release, and repeated-run policy for every candidate.
 
 ## Scope
 
@@ -45,8 +45,8 @@ per-scenario score, stability across repeated attempts, tool-evidence level, fla
 severity-weighted suite score, and prominent blocking failures. Aligned comparisons classify
 scenario results as regressions, improvements, or stable.
 
-Severity weights and pass thresholds are versioned fields in the frozen evaluator/scoring
-configuration. `10/5/2/1` is only an example weight scheme, not a product constant.
+Severity weights and pass thresholds are fields in the immutable, versioned evaluator/scoring
+configuration release. `10/5/2/1` is only an example weight scheme, not a product constant.
 
 ## Evidence labels and limits
 
