@@ -14,7 +14,7 @@ from gatekeeper.persistence.projects import config_from_row, project_or_404, tim
 from gatekeeper.utils.json import canonical_json, digest
 
 # Administrator control-plane router group; authentication is deferred.
-router = APIRouter(prefix="/v1/projects/{project_id}/configs", tags=["Administrator control plane"])
+router = APIRouter(prefix="/v1/projects/{project_id}/configs")
 
 
 # Configuration content digest generator.

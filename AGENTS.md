@@ -4,6 +4,12 @@
 
 Gatekeeper is a Python 3.12 FastAPI hosted control plane and frontend for credible evaluation of complete agent workflows. It is a decision-support system, not an agent runtime, production orchestrator, release gate, or response guard. Before changing behavior, read all four documents in `docs/`: `requirements.md`, `architecture.md`, `measurement-credibility.md`, and `roadmap.md`. When implementation convenience conflicts with measurement credibility, preserve credibility.
 
+## Frontend Design
+
+Use the `$frontend-design` skill whenever building or materially reshaping the frontend. Ground
+the interface in Gatekeeper's measurement-credibility boundaries, complete its design-planning
+and self-critique passes, and avoid generic dashboard treatments that imply unsupported results.
+
 ## Project Structure & Module Organization
 
 ```text

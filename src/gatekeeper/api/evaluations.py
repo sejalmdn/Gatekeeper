@@ -22,7 +22,7 @@ from gatekeeper.utils.json import canonical_json
 
 # Administrator control-plane router group; authentication is deferred.
 router = APIRouter(
-    prefix="/v1/projects/{project_id}/evaluations", tags=["Administrator control plane"]
+    prefix="/v1/projects/{project_id}/evaluations"
 )
 
 
