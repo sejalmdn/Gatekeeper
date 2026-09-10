@@ -17,8 +17,10 @@ evaluator/scoring configuration release, and repeated-run policy for every candi
   evaluations, reports, and aligned comparisons.
 - The customer-side runner starts offline evaluations and requests one safe scenario assignment
   at a time. It invokes the local application but submits neither final responses nor traces.
-- The required customer-side proxy is the sole model-facing evidence source. It correlates each
-  observation with the assigned scenario and records model responses, tool requests/results,
+- The required Gatekeeper-hosted proxy forwards application LLM calls to model providers and
+  returns responses or streams on the same request connection in both offline and online modes.
+  It is the sole model-facing evidence source. It correlates observations with the assigned
+  scenario and records model responses, tool requests/results,
   and other observable behavior.
 - Offline evaluation evaluates assigned scenarios after local execution. Passive online
   evaluation samples production traffic through the proxy and evaluates it asynchronously.

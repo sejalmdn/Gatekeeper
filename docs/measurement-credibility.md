@@ -15,7 +15,7 @@ scenario level and retain attempt and scenario counts.
 ## Private scenarios and proxy evidence
 
 Gatekeeper sends an offline runner one safe scenario at a time. The runner invokes the local
-application but sends no final-response or trace evidence. The required proxy is the sole
+application but sends no final-response or trace evidence. The Gatekeeper-hosted proxy is the sole
 model-facing evidence source and correlates observations with that scenario. For passive online
 evaluation it samples the same evidence from traffic and sends it for asynchronous evaluation;
 it cannot delay, alter, block, or intervene in the response.

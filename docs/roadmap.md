@@ -29,6 +29,8 @@ without receiving private rules or submitting final responses, traces, or final-
 
 ## Stage 3: proxy evidence ingestion
 
+- Deliver a Gatekeeper-hosted proxy that forwards application LLM calls to model providers and
+  returns responses or streams on the same request connection for offline and online use.
 - Deliver correlated proxy observations for offline assignments and the model-facing evidence
   boundary.
 - Record `tool_requested` and `tool_result_reported` as observations; record

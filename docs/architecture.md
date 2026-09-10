@@ -2,8 +2,8 @@
 
 Gatekeeper is a hosted control plane with a frontend, deterministic evaluation service, and
 reporting store. The application and its runner remain in the customer environment. The runner
-only integrates with the control plane and invokes the local application; the required proxy is
-the sole source of model-facing evidence.
+only integrates with the control plane and invokes the local application; the proxy runs inside
+Gatekeeper and is the sole source of model-facing evidence.
 
 ```mermaid
 sequenceDiagram
@@ -11,8 +11,8 @@ sequenceDiagram
     participant GK as Gatekeeper control plane and frontend
     participant R as Customer runner
     participant A as Local application
-    participant P as Required proxy
-    participant M as Model and tools
+    participant P as Gatekeeper-hosted proxy
+    participant M as Model provider
     actor U as User
 
     rect rgb(235, 245, 255)
@@ -20,9 +20,10 @@ sequenceDiagram
         R->>GK: Start evaluation; request next scenario
         GK-->>R: Safe scenario assignment and correlation ID
         R->>A: Invoke locally
-        A->>P: Model or tool call
+        A->>P: LLM request
         P->>M: Forward call
-        M-->>P: Response or tool result
+        M-->>P: Model response or stream
+        P-->>A: Return response or stream
         P->>GK: Correlated observable evidence
         GK->>GK: Evaluate private rules; aggregate
         GK-->>R: Report available
@@ -31,9 +32,10 @@ sequenceDiagram
     rect rgb(245, 255, 235)
         Note over U,M: Passive online evaluation
         U->>A: User traffic
-        A->>P: Model or tool call
+        A->>P: LLM request
         P->>M: Forward call
-        M-->>P: Response or tool result
+        M-->>P: Model response or stream
+        P-->>A: Return response or stream
         P->>GK: Sampled observable evidence
         GK->>GK: Evaluate asynchronously; report findings
         Note over GK,A: No response delay, alteration, blocking, or intervention
@@ -49,9 +51,10 @@ sequenceDiagram
   into new offline dataset releases.
 - **Runner:** starts offline work, obtains and supplies one scenario at a time, and invokes the
   application locally. It does not submit traces, final responses, or final-state evidence.
-- **Proxy:** sits on the model-facing path, correlates observations with an offline assignment
-  or online sample, and sends evidence to Gatekeeper. It records model responses, tool requests,
-  tool results, and other observable behavior.
+- **Proxy:** runs inside Gatekeeper, forwards application LLM calls to model providers, and
+  returns responses or streams on the same request connection; no application callback is needed.
+  It records model responses, tool requests/results observable in LLM traffic, and other
+  observable behavior, correlated with an offline assignment or online sample.
 - **Evaluation service:** applies only frozen deterministic evaluators: outcome/schema/set/range
   checks, required/forbidden actions, sequences, and policy/safety checks.
 - **Storage and reports:** retain evidence references, evaluator results, repeated-attempt
