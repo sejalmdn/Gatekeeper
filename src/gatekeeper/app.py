@@ -15,6 +15,7 @@ from gatekeeper.api.evaluations import router as evaluations_router
 from gatekeeper.api.projects import router as projects_router
 from gatekeeper.persistence.database import Database
 
+import uvicorn
 
 # Frontend asset registration.
 def register_frontend(app: FastAPI, frontend_directory: Path) -> None:
@@ -31,21 +32,23 @@ def register_frontend(app: FastAPI, frontend_directory: Path) -> None:
         return HTMLResponse(index_file.read_text())
 
 
-# Application factory.
-def create_app(
-    database_path: str | Path = "gatekeeper.db", frontend_directory: str | Path | None = None
-) -> FastAPI:
-    app = FastAPI(title="Gatekeeper")
-    app.state.database = Database(database_path)
-    app.include_router(projects_router)
-    app.include_router(candidates_router)
-    app.include_router(dataset_releases_router)
-    app.include_router(configs_router)
-    app.include_router(evaluations_router)
-    default_frontend_directory = Path(__file__).parent / "frontend_dist"
-    register_frontend(app, Path(frontend_directory or default_frontend_directory))
-    return app
+app = FastAPI(title="Gatekeeper")
+app.state.database = Database('gatekeeper.db')
+app.include_router(projects_router)
+app.include_router(candidates_router)
+app.include_router(dataset_releases_router)
+app.include_router(configs_router)
+app.include_router(evaluations_router)
+default_frontend_directory = Path(__file__).parent / "frontend_dist"
+register_frontend(app, Path(default_frontend_directory))
 
 
-# Default ASGI application.
-app = create_app()
+# Development server entry point.
+def main() -> None:
+    """Start the Gatekeeper development server."""
+    uvicorn.run(
+        "gatekeeper.app:app",
+        host="127.0.0.1",
+        port=8000,
+        reload=True,
+    )
