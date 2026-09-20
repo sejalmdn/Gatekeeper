@@ -4,6 +4,10 @@
 
 Gatekeeper is a Python 3.12 FastAPI hosted control plane and frontend for credible evaluation of complete agent workflows. It is a decision-support system, not an agent runtime, production orchestrator, release gate, or response guard. Before changing behavior, read all four documents in `docs/`: `requirements.md`, `architecture.md`, `measurement-credibility.md`, and `roadmap.md`. When implementation convenience conflicts with measurement credibility, preserve credibility.
 
+### Core Philosophy
+
+This is a project focused on core evaluation logic and credibility principles. **Prioritize simplicity, readability, and maintainability over enterprise scalability.** Do not add architectural abstractions or extra dependencies unless explicitly requested. Design for an individual developer evaluating their own application; avoid enterprise administration, multi-tenant workflows, and operational controls unless explicitly requested.
+
 ## Frontend Design
 
 Use the `$frontend-design` skill whenever building or materially reshaping the frontend. Ground
@@ -17,8 +21,20 @@ src/gatekeeper/
 ├── app.py                  # FastAPI application wiring only
 ├── api/                    # HTTP routers and shared request dependencies
 ├── contracts/              # Pydantic API and persisted-boundary contracts
+├── frontend_dist/          # Generated Vite build served by FastAPI
 ├── persistence/            # SQLite lifecycle, scoping, and row mapping
 └── utils/                  # Shared pure utility functions
+frontend/
+└── src/
+    ├── components/         # Shared React presentation
+    ├── hooks/              # Reusable React behavior
+    ├── pages/              # Route-level behavior and state
+    ├── styles/             # Component and page CSS
+    ├── utils/              # Pure frontend utilities
+    ├── api.ts              # Backend API client
+    ├── types.ts            # Frontend boundary types
+    ├── App.tsx             # Route declarations
+    └── main.tsx            # Browser entry point
 tests/                      # Fixtures plus contract, API, and schema tests
 schemas/                    # Published JSON Schema artifacts
 ```
@@ -28,6 +44,11 @@ module-level ASGI application. It must not contain contracts, routes, or storage
 `contracts/` owns Pydantic models; `api/` owns endpoint behavior; `persistence/` owns database
 access and database-to-contract mapping; and `utils/` owns reusable pure helpers. Import each
 responsibility from its owning module rather than re-exporting it through `gatekeeper.app`.
+
+Frontend source lives in `frontend/src/`. Pages own route behavior, components own reusable
+presentation, hooks own reusable React behavior, `styles/` owns component and page CSS, and
+`api.ts` and `types.ts` own frontend boundary communication and types. Vite generates
+`src/gatekeeper/frontend_dist/`, which FastAPI serves; never edit its contents manually.
 
 Place one concise `#` comment immediately before every module section, class, function, and router
 group. Do not add repetitive comments before internal conditionals, context managers, exception
@@ -45,6 +66,25 @@ python3.12 -m venv .venv
 ```
 
 The first two commands create the environment and install development dependencies. Uvicorn runs the local API; pytest runs the strict test suite; Ruff checks imports, style, modernization, and common defects.
+
+### Strict Architectural Boundaries
+
+1. **Single-Process control plane:** Keep the Gatekeeper control plane, API, proxy, evaluation logic, and frontend delivery in the existing FastAPI application. Do not introduce worker queues, message brokers, microservices, or distributed execution frameworks. The evaluated application and customer-side runner remain outside Gatekeeper as defined in the architecture.
+2. **SQLite Only:** Use embedded SQLite via standard Python library / minimal ORM. Do NOT suggest PostgreSQL, Migration engines (Alembic) unless required, or multi-database abstractions.
+3. **Simple React Frontend:** Use React with TypeScript (`.tsx`) bundled via Vite. Do NOT introduce complex state management libraries (Redux, Zustand), heavy CSS frameworks (Tailwind, Material UI), or complicated multi-step build pipelines. Keep type definitions simple and co-located in `types.ts`.
+4. **Synchronous/Simple Persistence:** Use straightforward synchronous or standard FastAPI `async` handlers with direct SQLite queries/Pydantic validation. Do not over-abstract with repository pattern interfaces or multi-layered DAOs unless files exceed 300 lines.
+5. **No External Runner Engines:** Mock or directly invoke scenario runs synchronously in memory/local subprocesses. Do NOT integrate Docker SDKs, Kubernetes jobs, or remote runner orchestration.
+6. **Minimal Dependency Footprint:** Lean on Python 3.12 standard libraries (`pathlib`, `json`, `sqlite3`, `dataclasses`, `typing`) and primary declared dependencies (`FastAPI`, `Pydantic`, `Uvicorn`). Reject new third-party package additions for minor utility tasks.
+
+## Codex Collaboration Guidance
+
+- Implement only the current requirement and roadmap stage. Do not add speculative fields, extension points, generic frameworks, or production infrastructure.
+- Prefer the smallest clear change within the existing module layout.
+- Make reasonable, reversible assumptions instead of asking about hypothetical scale, deployment, queuing, or enterprise requirements.
+- New files inside an existing module do not require confirmation when their ownership is clear. Ask before creating a new top-level subsystem or changing an architectural boundary.
+- Ask for clarification only when a decision affects measurement credibility, a public API, persisted data, security, destructive behavior, or product scope.
+- Briefly explain a non-trivial refactor in commentary, then proceed when it remains within the requested scope.
+
 
 ## Architecture & Delivery Workflow
 

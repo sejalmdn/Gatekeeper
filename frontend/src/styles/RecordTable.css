@@ -1,0 +1,66 @@
+/* Dense record ledgers retain clear source hierarchy and keyboard scrolling. */
+.record-table-scroll { max-width: 100%; overflow-x: auto; }
+.record-table { width: 100%; border-collapse: collapse; text-align: left; }
+.record-table-caption {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+}
+.record-table th {
+    background: var(--surface-raised);
+    padding: 12px 20px;
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.045em;
+    white-space: nowrap;
+}
+.record-table td {
+    border-top: 1px solid var(--border);
+    padding: 20px;
+    font-size: 11px;
+    vertical-align: middle;
+    color: var(--muted);
+    min-width: 140px;
+    max-width: 320px;
+    overflow-wrap: anywhere;
+}
+.record-table tbody tr:hover { background: var(--surface-hover); }
+.record-table td:first-child { color: var(--text); }
+.record-table a { font-weight: 500; text-decoration: none; }
+.record-table a:hover { text-decoration: underline; }
+.record-table td:last-child { white-space: nowrap; font-size: 10px; }
+.table-cell-stack { display: grid; gap: 5px; }
+.table-cell-stack strong { color: var(--text); font-size: 12px; font-weight: 500; }
+.table-cell-stack small { font-size: 10px; color: var(--muted); }
+.evaluation-id {
+    display: block;
+    max-width: 22ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-display);
+    font-size: 12px;
+    color: var(--accent);
+}
+.table-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 6px 10px;
+    border: 1px solid var(--accent-border);
+    border-radius: 5px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 10px;
+}
+.table-action:hover { background: var(--surface-hover); }
+.record-table td.record-table-empty {
+    padding: 36px 20px;
+    text-align: center;
+    white-space: normal;
+}

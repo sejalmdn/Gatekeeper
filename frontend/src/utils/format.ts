@@ -1,0 +1,42 @@
+import type { JsonObject } from "../types";
+
+// Convert request failures into readable form feedback.
+export function messageFor(error: unknown): string {
+    return error instanceof Error ? error.message : "The request could not be completed.";
+}
+
+// Keep the full digest available wherever its compact form is displayed.
+export function shortDigest(value: string): string {
+    return `${value.slice(0, 10)}…${value.slice(-6)}`;
+}
+
+// Format record timestamps in the browser's locale and timezone.
+export function timestamp(value: string): string {
+    return new Intl.DateTimeFormat(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+    }).format(new Date(value));
+}
+
+// Format structured values for inspection and editing.
+export function json(value: unknown): string {
+    return JSON.stringify(value, null, 2);
+}
+
+// Reject non-object JSON before sending a record to the API.
+export function parseObject(value: string, field: string): JsonObject {
+    const parsed: unknown = JSON.parse(value);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+        throw new Error(`${field} must be a JSON object.`);
+    }
+    return parsed as JsonObject;
+}
+
+// Leave array item validation to the API's scenario contract.
+export function parseArray(value: string, field: string): unknown[] {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) {
+        throw new Error(`${field} must be a JSON array.`);
+    }
+    return parsed;
+}

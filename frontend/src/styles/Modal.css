@@ -1,0 +1,32 @@
+/* The evaluation dialog uses the reference's amber edge and carbon backdrop. */
+.modal {
+    width: min(700px, calc(100% - 32px));
+    max-height: calc(100dvh - 48px);
+    padding: 28px;
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius-panel);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 24px 100px rgb(0 0 0 / 60%);
+    overflow-y: auto;
+}
+.modal::backdrop { background: rgb(0 0 0 / 80%); backdrop-filter: blur(6px); }
+.modal-close { position: absolute; top: 16px; right: 16px; padding: 6px; width: 36px; }
+.modal .page-heading {
+    padding: 0 40px 20px 0;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    margin-bottom: 20px;
+}
+.modal .page-heading h1 { font-size: 18px; }
+.modal .page-heading p { font-size: 11px; }
+.modal .record-form { border: 0; border-radius: 0; padding: 0; gap: 20px; }
+.modal .source-selects { grid-template-columns: 1fr; }
+.modal .record-form-caption { display: none; }
+.modal .freeze-sources { grid-template-columns: 1fr; }
+.modal .freeze-source { padding: 12px 20px; }
+.modal .freeze-source + .freeze-source { border-left: 0; border-top: 1px solid var(--border); }
+.modal .freeze-source strong { margin: 6px 0; font-size: 12px; }
+.modal .freeze-heading { padding: 14px 20px; }
+.modal .freeze-policy { padding: 12px 20px; font-size: 10px; }

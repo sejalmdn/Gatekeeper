@@ -1,0 +1,164 @@
+/* Project selection shares the carbon grid and compact command header. */
+.projects-shell { min-height: 100vh; }
+.projects-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    background: var(--sidebar);
+}
+
+.projects-header > span {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.projects-page {
+    max-width: 1140px;
+    margin: auto;
+    padding: 40px 24px;
+}
+
+.projects-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 24px;
+}
+
+.project-directory {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-panel);
+    overflow: hidden;
+    background: var(--surface);
+    align-self: start;
+}
+
+.project-directory-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.project-directory-heading h2 {
+    margin: 0;
+    font-size: 14px;
+}
+
+.project-directory-heading > span {
+    font-size: 11px;
+    color: var(--cyan);
+}
+
+.project-directory ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.project-directory li + li {
+    border-top: 1px solid var(--border);
+}
+
+.project-directory a {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px;
+    text-decoration: none;
+}
+
+.project-directory a:hover {
+    background: var(--surface-hover);
+}
+
+.project-directory-icon {
+    color: var(--accent);
+}
+
+.project-directory-name {
+    flex: 1;
+    min-width: 0;
+}
+
+.project-directory-name strong {
+    display: block;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.project-directory-name small {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.project-directory a > .icon {
+    color: var(--muted);
+    width: 16px;
+}
+
+.project-directory-empty {
+    padding: 44px 24px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.project-directory-empty h3 {
+    margin: 12px 0 6px;
+    color: var(--text);
+}
+
+.project-directory-empty p {
+    font-size: 12px;
+    margin: 0;
+}
+
+.project-create {
+    background: var(--surface);
+    padding: 28px;
+    border: 1px solid var(--border);
+    border-top-color: var(--accent-border);
+    border-radius: var(--radius-panel);
+}
+
+.project-create > .icon {
+    color: var(--accent);
+    margin-bottom: 16px;
+}
+
+.project-create h2 {
+    margin-bottom: 8px;
+}
+
+.project-create > p {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 24px;
+}
+
+.project-create form {
+    display: grid;
+    gap: 20px;
+}
+
+.project-create button {
+    justify-self: start;
+}
+
+.projects-footer {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 48px;
+}
+
+.projects-footer .icon {
+    width: 13px;
+}
