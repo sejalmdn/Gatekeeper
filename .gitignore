@@ -4,3 +4,5 @@
 __pycache__/
 *.egg-info/
 gatekeeper.db
+
+*node_modules/
