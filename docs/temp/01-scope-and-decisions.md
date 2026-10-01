@@ -19,8 +19,9 @@ The core entities discussed are application targets, datasets and scenarios, reu
 1. For the MVP, ingest the application's existing OTel traces through OTLP. An execution ID links model calls, actual tool executions, results, and the final answer. Support one documented instrumentation format initially; a dedicated GateKeeper SDK is future scope.
 2. Keep the developer's application in the picture. It owns the agent loop and executes its tools.
 3. For offline tests, GateKeeper sends scenarios to an exposed endpoint on the application's backend.
-4. Keep different scenario categories in separate datasets.
+4. A dataset can contain scenarios from multiple categories. Store the category on each scenario so its input contract and applicable rules remain explicit.
 5. Simplify conversation tests: supply existing history and a new user query, then evaluate the next answer. Do not implement an adaptive user simulator for this scope.
+6. Use deterministic evaluators for the MVP. LLM-as-a-judge evaluation and its calibration are future scope.
 
 ## MVP integration boundary
 
@@ -33,7 +34,7 @@ This decision replaces the earlier custom SDK approach. A [future GateKeeper SDK
 ## Proposed design discussed
 
 - Reusable evaluation definitions with scenario-specific parameter bindings, plus dataset-wide default rules.
-- Evaluation of outcomes, constraints, quality, and efficiency rather than one exact expected tool sequence.
+- Deterministic evaluation of outcomes, constraints, quality, and efficiency rather than one exact expected tool sequence.
 - Application-specific outcome verification using observed test-state evidence.
 - Repeated attempts and version comparisons to measure reliability and regressions.
 

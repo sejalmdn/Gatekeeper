@@ -7,11 +7,11 @@ This file is a proposed implementation aid for the new GateKeeper project. The u
 1. Design one typed scenario envelope, rule definitions/bindings, and execution identity/lifecycle. Publish the MVP OTel evidence contract and select one supported instrumentation format/version.
 2. Implement authenticated OTLP trace ingestion, span normalization, execution correlation, and a working example using existing OTel libraries.
 3. Add application target registration, dispatch to the exposed backend endpoint, proxy correlation, and completion/evidence-readiness handling.
-4. Apply trace/answer rules and ingest application-specific outcome evidence.
+4. Apply deterministic trace/answer rules and ingest application-specific outcome evidence.
 5. Expose dataset editing/import, per-case rule assignments, trace viewing, and evaluation reports.
 6. Add repeated trials, version comparison, and shared production/offline grading where applicable.
 
-Start with one complete example application and scenario, then expand the supported categories. The MVP uses existing OTel libraries with documented enrichment. A dedicated GateKeeper SDK is [future scope](07-future-sdk.md). A hosted tool runtime, adaptive user simulation, and support for every framework format are outside the selected MVP.
+Start with one complete example application and scenario, then expand the supported scenario types within datasets. The MVP uses existing OTel libraries with documented enrichment. A dedicated GateKeeper SDK is [future scope](07-future-sdk.md). A hosted tool runtime, adaptive user simulation, LLM-as-a-judge evaluation, and support for every framework format are outside the selected MVP.
 
 ## Important design choices still open
 
@@ -24,7 +24,7 @@ Start with one complete example application and scenario, then expand the suppor
 - Fixture preparation/reset and state-verifier contracts.
 - Definition versioning, parameter validation and expected-value references, default-rule overrides, and grading applicability.
 - Storage schema, payload retention, and handling of large or sensitive inputs/results.
-- Initial built-in evaluators and the interface/runtime for developer-provided custom evaluators.
+- Initial deterministic built-in evaluators and the interface/runtime for developer-provided deterministic custom evaluators.
 - Whether evaluation suites and CI release gates are part of the first delivery or later.
 
 ## Proposed component boundaries
@@ -53,6 +53,7 @@ Meaningful integration checks should cover:
 - A final answer claiming success fails when authoritative final state disagrees.
 - Different valid tool paths can pass; an actual constraint violation cannot be hidden by a high quality score.
 - Rule reuse works with different case parameters, and dataset-wide rules combine predictably with case rules.
+- One dataset can contain different scenario types, with each scenario validated and evaluated according to its own type.
 - Tool errors, delayed events, timeout, and completion/export failures remain visible rather than disappearing from evaluation counts.
 - Missing tool arguments, sampled/lost spans, and absent outcome evidence produce cannot-evaluate results for affected rules. An incomplete trace cannot pass a forbidden-tool absence check.
 
@@ -60,4 +61,4 @@ These checks are recommendations for implementation verification, not tests crea
 
 ## Later integration scope
 
-After the MVP works, consider a [GateKeeper SDK](07-future-sdk.md) to simplify instrumentation and endpoint integration, additional OTel framework mappings/transports, and broader production collection options. The SDK should use the same evidence contract and preserve OTel-only integrations.
+After the MVP works, consider a [GateKeeper SDK](07-future-sdk.md) to simplify instrumentation and endpoint integration, additional OTel framework mappings/transports, broader production collection options, and separately scoped LLM-as-a-judge evaluation with calibration. The SDK should use the same evidence contract and preserve OTel-only integrations.

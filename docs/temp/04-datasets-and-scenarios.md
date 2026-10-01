@@ -2,28 +2,28 @@
 
 ## Agreed organization
 
-Each dataset contains multiple scenarios of one type. Keep different types in separate datasets. An optional evaluation suite can group related datasets, but suite implementation was not explicitly settled.
+Each dataset can contain scenarios of multiple types. Store the type on every scenario rather than on the dataset. This lets one dataset represent a related evaluation goal across simple responses, conversations, focused tool checks, and end-to-end tasks.
 
-| Dataset type | Input | Primary evaluation focus |
+| Scenario type | Input | Primary evaluation focus |
 |---|---|---|
 | Single turn | One user message | Resulting answer |
 | Contextual turn | Existing history plus a new user message | Next answer using the history |
 | Tool use | Request intended to exercise a tool; optional history | Selection, arguments, actual execution, result handling |
 | Agentic task | Goal, optional history, initial test-state fixture | Final outcome, constraints, quality, efficiency |
 
-These are practical dataset categories, not mutually exclusive agent capabilities. A single-turn response can involve tools. Tool-use evaluation is a focused agentic test; full agentic tasks evaluate end-to-end completion. Do not equate a contextual-turn input with exactly one model call: the application may still use internal tools while producing the next answer.
+These are practical scenario categories, not mutually exclusive agent capabilities. A single-turn response can involve tools. Tool-use evaluation is a focused agentic test; full agentic tasks evaluate end-to-end completion. Do not equate a contextual-turn input with exactly one model call: the application may still use internal tools while producing the next answer.
 
 ## Proposed common structure
 
 ```text
 Dataset
-- identity, name, scenario type, version
+- identity, name, version
 - application target reference
 - default rule bindings
 - scenarios[]
 
 Scenario
-- identity, name
+- identity, name, scenario type
 - typed input
 - setup / fixture reference
 - expected values
@@ -36,31 +36,38 @@ For the MVP, evidence comes from the [application's OTel integration](02-otel-an
 
 ## Illustrative inputs
 
-Single turn:
-
-```json
-{"userMessage": "What is 2 + 2?"}
-```
-
-Contextual turn:
+Single-turn scenario:
 
 ```json
 {
-  "history": [
-    {"role": "user", "content": "My order is 123."},
-    {"role": "assistant", "content": "How can I help with it?"}
-  ],
-  "nextUserMessage": "Where is it?"
+  "type": "single_turn",
+  "input": {"userMessage": "What is 2 + 2?"}
 }
 ```
 
-Tool-use input can be the same request shape as single turn. Its expectations identify whether the check concerns a proposed call, an executed call, arguments, or use of the returned result. Define this distinction in the rule, not by silently treating a proposal as execution.
+Contextual-turn scenario:
+
+```json
+{
+  "type": "contextual_turn",
+  "input": {
+    "history": [
+      {"role": "user", "content": "My order is 123."},
+      {"role": "assistant", "content": "How can I help with it?"}
+    ],
+    "nextUserMessage": "Where is it?"
+  }
+}
+```
+
+A tool-use scenario can have the same input shape as a single-turn scenario, but uses the `tool_use` type. Its expectations identify whether the check concerns a proposed call, an executed call, arguments, or use of the returned result. Define this distinction in the rule, not by silently treating a proposal as execution.
 
 Agentic task example (illustrative schema):
 
 ```json
 {
   "id": "meeting-01",
+  "type": "agentic_task",
   "input": {
     "userGoal": "Book a meeting with Sam on 2026-10-06 at 2 pm IST"
   },

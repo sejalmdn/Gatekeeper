@@ -30,7 +30,7 @@ RuleBinding
 - required / scored / informational role
 ```
 
-Dataset-level bindings apply common rules. Scenario-level bindings add case-specific checks. Default override/removal behavior and applicability need an explicit design; they were not agreed.
+Dataset-level bindings apply common rules across a mixed set of scenario types. Each binding must make its applicable scenario types or evidence requirements clear. Scenario-level bindings add case-specific checks. Default override/removal behavior and applicability need an explicit design; they were not agreed.
 
 Potential logical relationships are `Dataset -> Scenario`, `Dataset -> RuleBinding`, and `Scenario -> RuleBinding -> RuleDefinition`. This is a conceptual model; the database and storage schema remain open choices.
 
@@ -52,7 +52,7 @@ The ingestion layer maps supported OTel spans into the evaluator context. Rules 
 |---|---|
 | Required/forbidden tool | Actual tool-execution spans; complete relevant trace for absence checks |
 | Tool argument validation | Recorded executed-tool arguments, with no missing required fields |
-| Final answer schema or quality rubric | Final answer plus any required reference facts/context |
+| Final answer schema or deterministic content check | Final answer plus any required reference facts/context |
 | Execution duration and call counts | Agent lifecycle and complete normalized model/tool operations |
 | Token usage | Recorded token counts; unavailable usage remains unknown |
 | Outcome matches expectations | Application state observation or verifier result |
@@ -66,10 +66,10 @@ Start with these checks and report evidence availability per rule. The exact fir
 |---|---|---|
 | Outcome | Task completed; correct record/artifact; no duplicate or unintended changes | Authoritative final state/artifacts |
 | Constraints | Forbidden tools; argument limits; authorization; approval before action; error recovery | Trace and application observations |
-| Quality | Correctness, clarity, relevance, claims grounded in tool results | Answer and trace, reference facts/rubric |
+| Quality | Schema conformance, required facts, deterministic correctness, claims grounded in tool results | Answer and trace, reference facts |
 | Efficiency | End-to-end latency, steps, model/tool calls, tokens, cost | Timing and usage records |
 
-Use code checks for objective conditions, calibrated LLM rubrics for subjective quality, and human review for ambiguous failures and judge calibration. An LLM judge is not a substitute for checking whether a database write actually happened.
+Use deterministic code checks for MVP evaluation. Human review can investigate ambiguous failures, but it is not an automated grader. LLM-as-a-judge evaluation, subjective quality rubrics that require it, and judge calibration are future scope. Even in later scope, an LLM judge cannot establish whether a database write or other business outcome actually happened.
 
 Generic state equality works only after the application exposes relevant facts. The developer defines application-specific expectations and how to obtain authoritative observations. A verifier can inspect test state and return evidence; its exact integration is open.
 
