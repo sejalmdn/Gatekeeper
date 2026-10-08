@@ -11,6 +11,44 @@ preserve credibility.
 
 ## Project Structure & Module Organization
 
+```text
+src/gatekeeper/
+├── app.py                  # FastAPI application wiring only
+├── api/                    # HTTP routers and shared request dependencies
+├── contracts/              # Pydantic API and persisted-boundary contracts
+├── frontend_dist/          # Generated Vite build served by FastAPI
+├── persistence/            # SQLite lifecycle, scoping, and row mapping
+└── utils/                  # Shared pure utility functions
+frontend/
+└── src/
+    ├── components/         # Shared React presentation
+    ├── hooks/              # Reusable React behavior
+    ├── pages/              # Route-level behavior and state
+    ├── styles/             # Component and page CSS
+    ├── utils/              # Pure frontend utilities
+    ├── api.ts              # Backend API client
+    ├── types.ts            # Frontend boundary types
+    ├── App.tsx             # Route declarations
+    └── main.tsx            # Browser entry point
+tests/                      # Fixtures plus contract, API, and schema tests
+schemas/                    # Published JSON Schema artifacts
+```
+
+`app.py` constructs the application, initializes storage, registers routers, and exposes the
+module-level ASGI application. It must not contain contracts, routes, or storage logic.
+`contracts/` owns Pydantic models; `api/` owns endpoint behavior; `persistence/` owns database
+access and database-to-contract mapping; and `utils/` owns reusable pure helpers. Import each
+responsibility from its owning module rather than re-exporting it through `gatekeeper.app`.
+
+Frontend source lives in `frontend/src/`. Pages own route behavior, components own reusable
+presentation, hooks own reusable React behavior, `styles/` owns component and page CSS, and
+`api.ts` and `types.ts` own frontend boundary communication and types. Vite generates
+`src/gatekeeper/frontend_dist/`, which FastAPI serves; never edit its contents manually.
+
+Place one concise `#` comment immediately before every module section, class, function, and router
+group. Do not add repetitive comments before internal conditionals, context managers, exception
+handlers, loops, or validators; use the enclosing unit's comment and clear names instead.
+
 Product and architecture decisions live in `docs/`. Python packages live under `src/gatekeeper/`,
 and tests mirror product boundaries under `tests/`. Keep transport integrations, normalized
 evidence, deterministic evaluation, and reporting as separate components.

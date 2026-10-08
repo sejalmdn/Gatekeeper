@@ -1,1 +1,1 @@
-"""Gatekeeper."""
+"""Gatekeeper control-plane package."""

@@ -1,0 +1,96 @@
+{
+  "$defs": {
+    "JsonValue": {}
+  },
+  "additionalProperties": false,
+  "properties": {
+    "settings": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "title": "Settings",
+      "type": "object"
+    },
+    "thresholds": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "propertyNames": {
+        "minLength": 1
+      },
+      "title": "Thresholds",
+      "type": "object"
+    },
+    "weights": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "propertyNames": {
+        "minLength": 1
+      },
+      "title": "Weights",
+      "type": "object"
+    },
+    "default_attempts": {
+      "title": "Default Attempts",
+      "type": "integer"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "version": {
+      "minLength": 1,
+      "title": "Version",
+      "type": "string"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "format": "uuid",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "digest": {
+      "title": "Digest",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "settings",
+    "thresholds",
+    "weights",
+    "default_attempts",
+    "name",
+    "version",
+    "id",
+    "project_id",
+    "digest",
+    "created_at"
+  ],
+  "title": "Config",
+  "type": "object"
+}

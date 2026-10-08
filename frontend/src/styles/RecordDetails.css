@@ -1,0 +1,84 @@
+/* Read-only sections shared by candidate, dataset, configuration, and evaluation pages. */
+.detail-section {
+    margin-top: 28px;
+    min-width: 0;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    margin-top: 28px;
+}
+
+.detail-grid > div {
+    min-width: 0;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.section-title > span {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.scenario-list {
+    display: grid;
+    gap: 16px;
+}
+
+.scenario-list article {
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-panel);
+    min-width: 0;
+}
+
+.scenario-list h3 {
+    overflow-wrap: anywhere;
+}
+
+.policy-strip {
+    padding: 16px 20px;
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+
+.policy-strip > span {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.policy-strip > strong {
+    display: block;
+    margin-top: 4px;
+    font-family: var(--font-display);
+    color: var(--accent);
+    font-size: 15px;
+}
+
+.detail-section > details {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-panel);
+    margin-bottom: 12px;
+    padding: 16px;
+    background: var(--surface);
+}
+
+.detail-section > details > summary {
+    font-size: 13px;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+}
+
+.detail-section > details[open] > summary {
+    margin-bottom: 16px;
+}
