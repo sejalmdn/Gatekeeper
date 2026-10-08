@@ -30,8 +30,7 @@ frontend/
     ├── types.ts            # Frontend boundary types
     ├── App.tsx             # Route declarations
     └── main.tsx            # Browser entry point
-tests/                      # Fixtures plus contract, API, and schema tests
-schemas/                    # Published JSON Schema artifacts
+tests/                      # Fixtures plus contract, API, and frontend tests
 ```
 
 `app.py` constructs the application, initializes storage, registers routers, and exposes the
