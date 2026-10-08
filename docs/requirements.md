@@ -3,9 +3,9 @@
 ## Product
 
 Gatekeeper is a hosted control plane and frontend for credible evaluation of AI applications. A
-candidate identifies an application version and its relevant model, prompt, tool, and runtime
-configuration. Gatekeeper supports engineering decisions; it is not an agent runtime, production
-orchestrator, response guard, or release gate.
+candidate identifies a developer-configured model or agent and its relevant prompt, tool, and
+runtime configuration. Gatekeeper invokes candidates only for controlled offline evaluation; it is
+not a customer application host, production orchestrator, response guard, or release gate.
 
 An evaluation freezes the candidate, immutable dataset release, versioned evaluator and scoring
 configuration, thresholds, severity weights, and repeated-run policy. Candidate comparisons use
@@ -18,14 +18,17 @@ aligned frozen inputs and configuration.
   response. Adaptive user simulation is excluded.
 - A tool-use scenario evaluates requested tool selection and arguments. It does not establish that
   the tool was executed or that a real-world outcome occurred.
-- Gatekeeper dispatches one safe scenario attempt at a time to an authenticated application
-  evaluation endpoint. Private expectations, rules, severity, and holdout status remain in
-  Gatekeeper.
-- The application returns normalized execution evidence containing the status, final response,
+- Developers upload scenarios into datasets and configure the model or agent candidate that
+  Gatekeeper will evaluate. Evaluations reference immutable dataset releases and frozen candidate
+  configurations.
+- Gatekeeper invokes the configured model or agent directly from its backend for one scenario
+  attempt at a time. Private expectations, rules, severity, and holdout status remain in Gatekeeper
+  and are never included in the invocation.
+- Gatekeeper normalizes the observed execution evidence, including status, final response,
   requested tools and arguments when applicable, latency, token usage when available, model
   identity, and errors.
-- Evidence provenance is retained. Phase 1 evidence is application-reported and must not be
-  presented as independently observed or externally verified.
+- Evidence provenance is retained. A model or agent response is direct integration evidence, but it
+  must not be presented as proof of tool execution or an externally verified real-world outcome.
 - Missing evidence remains unknown and yields `cannot_evaluate` for rules that require it. Missing
   usage must never be treated as zero.
 - Gatekeeper applies deterministic schema, exact/set/range, required/forbidden content, tool
@@ -33,15 +36,15 @@ aligned frozen inputs and configuration.
 - Runs support repeated attempts, machine-readable reasons, evidence references, per-scenario
   results, stability and flakiness measures, and aligned regression comparisons.
 
-Phase 1 requires neither a production proxy nor OTel ingestion.
+Phase 1 requires no customer application endpoint or runner, production proxy, or OTel ingestion.
 
 ## Shared evidence and credibility requirements
 
 - Keep scenario definitions, execution evidence, and evaluation results separate and versioned.
 - Use a stable execution ID for every attempt and an evaluation-run ID for grouped attempts.
-- Evaluators consume a transport-independent normalized evidence model rather than endpoint,
-  proxy, or OTel payloads directly.
-- Distinguish application, evaluator, infrastructure, and insufficient-evidence failures.
+- Evaluators consume a transport-independent normalized evidence model rather than model/agent
+  integration, proxy, or OTel payloads directly.
+- Distinguish candidate/workflow, evaluator, infrastructure, and insufficient-evidence failures.
 - Do not infer a definitive reliability result from one nondeterministic attempt.
 - Pricing-based cost uses a versioned pricing source and remains unavailable when required usage
   or model information is missing.

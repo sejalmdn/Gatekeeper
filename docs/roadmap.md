@@ -11,15 +11,16 @@ Build controlled regression evaluation for three scenario types:
 - **Multi-turn:** supplied conversation history plus one new user message and one evaluated
   response. Gatekeeper does not simulate an adaptive user.
 - **Tool use:** evaluate the model's requested tool and arguments. This phase does not claim that
-  the application executed the tool.
+  the tool was executed.
 
-Gatekeeper dispatches versioned scenarios to an authenticated application evaluation endpoint.
-The endpoint returns normalized, application-reported evidence such as the final response, tool
-requests, model identity, latency, token usage, and errors. Deterministic rules evaluate that
-evidence against private expectations. Repeated attempts and aligned candidate comparisons expose
-reliability and regressions.
+Developers upload scenarios as versioned dataset releases and configure the model or agent candidate
+to evaluate. Gatekeeper's backend invokes that configured target directly for each scenario attempt
+and normalizes the observed final response, tool requests, model identity, latency, token usage, and
+errors. Deterministic rules evaluate that evidence against private expectations. Repeated attempts
+and aligned candidate comparisons expose reliability and regressions.
 
-Phase 1 does not require a model proxy, production ingestion, OTel traces, or agentic tasks.
+Phase 1 does not call a customer application or require a customer-side runner, model proxy,
+production ingestion, OTel traces, or agentic tasks.
 
 ## Phase 2: online evaluation
 

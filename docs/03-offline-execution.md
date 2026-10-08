@@ -1,36 +1,43 @@
-# Gatekeeper: offline application execution
+# Gatekeeper: offline model and agent execution
 
 ## Phase 1 approach
 
-The developer exposes an authenticated evaluation endpoint. Gatekeeper sends a safe scenario
-attempt to this endpoint, and the application invokes its normal model integration.
+The developer uploads scenario datasets and configures the model or agent candidate in Gatekeeper.
+For each attempt, Gatekeeper's backend loads the scenario input and invokes the configured target
+through a supported integration.
 
 ```text
-Versioned scenario -> application evaluation endpoint
-                   -> application/model execution
-                   -> normalized application-reported evidence
-                   -> deterministic evaluation and report
+Developer-uploaded versioned scenario -> configured model or agent
+                                      -> backend-observed response or tool request
+                                      -> normalized execution evidence
+                                      -> deterministic evaluation and report
 ```
 
-No proxy or OTel integration is required. Offline means controlled execution outside live user
-traffic; the application may still call a hosted model.
+No customer application endpoint, customer-side runner, proxy, or OTel integration is required.
+Offline means controlled execution initiated by Gatekeeper outside live user traffic; the target
+may still be a hosted model or agent service.
+
+Candidate configuration identifies the target integration and model or agent, together with the
+prompt, tool definitions, and runtime parameters relevant to the evaluation. Authentication secrets
+are referenced securely and are not stored in scenario datasets.
 
 ## Lifecycle
 
 1. Freeze the candidate, dataset release, evaluator configuration, and repeated-run policy.
 2. Create a distinct execution ID for every scenario attempt.
-3. Send the scenario input, execution identity, limits, and safe setup references.
-4. Let the application produce one evaluated response or tool request.
-5. Receive normalized evidence and validate its completeness and provenance.
+3. Load the scenario input and build the target invocation without private evaluation fields.
+4. Invoke the configured model or agent and capture one evaluated response or tool request.
+5. Normalize the observed evidence and validate its completeness and provenance.
 6. Apply dataset and scenario rule bindings, store results, and aggregate repeated attempts.
 7. Compare candidates only when their frozen evaluation configuration is aligned.
 
-Expected outputs, rules, severity, thresholds, and holdout status never enter the application
-request.
+Expected outputs, rules, severity, thresholds, and holdout status never enter the model or agent
+invocation.
 
-## Evidence response
+## Execution evidence
 
-The exact wire schema remains to be designed, but Phase 1 needs a transport-independent model with:
+The exact integration adapters remain to be designed, but Phase 1 needs a transport-independent
+evidence model with:
 
 - execution ID and completed, failed, or timed-out status;
 - final response when produced;
@@ -40,15 +47,15 @@ The exact wire schema remains to be designed, but Phase 1 needs a transport-inde
 - input/output token usage when available; and
 - evidence-source and completeness metadata.
 
-The application may return synchronously or through a job/callback protocol. Retries must be
-idempotent and must not mix attempts. Missing usage stays unknown rather than becoming zero.
+An integration may complete synchronously or asynchronously. Retries must preserve attempt identity
+and must not mix evidence across attempts. Missing usage stays unknown rather than becoming zero.
 
 ## Scenario handling
 
-Single-turn sends one user message. Multi-turn loads supplied history and adds one new user message;
-historical actions are not replayed. Tool use captures the requested tool and arguments without
-executing the tool for evaluation purposes or claiming execution was verified.
+Single-turn supplies one user message. Multi-turn loads supplied history and adds one new user
+message; historical actions are not replayed. Tool use captures the requested tool and arguments
+without executing the tool for evaluation purposes or claiming execution was verified.
 
-The application-reported evidence is sufficient for developer-owned regression tests, provided its
-provenance is visible. Phase 2 proxy evidence and Phase 3 OTel evidence can later populate the same
-normalized model.
+The response observed at the configured integration boundary is sufficient for controlled
+regression tests, provided its provenance and evidentiary limits are visible. Phase 2 proxy evidence
+and Phase 3 OTel evidence can later populate the same normalized model.

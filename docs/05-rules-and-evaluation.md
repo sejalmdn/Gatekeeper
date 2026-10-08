@@ -27,7 +27,7 @@ rather than pass.
 ## Phase 1 evaluator context
 
 ```text
-Scenario definition + normalized application-reported ExecutionEvidence
+Scenario definition + normalized backend-observed ExecutionEvidence
 ```
 
 Initial deterministic checks include:
@@ -36,7 +36,7 @@ Initial deterministic checks include:
 |---|---|
 | Response schema or content | Final response and expected values |
 | Required/forbidden deterministic content | Final response |
-| Requested tool selection | Complete application-reported tool requests |
+| Requested tool selection | Complete tool requests observed by the backend integration |
 | Tool arguments | Requested arguments and expected values/schema |
 | Latency limit | Start/end timing or duration |
 | Token limit | Recorded input/output usage |
@@ -57,7 +57,7 @@ attempts visible. Never substitute zero for unavailable evidence.
 
 Repeat scenarios to measure nondeterminism. Report attempt and scenario counts, stability, and
 flakiness. `pass@k` and `pass^k` may be reported when clearly defined. Regrading stored evidence
-tests evaluator changes; rerunning the application tests candidate changes.
+tests evaluator changes; reinvoking the configured target tests candidate changes.
 
 ## Later phases
 
