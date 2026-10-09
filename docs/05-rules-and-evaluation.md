@@ -2,22 +2,15 @@
 
 ## Rules and bindings
 
-A rule definition describes how to evaluate evidence. A binding supplies the expected values and
-configuration for a dataset or scenario.
+A rule binding selects a built-in evaluator and supplies its private expected values and settings
+for a dataset or scenario.
 
 ```text
-RuleDefinition
-- identity and version
-- supported scenario types and required evidence
-- parameter contract
-- deterministic implementation
-- result shape and reasons
-
 RuleBinding
 - dataset or scenario reference
-- definition version
-- parameters or expected-value references
+- rule type and validated parameters
 - required, scored, or informational role
+- severity
 ```
 
 Dataset-level bindings apply defaults across mixed scenario types. Scenario bindings add specific
@@ -30,20 +23,54 @@ rather than pass.
 Scenario definition + normalized backend-observed ExecutionEvidence
 ```
 
-Initial deterministic checks include:
+Phase 1 rule types include:
 
-| Check | Required evidence |
+| Family | Rule types |
 |---|---|
-| Response schema or content | Final response and expected values |
-| Required/forbidden deterministic content | Final response |
-| Requested tool selection | Complete tool requests observed by the backend integration |
-| Tool arguments | Requested arguments and expected values/schema |
-| Latency limit | Start/end timing or duration |
-| Token limit | Recorded input/output usage |
-| Cost | Usage, model identity, and versioned pricing |
+| Operational | `metric.latency`, `metric.tokens`, `metric.cost` |
+| Response | `response.required_text`, `response.forbidden_text`, `response.regex`, `response.json_valid`, `response.json_schema`, `response.json_field`, `response.length` |
+| Semantic | `judge.rubric` |
+| Tool request | `tool.selection`, `tool.argument_field`, `tool.expected_calls` |
+
+Every tool request is automatically parsed as JSON and validated against the corresponding tool
+schema declared by the candidate. These checks are not configurable rule bindings. Tool-specific
+rules add private scenario expectations. Multiple tool requests emitted in one model response are
+matched without assigning execution order. Repeated requests to the same tool are supported by
+unordered one-to-one expected-call matching.
 
 Tool-use rules concern requests in Phase 1. Rules for actual execution, returned results, workflow
 ordering, or final business state belong to Phase 3.
+
+## Parameter examples
+
+```json
+{
+  "rule_type": "response.regex",
+  "parameters": {
+    "pattern": "ORD-[0-9]+",
+    "mode": "search",
+    "flags": ["IGNORECASE"]
+  }
+}
+```
+
+JSON field assertions use JSON Pointer, such as `/customer/address/city` or `/items/1/id`, and one
+of `exists`, `not_exists`, `equals`, `not_equals`, `in`, `not_in`, `gt`, `gte`, `lt`, `lte`, or
+`between`.
+
+```json
+{
+  "rule_type": "judge.rubric",
+  "parameters": {
+    "criterion": "Uses the order ID from history without asking for it again.",
+    "min_score": 4
+  }
+}
+```
+
+The deployment-configured judge evaluates all applicable rubric rules for one attempt in one
+batched request. It returns a score from 1 through 5 and a reason for each rule key. Judge latency,
+usage, cost, and failures remain separate from candidate metrics.
 
 ## Results and metrics
 
@@ -67,5 +94,3 @@ claiming semantic correctness.
 
 Phase 3 extends the evaluator context with OTel operations and authoritative outcome observations.
 Rules must distinguish tool requests, reported results, observed executions, and verified state.
-
-LLM-as-a-judge and subjective rubrics that require it remain outside the committed roadmap.

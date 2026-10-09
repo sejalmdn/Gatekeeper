@@ -2,12 +2,12 @@
 
 ## Phase 1 delivery order
 
-1. Define versioned datasets, the three MVP scenario types, rule definitions and bindings, and
-   frozen evaluation configuration.
+1. Define immutable datasets, the three MVP scenario types, rule bindings, and run settings.
 2. Define the transport-independent `ExecutionEvidence` model with provenance, completeness,
    latency, token usage, errors, final responses, and requested tools.
 3. Add developer-managed model/agent candidate configuration and backend invocation adapters.
-4. Implement deterministic evaluators and explicit `cannot_evaluate` handling.
+4. Implement deterministic evaluators, the fixed judge evaluator, and explicit
+   `cannot_evaluate` handling.
 5. Add repeated attempts, aggregation, candidate comparison, and regression reports.
 6. Expose dataset import/editing, run initiation, evidence inspection, and reports through the API
    and frontend.
@@ -23,7 +23,8 @@ evaluation.
   parameters, and secure credential references.
 - **Offline orchestration:** backend invocation, timeouts, retries, and attempt identity.
 - **Evidence normalization:** normalize integration responses and retain their source provenance.
-- **Evaluation engine:** deterministic rule execution independent of evidence transport.
+- **Evaluation engine:** deterministic and fixed-judge rule execution independent of evidence
+  transport.
 - **Reporting:** attempt results, stability, efficiency metrics, and aligned comparisons.
 - **Web/API surface:** upload datasets, configure candidates, initiate runs, and inspect
   evidence/results.

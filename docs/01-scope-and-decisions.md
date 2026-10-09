@@ -16,7 +16,8 @@ testing is the first product goal.
 5. Developers upload scenario datasets and configure model or agent candidates. Gatekeeper invokes
    each configured target directly from its backend and normalizes the observed evidence.
 6. Latency, token usage, model identity, errors, and cost where derivable are Phase 1 metrics.
-7. Phase 1 uses deterministic evaluators. LLM-as-a-judge remains outside the committed roadmap.
+7. Phase 1 uses deterministic evaluators plus a fixed deployment-configured LLM judge for explicit
+   semantic rubric rules. Users cannot select the judge model.
 8. Phase 2 adds a production proxy and passive online evaluation. Phase 3 adds OTel and agentic
    tasks.
 
@@ -27,15 +28,15 @@ adapter invokes the configured model or agent and produces it; in Phase 2 a prox
 production evidence; in Phase 3 an OTel adapter adds workflow and actual-tool evidence. Evaluators
 operate on this normalized representation.
 
-Gatekeeper keeps expectations, rule configuration, thresholds, severity, and holdout status away
+Gatekeeper keeps expectations, rule configuration, thresholds, and severity away
 from the evaluated model or agent. It records evidence provenance so model or agent responses are
 not presented as proof of actual tool execution or independently verified outcomes.
 
 ## Measurement approach
 
-Use immutable dataset releases, versioned evaluator configuration, repeated attempts, and aligned
-candidate comparisons. Required rules determine pass/fail; efficiency and informational measures
-remain visible separately. Missing evidence produces `cannot_evaluate`, not a pass.
+Treat datasets, candidates, and run settings as immutable after creation. Use repeated attempts and
+aligned candidate comparisons. Required rules determine pass/fail; efficiency and informational
+measures remain visible separately. Missing evidence produces `cannot_evaluate`, not a pass.
 
 Production inputs have no oracle by default. Phase 2 therefore provides monitoring and a reviewed
 feedback loop into offline datasets rather than automatic semantic correctness judgments.

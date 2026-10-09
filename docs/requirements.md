@@ -7,23 +7,21 @@ candidate identifies a developer-configured model or agent and its relevant prom
 runtime configuration. Gatekeeper invokes candidates only for controlled offline evaluation; it is
 not a customer application host, production orchestrator, response guard, or release gate.
 
-An evaluation freezes the candidate, immutable dataset release, versioned evaluator and scoring
-configuration, thresholds, severity weights, and repeated-run policy. Candidate comparisons use
-aligned frozen inputs and configuration.
+An evaluation references one immutable candidate, dataset, and run-settings record. Candidate
+comparisons use aligned inputs, rules, thresholds, severity weights, and repeated-run policy.
 
 ## Phase 1: offline evaluation MVP
 
-- A dataset release may contain `single_turn`, `multi_turn`, and `tool_use` scenarios.
+- A dataset may contain `single_turn`, `multi_turn`, and `tool_use` scenarios.
 - A multi-turn scenario supplies conversation history and one new user message, then evaluates one
   response. Adaptive user simulation is excluded.
 - A tool-use scenario evaluates requested tool selection and arguments. It does not establish that
   the tool was executed or that a real-world outcome occurred.
 - Developers upload scenarios into datasets and configure the model or agent candidate that
-  Gatekeeper will evaluate. Evaluations reference immutable dataset releases and frozen candidate
-  configurations.
+  Gatekeeper will evaluate. Evaluations reference immutable datasets and candidate configurations.
 - Gatekeeper invokes the configured model or agent directly from its backend for one scenario
-  attempt at a time. Private expectations, rules, severity, and holdout status remain in Gatekeeper
-  and are never included in the invocation.
+  attempt at a time. Private expectations, rules, and severity remain in Gatekeeper and are never
+  included in the invocation.
 - Gatekeeper normalizes the observed execution evidence, including status, final response,
   requested tools and arguments when applicable, latency, token usage when available, model
   identity, and errors.
@@ -33,6 +31,9 @@ aligned frozen inputs and configuration.
   usage must never be treated as zero.
 - Gatekeeper applies deterministic schema, exact/set/range, required/forbidden content, tool
   selection, tool-argument, latency, token, and cost checks supported by the available evidence.
+- A fixed deployment-configured LLM judge evaluates explicitly configured semantic rubric rules.
+  Users cannot choose or override the judge model. Judge usage and failures remain separate from
+  candidate evidence and metrics.
 - Runs support repeated attempts, machine-readable reasons, evidence references, per-scenario
   results, stability and flakiness measures, and aligned regression comparisons.
 
@@ -40,7 +41,7 @@ Phase 1 requires no customer application endpoint or runner, production proxy, o
 
 ## Shared evidence and credibility requirements
 
-- Keep scenario definitions, execution evidence, and evaluation results separate and versioned.
+- Keep scenario definitions, execution evidence, and evaluation results separate.
 - Use a stable execution ID for every attempt and an evaluation-run ID for grouped attempts.
 - Evaluators consume a transport-independent normalized evidence model rather than model/agent
   integration, proxy, or OTel payloads directly.
@@ -58,7 +59,7 @@ Phase 1 requires no customer application endpoint or runner, production proxy, o
 - Online evaluation focuses on deterministic contracts, tool-request policy, operational metrics,
   feedback, and application-provided outcomes. It does not infer reference-answer correctness.
 - A human may review and redact a production failure, add expectations, and promote it into a new
-  immutable offline dataset release with provenance.
+  immutable offline dataset with provenance.
 
 ## Phase 3: OTel and agentic tasks
 
@@ -72,6 +73,6 @@ Phase 1 requires no customer application endpoint or runner, production proxy, o
 
 ## Deferred
 
-LLM-as-a-judge evaluation and calibration, adaptive user simulation, multi-agent orchestration,
-controlled replay, automatic regression-case promotion, in-workflow approvals, production-response
-intervention, a CLI product, and release gating are outside the committed phases.
+Judge calibration, adaptive user simulation, multi-agent orchestration, controlled replay,
+automatic regression-case promotion, in-workflow approvals, production-response intervention, a
+CLI product, and release gating are outside the committed phases.

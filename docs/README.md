@@ -14,10 +14,12 @@ These documents record the current product decisions. The delivery order is defi
 
 ## Current MVP
 
-Phase 1 provides offline deterministic evaluation for developer-uploaded single-turn, multi-turn,
-and tool-use scenarios. Developers configure a model or agent candidate, and Gatekeeper's backend
-invokes it directly and normalizes the observed output, requested tools, latency, token usage, and
-errors. The MVP has no customer application endpoint, runner, proxy, or OTel dependency.
+Phase 1 provides offline evaluation for developer-uploaded single-turn, multi-turn, and tool-use
+scenarios. Developers configure a model or agent candidate, and Gatekeeper's backend invokes it
+directly and normalizes the observed output, requested tools, latency, token usage, and errors.
+Objective checks use deterministic evaluators; explicit semantic rubrics use a fixed
+deployment-configured LLM judge. The MVP has no customer application endpoint, runner, proxy, or
+OTel dependency.
 
 Phase 2 adds passive online evaluation and its production proxy. Phase 3 adds OTel evidence and
 agentic-task evaluation. All phases feed the same normalized evidence and evaluator interfaces.

@@ -23,7 +23,7 @@ are referenced securely and are not stored in scenario datasets.
 
 ## Lifecycle
 
-1. Freeze the candidate, dataset release, evaluator configuration, and repeated-run policy.
+1. Select the immutable candidate, dataset, rule bindings, and run settings.
 2. Create a distinct execution ID for every scenario attempt.
 3. Load the scenario input and build the target invocation without private evaluation fields.
 4. Invoke the configured model or agent and capture one evaluated response or tool request.
@@ -31,7 +31,7 @@ are referenced securely and are not stored in scenario datasets.
 6. Apply dataset and scenario rule bindings, store results, and aggregate repeated attempts.
 7. Compare candidates only when their frozen evaluation configuration is aligned.
 
-Expected outputs, rules, severity, thresholds, and holdout status never enter the model or agent
+Expected outputs, rules, severity, and thresholds never enter the model or agent
 invocation.
 
 ## Execution evidence

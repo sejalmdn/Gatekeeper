@@ -1,96 +1,91 @@
-"""Contract and canonical JSON validation tests."""
-
-from __future__ import annotations
-
-import hashlib
+"""Phase 1 boundary contract tests."""
 
 import pytest
 from pydantic import ValidationError
 
-from gatekeeper.contracts.candidates import CandidateCreate
-from gatekeeper.contracts.configs import ConfigCreate
-from gatekeeper.contracts.dataset_releases import DatasetReleaseCreate
-from gatekeeper.contracts.evaluations import EvaluationCreate
-from gatekeeper.contracts.projects import Project, ProjectCreate
-from gatekeeper.utils.json import canonical_json, digest
+from gatekeeper.contracts.rules import RuleBindingCreate
+from gatekeeper.contracts.scenarios import ScenarioCreate
 
 
-# Validate contract serialization and strict input behavior.
-def test_contracts_serialize_and_reject_invalid_values() -> None:
-    project = ProjectCreate(name="Payments")
-    assert (
-        Project.model_validate(
-            {
-                "id": "b0d5740a-1f0b-4bc0-82a7-b1cfab9bdbbc",
-                "name": project.name,
-                "created_at": "2026-01-01T00:00:00Z",
-            }
-        ).model_dump(mode="json")["name"]
-        == "Payments"
+# Validate type-specific scenario input contracts.
+def test_scenario_contracts_validate_by_type() -> None:
+    single = ScenarioCreate(
+        scenario_key="math",
+        name="Simple math",
+        scenario_type="single_turn",
+        input={"user_message": "What is 2 + 2?"},
     )
-    assert CandidateCreate(
-        application_version="1", runtime_configuration={"model": "x"}
-    ).model_dump()
-    assert DatasetReleaseCreate(
-        dataset_name="smoke", version="1", scenarios=[{"scenario_id": "one", "input": {}}]
-    ).model_dump()
-    assert ConfigCreate(
-        name="standard",
-        version="v1",
-        settings={"rules": {"schema": "v1"}},
-        thresholds={"pass": 0.8},
-        weights={"critical": 10},
-        default_attempts=3,
-    ).model_dump()
-    assert EvaluationCreate(
-        candidate_id="b0d5740a-1f0b-4bc0-82a7-b1cfab9bdbbc",
-        dataset_release_id="b0d5740a-1f0b-4bc0-82a7-b1cfab9bdbbc",
-        config_id="b0d5740a-1f0b-4bc0-82a7-b1cfab9bdbbc",
-    ).model_dump()
-    with pytest.raises(ValidationError):
-        CandidateCreate(application_version=" ", runtime_configuration={})
-    with pytest.raises(ValidationError):
-        CandidateCreate(application_version="1", runtime_configuration={"bad": float("nan")})
-    with pytest.raises(ValidationError):
-        DatasetReleaseCreate(
-            dataset_name="smoke",
-            version="1",
-            scenarios=[
-                {"scenario_id": "one", "input": {}},
-                {"scenario_id": "one", "input": {}},
-            ],
-        )
-    with pytest.raises(ValidationError):
-        ProjectCreate.model_validate({"name": "x", "extra": True})
-    valid_config = {
-        "name": "x",
-        "version": "v1",
-        "settings": {},
-        "thresholds": {"pass": 1},
-        "weights": {"low": 1},
-        "default_attempts": 1,
-    }
-    for invalid in (
-        {key: value for key, value in valid_config.items() if key != "version"},
-        valid_config | {"name": " "},
-        valid_config | {"settings": {"bad": float("nan")}},
-        valid_config | {"thresholds": {}},
-        valid_config | {"thresholds": {"pass": float("inf")}},
-        valid_config | {"weights": {}},
-        valid_config | {"weights": {"low": 0}},
-        valid_config | {"default_attempts": 0},
-    ):
+    assert single.input == {"user_message": "What is 2 + 2?"}
+
+    multi = ScenarioCreate(
+        scenario_key="order",
+        name="Order context",
+        scenario_type="multi_turn",
+        input={
+            "history": [{"role": "user", "content": "My order is 123."}],
+            "user_message": "Where is it?",
+        },
+    )
+    assert multi.input["history"][0]["role"] == "user"
+
+    tool = ScenarioCreate(
+        scenario_key="lookup",
+        name="Tool lookup",
+        scenario_type="tool_use",
+        input={"user_message": "Find order 123."},
+    )
+    assert tool.input["history"] == []
+
+    invalid_inputs = [
+        {"scenario_type": "single_turn", "input": {"history": []}},
+        {"scenario_type": "multi_turn", "input": {"history": [], "user_message": "x"}},
+        {
+            "scenario_type": "multi_turn",
+            "input": {
+                "history": [{"role": "system", "content": "hidden"}],
+                "user_message": "x",
+            },
+        },
+    ]
+    for invalid in invalid_inputs:
         with pytest.raises(ValidationError):
-            ConfigCreate.model_validate(invalid)
-    for invalid_version in ("", " "):
-        with pytest.raises(ValidationError):
-            ConfigCreate.model_validate(valid_config | {"version": invalid_version})
+            ScenarioCreate.model_validate({"scenario_key": "x", "name": "X", **invalid})
 
 
-# Validate canonical JSON encoding and digest stability.
-def test_canonical_json_and_digest_are_stable() -> None:
-    first = {"model": {"name": "x", "temperature": 0}}
-    second = {"model": {"temperature": 0, "name": "x"}}
-    assert canonical_json(first) == '{"model":{"name":"x","temperature":0}}'
-    assert digest(first) == digest(second)
-    assert digest(first) == hashlib.sha256(canonical_json(first).encode()).hexdigest()
+# Validate rule parameters and binding scope.
+def test_rule_binding_contracts_validate_parameters_and_scope() -> None:
+    binding = RuleBindingCreate(
+        rule_key="order_id",
+        rule_type="tool.argument_field",
+        role="required",
+        severity="high",
+        applies_to=["tool_use"],
+        parameters={
+            "tool": "lookup_order",
+            "path": "/order_id",
+            "operator": "equals",
+            "value": "123",
+        },
+    )
+    assert binding.parameters["path"] == "/order_id"
+
+    invalid_rules = [
+        {"rule_type": "metric.tokens", "parameters": {}},
+        {"rule_type": "judge.rubric", "parameters": {"criterion": "Correct", "min_score": 6}},
+        {"rule_type": "response.regex", "parameters": {"pattern": "["}},
+        {
+            "rule_type": "tool.selection",
+            "parameters": {"required_all": ["lookup"], "forbidden": ["lookup"]},
+        },
+    ]
+    for invalid in invalid_rules:
+        with pytest.raises(ValidationError):
+            RuleBindingCreate.model_validate(
+                {
+                    "rule_key": "invalid",
+                    "role": "required",
+                    "severity": "high",
+                    "applies_to": ["tool_use"],
+                    **invalid,
+                }
+            )

@@ -30,4 +30,4 @@ ignore = ["B008"]
 where = ["src"]
 
 [tool.setuptools.package-data]
-gatekeeper = ["frontend_dist/**"]
+gatekeeper = ["frontend_dist/**", "persistence/schema.sql"]

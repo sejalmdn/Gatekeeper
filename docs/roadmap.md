@@ -13,11 +13,12 @@ Build controlled regression evaluation for three scenario types:
 - **Tool use:** evaluate the model's requested tool and arguments. This phase does not claim that
   the tool was executed.
 
-Developers upload scenarios as versioned dataset releases and configure the model or agent candidate
-to evaluate. Gatekeeper's backend invokes that configured target directly for each scenario attempt
+Developers upload immutable scenario datasets and configure the model or agent candidate to
+evaluate. Gatekeeper's backend invokes that configured target directly for each scenario attempt
 and normalizes the observed final response, tool requests, model identity, latency, token usage, and
-errors. Deterministic rules evaluate that evidence against private expectations. Repeated attempts
-and aligned candidate comparisons expose reliability and regressions.
+errors. Deterministic rules evaluate objective checks, while a fixed deployment-configured LLM
+judge evaluates explicitly bound semantic rubrics. Repeated attempts and aligned candidate
+comparisons expose reliability and regressions.
 
 Phase 1 does not call a customer application or require a customer-side runner, model proxy,
 production ingestion, OTel traces, or agentic tasks.
@@ -33,7 +34,7 @@ include response contracts, allowed or forbidden tool requests, tool-argument va
 token usage, cost, and errors. Production traffic has no reference answer by default, so semantic
 correctness is not inferred.
 
-Reviewed and redacted production failures may be promoted into a new versioned offline dataset.
+Reviewed and redacted production failures may be promoted into a new immutable offline dataset.
 A human supplies the scenario type and expected behavior before the case becomes a regression test.
 
 ## Phase 3: OTel and agentic-task evaluation
@@ -47,5 +48,5 @@ Missing or incomplete trace and outcome evidence produces an insufficient-eviden
 
 ## Beyond the committed phases
 
-LLM-as-a-judge evaluation, adaptive conversation simulation, automatic promotion of production
-cases, production-response intervention, and release gating require separate scope decisions.
+Adaptive conversation simulation, automatic promotion of production cases, production-response
+intervention, and release gating require separate scope decisions.

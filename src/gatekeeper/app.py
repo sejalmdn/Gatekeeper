@@ -4,18 +4,21 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from gatekeeper.api.candidates import router as candidates_router
-from gatekeeper.api.configs import router as configs_router
-from gatekeeper.api.dataset_releases import router as dataset_releases_router
-from gatekeeper.api.evaluations import router as evaluations_router
+from gatekeeper.api.datasets import router as datasets_router
+from gatekeeper.api.evaluation_runs import router as evaluation_runs_router
 from gatekeeper.api.projects import router as projects_router
+from gatekeeper.api.providers import router as providers_router
+from gatekeeper.api.rules import router as rules_router
+from gatekeeper.api.run_settings import router as run_settings_router
+from gatekeeper.api.scenarios import router as scenarios_router
 from gatekeeper.persistence.database import Database
 
-import uvicorn
 
 # Frontend asset registration.
 def register_frontend(app: FastAPI, frontend_directory: Path) -> None:
@@ -32,15 +35,27 @@ def register_frontend(app: FastAPI, frontend_directory: Path) -> None:
         return HTMLResponse(index_file.read_text())
 
 
-app = FastAPI(title="Gatekeeper")
-app.state.database = Database('gatekeeper.db')
-app.include_router(projects_router)
-app.include_router(candidates_router)
-app.include_router(dataset_releases_router)
-app.include_router(configs_router)
-app.include_router(evaluations_router)
-default_frontend_directory = Path(__file__).parent / "frontend_dist"
-register_frontend(app, Path(default_frontend_directory))
+# Application factory.
+def create_app(
+    database_path: str | Path = "gatekeeper.db", frontend_directory: Path | None = None
+) -> FastAPI:
+    application = FastAPI(title="Gatekeeper")
+    application.state.database = Database(database_path)
+    application.include_router(projects_router)
+    application.include_router(providers_router)
+    application.include_router(candidates_router)
+    application.include_router(datasets_router)
+    application.include_router(scenarios_router)
+    application.include_router(rules_router)
+    application.include_router(run_settings_router)
+    application.include_router(evaluation_runs_router)
+    assets = frontend_directory or Path(__file__).parent / "frontend_dist"
+    register_frontend(application, assets)
+    return application
+
+
+# Module-level ASGI application.
+app = create_app()
 
 
 # Development server entry point.

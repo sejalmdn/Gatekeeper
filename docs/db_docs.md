@@ -146,7 +146,7 @@ default replaces that default when Gatekeeper assembles the effective rules.
 | `dataset_id` | `TEXT` | Yes | Dataset that owns the binding. References `datasets.id`. |
 | `scenario_id` | `TEXT` | No | Scenario receiving the rule. Null means the rule is a dataset-level default. |
 | `rule_key` | `TEXT` | Yes | Logical identifier used to distinguish rules and match scenario overrides to defaults. |
-| `rule_type` | `TEXT` | Yes | Supported evaluator type, such as `response.regex`, `tool.selected`, or `judge.rubric`. |
+| `rule_type` | `TEXT` | Yes | Supported evaluator type, such as `response.regex`, `tool.selection`, or `judge.rubric`. |
 | `role` | `TEXT` | Yes | Result behavior: `required`, `scored`, or `informational`. |
 | `severity` | `TEXT` | Yes | Importance category used with the severity weights in run settings. |
 | `parameters` | JSON `TEXT` | Yes | Rule-specific settings and private expected values, such as a regex, accepted answers, tool name, JSON Schema, limit, or judge criterion. |
@@ -176,14 +176,10 @@ expectations do not belong here; they remain in rule bindings.
 | `timeout_ms` | `INTEGER` | Yes | Maximum duration of one candidate attempt in milliseconds. Must be positive. |
 | `pass_threshold` | `REAL` | Yes | Required aggregate passing fraction, between `0.0` and `1.0`. |
 | `severity_weights` | JSON `TEXT` | Yes | Mapping from severity names to positive scoring weights. |
-| `judge_provider_id` | `TEXT` | Conditional | Provider used for LLM-as-a-judge evaluation. References a provider in the same project. |
-| `judge_model_name` | `TEXT` | Conditional | Model used for judging. |
-| `judge_parameters` | JSON `TEXT` | Conditional | Generation and execution settings for the judge model. |
 | `created_at` | `TEXT` | Yes | Timestamp recording when the run settings were created. |
 
-The three judge fields must either all be null or all be populated. They may remain null when an
-evaluation uses deterministic rules only. `ix_run_settings_project_id` supports project-scoped
-settings listings.
+The LLM judge is configured once by the Gatekeeper deployment and cannot be selected through run
+settings. `ix_run_settings_project_id` supports project-scoped settings listings.
 
 ## `evaluation_runs`
 

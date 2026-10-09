@@ -119,7 +119,7 @@ ON rule_bindings (dataset_id);
 CREATE INDEX IF NOT EXISTS ix_rule_bindings_scenario_id
 ON rule_bindings (scenario_id);
 
--- Run settings control repeated attempts, scoring, timeouts, and optional judging.
+-- Run settings control repeated attempts, scoring, and timeouts.
 CREATE TABLE IF NOT EXISTS run_settings (
     id TEXT PRIMARY KEY,
     project_id TEXT NOT NULL,
@@ -130,21 +130,10 @@ CREATE TABLE IF NOT EXISTS run_settings (
     pass_threshold REAL NOT NULL
         CHECK (pass_threshold >= 0.0 AND pass_threshold <= 1.0),
     severity_weights TEXT NOT NULL CHECK (json_valid(severity_weights)),
-    judge_provider_id TEXT,
-    judge_model_name TEXT,
-    judge_parameters TEXT
-        CHECK (judge_parameters IS NULL OR json_valid(judge_parameters)),
     created_at TEXT NOT NULL,
     FOREIGN KEY (project_id) REFERENCES projects (id),
-    FOREIGN KEY (project_id, judge_provider_id) REFERENCES providers (project_id, id),
     UNIQUE (project_id, name),
-    UNIQUE (project_id, id),
-    CHECK (
-        (judge_provider_id IS NULL AND judge_model_name IS NULL AND judge_parameters IS NULL)
-        OR
-        (judge_provider_id IS NOT NULL AND judge_model_name IS NOT NULL
-            AND judge_parameters IS NOT NULL)
-    )
+    UNIQUE (project_id, id)
 );
 
 CREATE INDEX IF NOT EXISTS ix_run_settings_project_id

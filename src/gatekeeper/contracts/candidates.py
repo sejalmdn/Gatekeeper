@@ -5,32 +5,52 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from gatekeeper.contracts.common import Contract, JsonObject, NonEmptyString
 from gatekeeper.utils.json import canonical_json
 
 
-# Candidate creation contract.
-class CandidateCreate(Contract):
-    application_version: NonEmptyString
-    runtime_configuration: JsonObject
+# Provider-neutral tool definition exposed to a candidate.
+class ToolDefinition(Contract):
+    name: NonEmptyString
+    description: str | None = None
+    parameters: JsonObject
 
-    # Application version validation.
-    @field_validator("application_version")
+    # JSON Schema serialization validation.
+    @field_validator("parameters")
     @classmethod
-    def reject_blank_application_version(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("must not be blank")
+    def validate_parameters(cls, value: JsonObject) -> JsonObject:
+        canonical_json(value)
         return value
 
-    # Runtime configuration validation.
-    @field_validator("runtime_configuration")
+
+# Candidate creation contract.
+class CandidateCreate(Contract):
+    provider_id: UUID
+    name: NonEmptyString
+    adapter: NonEmptyString
+    model_name: NonEmptyString
+    system_prompt: str = ""
+    generation_parameters: JsonObject = Field(default_factory=dict)
+    tool_definitions: list[ToolDefinition] = Field(default_factory=list)
+    response_format: JsonObject | None = None
+
+    # Candidate JSON field validation.
+    @field_validator("generation_parameters", "response_format")
     @classmethod
-    def validate_runtime_configuration(cls, value: JsonObject) -> JsonObject:
-        if not value:
-            raise ValueError("must not be empty")
-        canonical_json(value)
+    def validate_json_fields(cls, value: JsonObject | None) -> JsonObject | None:
+        if value is not None:
+            canonical_json(value)
+        return value
+
+    # Unique tool-name validation.
+    @field_validator("tool_definitions")
+    @classmethod
+    def validate_tool_names(cls, value: list[ToolDefinition]) -> list[ToolDefinition]:
+        names = [tool.name for tool in value]
+        if len(names) != len(set(names)):
+            raise ValueError("tool names must be unique")
         return value
 
 
@@ -38,5 +58,4 @@ class CandidateCreate(Contract):
 class Candidate(CandidateCreate):
     id: UUID
     project_id: UUID
-    runtime_configuration_digest: str
     created_at: datetime
