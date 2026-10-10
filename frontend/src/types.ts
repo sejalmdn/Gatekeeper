@@ -1,4 +1,4 @@
-// JSON object values accepted by the Gatekeeper API.
+// JSON values accepted by the Gatekeeper API.
 export type JsonObject = Record<string, unknown>;
 
 // Control-plane project record.
@@ -8,59 +8,67 @@ export interface Project {
   created_at: string;
 }
 
-// Candidate record with a frozen runtime configuration.
-export interface Candidate {
-  id: string;
-  project_id: string;
-  application_version: string;
-  runtime_configuration: JsonObject;
-  runtime_configuration_digest: string;
-  created_at: string;
-}
-
-// Scenario data that is safe to send to a runner.
-export interface Scenario {
-  scenario_id: string;
-  input: JsonObject;
-}
-
-// Immutable scenario dataset release.
-export interface DatasetRelease {
-  id: string;
-  project_id: string;
-  dataset_name: string;
-  version: string;
-  scenarios: Scenario[];
-  content_digest: string;
-  created_at: string;
-}
-
-// Immutable evaluator and scoring configuration release.
-export interface Config {
+// Model provider connection metadata.
+export interface Provider {
   id: string;
   project_id: string;
   name: string;
-  version: string;
-  settings: JsonObject;
-  thresholds: Record<string, number>;
-  weights: Record<string, number>;
-  default_attempts: number;
-  digest: string;
+  provider_type: string;
+  base_url: string | null;
+  credential_ref: string;
   created_at: string;
 }
 
-// Evaluation record composed from immutable source snapshots.
-export interface Evaluation {
+// Provider-neutral tool definition exposed to a candidate.
+export interface ToolDefinition {
+  name: string;
+  description: string | null;
+  parameters: JsonObject;
+}
+
+// Configured model or agent candidate.
+export interface Candidate {
   id: string;
   project_id: string;
-  candidate_id: string;
-  dataset_release_id: string;
-  config_id: string;
-  candidate_digest: string;
-  dataset_release_digest: string;
-  config_digest: string;
-  candidate_snapshot: Candidate;
-  dataset_release_snapshot: DatasetRelease;
-  config_snapshot: Config;
+  provider_id: string;
+  name: string;
+  adapter: string;
+  model_name: string;
+  system_prompt: string;
+  generation_parameters: JsonObject;
+  tool_definitions: ToolDefinition[];
+  response_format: JsonObject | null;
   created_at: string;
 }
+
+// Dataset container for typed evaluation scenarios.
+export interface Dataset {
+  id: string;
+  project_id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+}
+
+// Supported Phase 1 scenario types.
+export type ScenarioType = "single_turn" | "multi_turn" | "tool_use";
+
+// Typed scenario stored under a dataset.
+export interface Scenario {
+  id: string;
+  dataset_id: string;
+  scenario_key: string;
+  name: string;
+  scenario_type: ScenarioType;
+  input: JsonObject;
+  created_at: string;
+}
+
+// Candidate creation payload.
+export type CandidateCreate = Omit<
+  Candidate,
+  "id" | "project_id" | "created_at"
+>;
+
+// Scenario creation payload.
+export type ScenarioCreate = Omit<Scenario, "id" | "dataset_id" | "created_at">;

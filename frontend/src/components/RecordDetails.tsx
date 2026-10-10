@@ -4,28 +4,37 @@ import { PageHeading } from "./PageHeading";
 import { RecordMetadata } from "./RecordData";
 import "../styles/RecordDetails.css";
 
-// Shared read-only record frame preserves navigation and integrity metadata.
+interface RecordDetailsProps {
+  title: string;
+  detail: string;
+  backTo: string;
+  backLabel: string;
+  createdAt: string;
+  children: ReactNode;
+}
+
+// Shared read-only resource frame preserves navigation and creation metadata.
 export function RecordDetails({
-    title, detail, backTo, backLabel, createdAt, digestLabel, digest, children,
-}: {
-    title: string;
-    detail: string;
-    backTo: string;
-    backLabel: string;
-    createdAt: string;
-    digestLabel?: string;
-    digest?: string;
-    children: ReactNode;
-}): ReactElement {
-    return (
-        <section className="page-content">
-            <PageHeading
-                title={title}
-                detail={detail}
-                action={<Link className="quiet-link" to={backTo}>{backLabel}</Link>}
-            />
-            <RecordMetadata createdAt={createdAt} digestLabel={digestLabel} digest={digest} />
-            {children}
-        </section>
-    );
+  title,
+  detail,
+  backTo,
+  backLabel,
+  createdAt,
+  children,
+}: RecordDetailsProps): ReactElement {
+  return (
+    <section className="page-content">
+      <PageHeading
+        title={title}
+        detail={detail}
+        action={
+          <Link className="quiet-link" to={backTo}>
+            {backLabel}
+          </Link>
+        }
+      />
+      <RecordMetadata createdAt={createdAt} />
+      {children}
+    </section>
+  );
 }

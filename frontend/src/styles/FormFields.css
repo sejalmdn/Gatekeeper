@@ -1,46 +1,57 @@
 /* Input styling is shared by the project picker and record creation forms. */
 .form-field {
-    display: block;
-    min-width: 0;
+  display: block;
+  min-width: 0;
 }
 
 .form-field > span {
-    display: block;
-    font-size: 11px;
-    font-weight: 500;
-    margin-bottom: 8px;
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  margin-bottom: 8px;
 }
 
 .form-field small {
-    display: block;
-    color: var(--muted);
-    font-size: 11px;
-    margin-bottom: 10px;
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 10px;
 }
 
-input, select, textarea {
-    width: 100%;
-    min-width: 0;
-    padding: 11px 12px;
-    background: var(--surface-raised);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
+input,
+select,
+textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
 }
 
-input::placeholder, textarea::placeholder {
-    color: var(--muted);
-    opacity: 0.8;
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
 }
 
 textarea {
-    min-height: 190px;
-    font-family: var(--font-code);
-    font-size: 12px;
-    line-height: 1.8;
-    resize: vertical;
+  min-height: 190px;
+  font-family: var(--font-code);
+  font-size: 12px;
+  line-height: 1.8;
+  resize: vertical;
 }
 
 /* Hover and focus reinforce the amber action language without layout movement. */
-input:hover, select:hover, textarea:hover { border-color: var(--border-strong); }
-input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--border-strong);
+}
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+}
