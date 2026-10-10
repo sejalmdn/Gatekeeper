@@ -93,7 +93,8 @@ CREATE TABLE IF NOT EXISTS rule_bindings (
     rule_type TEXT NOT NULL,
     role TEXT NOT NULL
         CHECK (role IN ('required', 'scored', 'informational')),
-    severity TEXT NOT NULL,
+    severity TEXT NOT NULL
+        CHECK (severity IN ('critical', 'high', 'medium', 'low')),
     parameters TEXT NOT NULL CHECK (json_valid(parameters)),
     applies_to TEXT CHECK (applies_to IS NULL OR json_valid(applies_to)),
     created_at TEXT NOT NULL,
@@ -129,7 +130,6 @@ CREATE TABLE IF NOT EXISTS run_settings (
     timeout_ms INTEGER NOT NULL CHECK (timeout_ms > 0),
     pass_threshold REAL NOT NULL
         CHECK (pass_threshold >= 0.0 AND pass_threshold <= 1.0),
-    severity_weights TEXT NOT NULL CHECK (json_valid(severity_weights)),
     created_at TEXT NOT NULL,
     FOREIGN KEY (project_id) REFERENCES projects (id),
     UNIQUE (project_id, name),

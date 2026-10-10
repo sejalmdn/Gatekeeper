@@ -8,7 +8,7 @@ runtime configuration. Gatekeeper invokes candidates only for controlled offline
 not a customer application host, production orchestrator, response guard, or release gate.
 
 An evaluation references one immutable candidate, dataset, and run-settings record. Candidate
-comparisons use aligned inputs, rules, thresholds, severity weights, and repeated-run policy.
+comparisons use aligned inputs, rules, thresholds, fixed severity policy, and repeated-run policy.
 
 ## Phase 1: offline evaluation MVP
 

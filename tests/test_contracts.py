@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from gatekeeper.contracts.rules import RuleBindingCreate
+from gatekeeper.contracts.rules import SEVERITY_WEIGHTS, RuleBindingCreate, Severity
 from gatekeeper.contracts.scenarios import ScenarioCreate
 
 
@@ -54,6 +54,12 @@ def test_scenario_contracts_validate_by_type() -> None:
 
 # Validate rule parameters and binding scope.
 def test_rule_binding_contracts_validate_parameters_and_scope() -> None:
+    assert SEVERITY_WEIGHTS == {
+        Severity.CRITICAL: 4,
+        Severity.HIGH: 3,
+        Severity.MEDIUM: 2,
+        Severity.LOW: 1,
+    }
     binding = RuleBindingCreate(
         rule_key="order_id",
         rule_type="tool.argument_field",
@@ -89,3 +95,15 @@ def test_rule_binding_contracts_validate_parameters_and_scope() -> None:
                     **invalid,
                 }
             )
+
+    with pytest.raises(ValidationError):
+        RuleBindingCreate.model_validate(
+            {
+                "rule_key": "unknown-severity",
+                "rule_type": "response.json_valid",
+                "role": "scored",
+                "severity": "urgent",
+                "applies_to": ["single_turn"],
+                "parameters": {},
+            }
+        )

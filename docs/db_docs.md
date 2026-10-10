@@ -148,7 +148,7 @@ default replaces that default when Gatekeeper assembles the effective rules.
 | `rule_key` | `TEXT` | Yes | Logical identifier used to distinguish rules and match scenario overrides to defaults. |
 | `rule_type` | `TEXT` | Yes | Supported evaluator type, such as `response.regex`, `tool.selection`, or `judge.rubric`. |
 | `role` | `TEXT` | Yes | Result behavior: `required`, `scored`, or `informational`. |
-| `severity` | `TEXT` | Yes | Importance category used with the severity weights in run settings. |
+| `severity` | `TEXT` | Yes | Fixed importance category: `critical`, `high`, `medium`, or `low`. |
 | `parameters` | JSON `TEXT` | Yes | Rule-specific settings and private expected values, such as a regex, accepted answers, tool name, JSON Schema, limit, or judge criterion. |
 | `applies_to` | JSON `TEXT` | Conditional | Scenario-type array for a dataset default. Required for defaults and prohibited for scenario-specific rules. |
 | `created_at` | `TEXT` | Yes | Timestamp recording when the rule binding was created. |
@@ -161,6 +161,11 @@ Rule roles have these effects:
 - `required`: a failed rule causes the scenario attempt to fail.
 - `scored`: the result contributes to aggregate scoring without independently failing the attempt.
 - `informational`: the result is reported but does not affect pass/fail or scoring.
+
+Severity has a fixed product-wide relative weight for scored rules: `critical` is `4`, `high` is
+`3`, `medium` is `2`, and `low` is `1`. These values express relative importance; they are not
+user-configurable run settings. Required rules still control pass/fail independently of weight, and
+informational rules remain unweighted.
 
 ## `run_settings`
 
@@ -175,7 +180,6 @@ expectations do not belong here; they remain in rule bindings.
 | `attempts_per_scenario` | `INTEGER` | Yes | Number of independent attempts to execute for each scenario. Must be positive. |
 | `timeout_ms` | `INTEGER` | Yes | Maximum duration of one candidate attempt in milliseconds. Must be positive. |
 | `pass_threshold` | `REAL` | Yes | Required aggregate passing fraction, between `0.0` and `1.0`. |
-| `severity_weights` | JSON `TEXT` | Yes | Mapping from severity names to positive scoring weights. |
 | `created_at` | `TEXT` | Yes | Timestamp recording when the run settings were created. |
 
 The LLM judge is configured once by the Gatekeeper deployment and cannot be selected through run

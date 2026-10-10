@@ -78,6 +78,11 @@ Required rules determine scenario success. Scored and informational results rema
 good efficiency score cannot hide a required-rule failure. Store machine-readable reasons,
 provenance, and evidence references.
 
+Scored rules use fixed severity weights: `critical = 4`, `high = 3`, `medium = 2`, and `low = 1`.
+The numbers express relative influence when scored results are aggregated. Required rules determine
+pass/fail regardless of severity, while informational rules do not contribute to scoring. The
+weights are product constants and cannot vary by run.
+
 Track pass rate, per-rule results, latency, input/output tokens, model-call count when reported,
 errors, and cost where derivable. Define denominators and keep failed, timed-out, and incomplete
 attempts visible. Never substitute zero for unavailable evidence.
