@@ -1,0 +1,71 @@
+"""Dataset API routes."""
+
+import sqlite3
+from uuid import UUID, uuid4
+
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from gatekeeper.api.dependencies import get_database
+from gatekeeper.contracts.datasets import Dataset, DatasetCreate
+from gatekeeper.persistence.database import Database
+from gatekeeper.persistence.records import dataset_from_row, project_or_404, timestamp
+
+# Project-scoped dataset router group.
+router = APIRouter(prefix="/v1/projects/{project_id}/datasets")
+
+
+# Create an immutable dataset container.
+@router.post("", response_model=Dataset, status_code=status.HTTP_201_CREATED)
+async def create_dataset(
+    project_id: UUID, payload: DatasetCreate, database: Database = Depends(get_database)
+) -> Dataset:
+    dataset = Dataset(
+        id=uuid4(), project_id=project_id, created_at=timestamp(), **payload.model_dump()
+    )
+    try:
+        with database.connection() as connection:
+            project_or_404(connection, project_id)
+            connection.execute(
+                """INSERT INTO datasets (id, project_id, name, description, created_at)
+                VALUES (?, ?, ?, ?, ?)""",
+                (
+                    str(dataset.id),
+                    str(project_id),
+                    dataset.name,
+                    dataset.description,
+                    dataset.created_at.isoformat(),
+                ),
+            )
+    except sqlite3.IntegrityError as error:
+        raise HTTPException(status_code=409, detail="dataset already exists") from error
+    return dataset
+
+
+# List datasets in a project.
+@router.get("", response_model=list[Dataset])
+async def list_datasets(
+    project_id: UUID, database: Database = Depends(get_database)
+) -> list[Dataset]:
+    with database.connection() as connection:
+        project_or_404(connection, project_id)
+        rows = connection.execute(
+            "SELECT * FROM datasets WHERE project_id = ? ORDER BY created_at",
+            (str(project_id),),
+        ).fetchall()
+    return [dataset_from_row(row) for row in rows]
+
+
+# Get one project-scoped dataset.
+@router.get("/{dataset_id}", response_model=Dataset)
+async def get_dataset(
+    project_id: UUID, dataset_id: UUID, database: Database = Depends(get_database)
+) -> Dataset:
+    with database.connection() as connection:
+        project_or_404(connection, project_id)
+        row = connection.execute(
+            "SELECT * FROM datasets WHERE id = ? AND project_id = ?",
+            (str(dataset_id), str(project_id)),
+        ).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="dataset not found")
+    return dataset_from_row(row)

@@ -1,65 +1,40 @@
-/* Compact integrity references with an accessible full-value disclosure. */
-.digest {
-    font-family: var(--font-code);
-    font-size: 11px;
-    color: var(--cyan);
-    max-width: 100%;
-}
-
-.digest summary {
-    cursor: pointer;
-    list-style-position: inside;
-    overflow-wrap: anywhere;
-}
-
-.digest summary span {
-    font-family: var(--font-body);
-}
-
-.digest code {
-    display: block;
-    max-width: 38ch;
-    overflow-wrap: anywhere;
-    padding: 8px 0;
-}
-
 .json-block {
-    background: var(--sidebar);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-family: var(--font-code);
-    font-size: 12px;
-    line-height: 1.8;
-    margin: 0;
-    max-height: 440px;
-    max-width: 100%;
-    overflow: auto;
-    padding: 20px;
-    color: var(--muted);
-    tab-size: 4;
+  background: var(--sidebar);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-code);
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 0;
+  max-height: 440px;
+  max-width: 100%;
+  overflow: auto;
+  padding: 20px;
+  color: var(--muted);
+  tab-size: 4;
 }
 
 .record-metadata {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px 40px;
-    margin: 0 0 24px;
-    padding: 20px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-panel);
-    background: var(--surface);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 40px;
+  margin: 0 0 24px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
 }
 
 .record-metadata > div {
-    min-width: 0;
+  min-width: 0;
 }
 
 .record-metadata dt {
-    color: var(--muted);
-    font-size: 11px;
+  color: var(--muted);
+  font-size: 11px;
 }
 
 .record-metadata dd {
-    margin: 4px 0 0;
-    font-size: 12px;
+  margin: 4px 0 0;
+  font-size: 12px;
 }

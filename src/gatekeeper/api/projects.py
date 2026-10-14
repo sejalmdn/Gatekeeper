@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -9,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from gatekeeper.api.dependencies import get_database
 from gatekeeper.contracts.projects import Project, ProjectCreate
 from gatekeeper.persistence.database import Database
-from gatekeeper.persistence.projects import project_from_row, timestamp
+from gatekeeper.persistence.records import project_from_row, timestamp
 
 # Project router group.
 router = APIRouter(prefix="/v1/projects")
@@ -20,12 +21,27 @@ router = APIRouter(prefix="/v1/projects")
 async def create_project(
     payload: ProjectCreate, database: Database = Depends(get_database)
 ) -> Project:
-    project = Project(id=uuid4(), name=payload.name, created_at=timestamp())
-    with database.connection() as connection:
-        connection.execute(
-            "INSERT INTO projects (id, name, created_at) VALUES (?, ?, ?)",
-            (str(project.id), project.name, project.created_at.isoformat()),
-        )
+    project = Project(
+        id=uuid4(),
+        name=payload.name,
+        description=payload.description,
+        created_at=timestamp(),
+    )
+    try:
+        with database.connection() as connection:
+            connection.execute(
+                "INSERT INTO projects (id, name, description, created_at) VALUES (?, ?, ?, ?)",
+                (
+                    str(project.id),
+                    project.name,
+                    project.description,
+                    project.created_at.isoformat(),
+                ),
+            )
+    except sqlite3.IntegrityError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="project already exists"
+        ) from error
     return project
 
 

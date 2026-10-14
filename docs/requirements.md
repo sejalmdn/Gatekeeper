@@ -2,66 +2,77 @@
 
 ## Product
 
-Gatekeeper is a hosted control plane and frontend for evaluating complete agent workflows. A
-candidate is an application version plus its runtime configuration, including its workflow,
-model, prompt, tool, and environment versions. Applications run in customer environments;
-Gatekeeper is not an agent runtime, production orchestrator, or release gate.
+Gatekeeper is a hosted control plane and frontend for credible evaluation of AI applications. A
+candidate identifies a developer-configured model or agent and its relevant prompt, tool, and
+runtime configuration. Gatekeeper invokes candidates only for controlled offline evaluation; it is
+not a customer application host, production orchestrator, response guard, or release gate.
 
-An evaluation freezes a candidate, immutable scenario-dataset release, and immutable, versioned
-evaluator/scoring configuration release. Comparisons use the same frozen dataset,
-evaluator/scoring configuration release, and repeated-run policy for every candidate.
+An evaluation references one immutable candidate, dataset, and run-settings record. Candidate
+comparisons use aligned inputs, rules, thresholds, fixed severity policy, and repeated-run policy.
 
-## Scope
+## Phase 1: offline evaluation MVP
 
-- The hosted control plane and frontend manage projects, candidates, immutable datasets,
-  evaluations, reports, and aligned comparisons.
-- The customer-side runner starts offline evaluations and requests one safe scenario assignment
-  at a time. It invokes the local application but submits neither final responses nor traces.
-- The required Gatekeeper-hosted proxy forwards application LLM calls to model providers and
-  returns responses or streams on the same request connection in both offline and online modes.
-  It is the sole model-facing evidence source. It correlates observations with the assigned
-  scenario and records model responses, tool requests/results,
-  and other observable behavior.
-- Offline evaluation evaluates assigned scenarios after local execution. Passive online
-  evaluation samples production traffic through the proxy and evaluates it asynchronously.
-  It never delays, alters, blocks, or otherwise guards a user response.
-- Assignments contain only safe input/context, controlled-environment references, limits, and
-  correlation data. Private expected outcomes, required/forbidden behavior, holdout status,
-  and evaluator/scoring configuration never reach the candidate runtime.
-- A human may review a failed online trace and promote a redacted, approved case into a new
-  versioned offline dataset release. The reviewer supplies expected outcomes and required or
-  forbidden behavior; the original production trace remains linked as provenance.
+- A dataset may contain `single_turn`, `multi_turn`, and `tool_use` scenarios.
+- A multi-turn scenario supplies conversation history and one new user message, then evaluates one
+  response. Adaptive user simulation is excluded.
+- A tool-use scenario evaluates requested tool selection and arguments. It does not establish that
+  the tool was executed or that a real-world outcome occurred.
+- Developers upload scenarios into datasets and configure the model or agent candidate that
+  Gatekeeper will evaluate. Evaluations reference immutable datasets and candidate configurations.
+- Gatekeeper invokes the configured model or agent directly from its backend for one scenario
+  attempt at a time. Private expectations, rules, and severity remain in Gatekeeper and are never
+  included in the invocation.
+- Gatekeeper normalizes the observed execution evidence, including status, final response,
+  requested tools and arguments when applicable, latency, token usage when available, model
+  identity, and errors.
+- Evidence provenance is retained. A model or agent response is direct integration evidence, but it
+  must not be presented as proof of tool execution or an externally verified real-world outcome.
+- Missing evidence remains unknown and yields `cannot_evaluate` for rules that require it. Missing
+  usage must never be treated as zero.
+- Gatekeeper applies deterministic schema, exact/set/range, required/forbidden content, tool
+  selection, tool-argument, latency, token, and cost checks supported by the available evidence.
+- A fixed deployment-configured LLM judge evaluates explicitly configured semantic rubric rules.
+  Users cannot choose or override the judge model. Judge usage and failures remain separate from
+  candidate evidence and metrics.
+- Runs support repeated attempts, machine-readable reasons, evidence references, per-scenario
+  results, stability and flakiness measures, and aligned regression comparisons.
 
-The runner pulls assignments from Gatekeeper. Its transport, endpoint shape, authentication, and
-customer integration are still to be designed; this is active scope, not a deferred capability.
+Phase 1 requires no customer application endpoint or runner, production proxy, or OTel ingestion.
 
-## Deterministic evaluation and reports
+## Shared evidence and credibility requirements
 
-Gatekeeper supports deterministic outcome, schema, set, and range checks; required and
-forbidden actions; action sequences; and policy/safety checks. It excludes LLM-as-a-judge and
-guardrail implementation: Gatekeeper evaluates evidence only and never intervenes in a runtime
-response.
+- Keep scenario definitions, execution evidence, and evaluation results separate.
+- Use a stable execution ID for every attempt and an evaluation-run ID for grouped attempts.
+- Evaluators consume a transport-independent normalized evidence model rather than model/agent
+  integration, proxy, or OTel payloads directly.
+- Distinguish candidate/workflow, evaluator, infrastructure, and insufficient-evidence failures.
+- Do not infer a definitive reliability result from one nondeterministic attempt.
+- Pricing-based cost uses a versioned pricing source and remains unavailable when required usage
+  or model information is missing.
 
-Reports retain machine-readable reasons, provenance, and evidence references. They show
-per-scenario score, stability across repeated attempts, tool-evidence level, flakiness,
-severity-weighted suite score, and prominent blocking failures. Aligned comparisons classify
-scenario results as regressions, improvements, or stable.
+## Phase 2: online evaluation
 
-Severity weights and pass thresholds are fields in the immutable, versioned evaluator/scoring
-configuration release. `10/5/2/1` is only an example weight scheme, not a product constant.
+- A production model proxy records model-facing evidence and submits sampled executions for
+  asynchronous evaluation without affecting the user response.
+- Online rules bind through project, application, environment, endpoint, observed properties, and
+  optional trusted application metadata such as `policy_id`.
+- Online evaluation focuses on deterministic contracts, tool-request policy, operational metrics,
+  feedback, and application-provided outcomes. It does not infer reference-answer correctness.
+- A human may review and redact a production failure, add expectations, and promote it into a new
+  immutable offline dataset with provenance.
 
-## Evidence labels and limits
+## Phase 3: OTel and agentic tasks
 
-- `tool_requested`: the proxy observed a request to use a tool.
-- `tool_result_reported`: the proxy observed a result reported for that tool request.
-- `tool_execution_verified`: optional evidence that an authoritative external source confirms
-  execution; proxy observation alone cannot establish this label.
-
-Gatekeeper distinguishes workflow, evaluator, infrastructure, and insufficient-evidence
-failures. A single non-deterministic attempt is diagnostic, not a definitive candidate result.
+- OTel traces correlate application operations and actual tool execution with normalized execution
+  evidence.
+- The `agentic_task` scenario evaluates workflow behavior and authoritative final outcomes.
+- `tool_requested`, `tool_result_reported`, observed tool execution, and
+  `tool_execution_verified` are distinct evidence levels. Verification requires an authoritative
+  external source.
+- Incomplete traces cannot prove the absence of forbidden behavior.
 
 ## Deferred
 
-Multi-agent orchestration, controlled replay, in-workflow approvals, a CLI product, automatic
-promotion of regression cases, LLM-as-a-judge evaluation and its calibration, and
-production-response intervention are outside the current scope.
+Judge calibration, adaptive user simulation, multi-agent orchestration, controlled replay,
+automatic regression-case promotion, in-workflow approvals, production-response intervention, a
+CLI product, and release gating are outside the committed phases.

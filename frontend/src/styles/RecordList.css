@@ -1,44 +1,44 @@
 /* A single table surface and quiet metadata frame each collection. */
 .record-list {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-panel);
-    overflow: hidden;
-    background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+  background: var(--surface);
 }
 
 .record-list-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 18px 20px;
-    border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
 }
 
 .record-list-header h2 {
-    margin: 0;
-    font-size: 13px;
+  margin: 0;
+  font-size: 13px;
 }
 
 .record-list-header h2 > span {
-    color: var(--cyan);
-    background: var(--cyan-soft);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 2px 7px;
-    font-family: var(--font-body);
-    font-size: 10px;
-    margin-left: 10px;
+  color: var(--cyan);
+  background: var(--cyan-soft);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  margin-left: 10px;
 }
 
 .record-list-note {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--cyan);
-    font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--cyan);
+  font-size: 10px;
 }
 
 .record-list-note .icon {
-    width: 13px;
+  width: 13px;
 }

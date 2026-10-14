@@ -1,4 +1,12 @@
-import type { Candidate, Config, DatasetRelease, Evaluation, JsonObject, Project, Scenario } from "./types";
+import type {
+  Candidate,
+  CandidateCreate,
+  Dataset,
+  Project,
+  Provider,
+  Scenario,
+  ScenarioCreate,
+} from "./types";
 
 // API error that retains the server's useful message.
 export class ApiError extends Error {
@@ -15,12 +23,14 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "";
 
 // Convert FastAPI error details into readable form text.
 function errorMessage(detail: unknown): string {
-  if (typeof detail === "string") {
-    return detail;
-  }
+  if (typeof detail === "string") return detail;
   if (Array.isArray(detail)) {
     return detail
-      .map((item) => (typeof item === "object" && item !== null && "msg" in item ? item.msg : item))
+      .map((item) =>
+        typeof item === "object" && item !== null && "msg" in item
+          ? item.msg
+          : item,
+      )
       .join("; ");
   }
   return "The request could not be completed.";
@@ -30,138 +40,106 @@ function errorMessage(detail: unknown): string {
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
+    headers: { "Content-Type": "application/json", ...options?.headers },
   });
   const body: unknown = await response.json().catch(() => undefined);
   if (!response.ok) {
-    const detail = typeof body === "object" && body !== null && "detail" in body ? body.detail : body;
+    const detail =
+      typeof body === "object" && body !== null && "detail" in body
+        ? body.detail
+        : body;
     throw new ApiError(response.status, errorMessage(detail));
   }
   return body as T;
 }
 
-// List all projects.
-export function listProjects(): Promise<Project[]> {
-  return request<Project[]>("/v1/projects");
+// Project operations.
+export const listProjects = (): Promise<Project[]> =>
+  request<Project[]>("/v1/projects");
+export const getProject = (projectId: string): Promise<Project> =>
+  request<Project>(`/v1/projects/${projectId}`);
+export const createProject = (name: string): Promise<Project> =>
+  request<Project>("/v1/projects", {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  });
+
+// Provider operations.
+export const listProviders = (projectId: string): Promise<Provider[]> =>
+  request<Provider[]>(`/v1/projects/${projectId}/providers`);
+export const getProvider = (
+  projectId: string,
+  providerId: string,
+): Promise<Provider> =>
+  request<Provider>(`/v1/projects/${projectId}/providers/${providerId}`);
+export function createProvider(
+  projectId: string,
+  payload: Pick<
+    Provider,
+    "name" | "provider_type" | "base_url" | "credential_ref"
+  >,
+): Promise<Provider> {
+  return request<Provider>(`/v1/projects/${projectId}/providers`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
-// Fetch one project.
-export function getProject(projectId: string): Promise<Project> {
-  return request<Project>(`/v1/projects/${projectId}`);
-}
-
-// Create a project.
-export function createProject(name: string): Promise<Project> {
-  return request<Project>("/v1/projects", { method: "POST", body: JSON.stringify({ name }) });
-}
-
-// List project candidates.
-export function listCandidates(projectId: string): Promise<Candidate[]> {
-  return request<Candidate[]>(`/v1/projects/${projectId}/candidates`);
-}
-
-// Fetch one candidate.
-export function getCandidate(projectId: string, candidateId: string): Promise<Candidate> {
-  return request<Candidate>(`/v1/projects/${projectId}/candidates/${candidateId}`);
-}
-
-// Create an immutable candidate record.
+// Candidate operations.
+export const listCandidates = (projectId: string): Promise<Candidate[]> =>
+  request<Candidate[]>(`/v1/projects/${projectId}/candidates`);
+export const getCandidate = (
+  projectId: string,
+  candidateId: string,
+): Promise<Candidate> =>
+  request<Candidate>(`/v1/projects/${projectId}/candidates/${candidateId}`);
 export function createCandidate(
   projectId: string,
-  applicationVersion: string,
-  runtimeConfiguration: JsonObject,
+  payload: CandidateCreate,
 ): Promise<Candidate> {
   return request<Candidate>(`/v1/projects/${projectId}/candidates`, {
     method: "POST",
-    body: JSON.stringify({
-      application_version: applicationVersion,
-      runtime_configuration: runtimeConfiguration,
-    }),
+    body: JSON.stringify(payload),
   });
 }
 
-// List project dataset releases.
-export function listDatasetReleases(projectId: string): Promise<DatasetRelease[]> {
-  return request<DatasetRelease[]>(`/v1/projects/${projectId}/dataset-releases`);
-}
-
-// Fetch one dataset release.
-export function getDatasetRelease(projectId: string, releaseId: string): Promise<DatasetRelease> {
-  return request<DatasetRelease>(`/v1/projects/${projectId}/dataset-releases/${releaseId}`);
-}
-
-// Create an immutable dataset release.
-export function createDatasetRelease(
+// Dataset operations.
+export const listDatasets = (projectId: string): Promise<Dataset[]> =>
+  request<Dataset[]>(`/v1/projects/${projectId}/datasets`);
+export const getDataset = (
   projectId: string,
-  datasetName: string,
-  version: string,
-  scenarios: Scenario[],
-): Promise<DatasetRelease> {
-  return request<DatasetRelease>(`/v1/projects/${projectId}/dataset-releases`, {
-    method: "POST",
-    body: JSON.stringify({ dataset_name: datasetName, version, scenarios }),
-  });
-}
-
-// List project configuration releases.
-export function listConfigs(projectId: string): Promise<Config[]> {
-  return request<Config[]>(`/v1/projects/${projectId}/configs`);
-}
-
-// Fetch one configuration release.
-export function getConfig(projectId: string, configId: string): Promise<Config> {
-  return request<Config>(`/v1/projects/${projectId}/configs/${configId}`);
-}
-
-// Create an immutable evaluator and scoring configuration release.
-export function createConfig(
+  datasetId: string,
+): Promise<Dataset> =>
+  request<Dataset>(`/v1/projects/${projectId}/datasets/${datasetId}`);
+export function createDataset(
   projectId: string,
   name: string,
-  version: string,
-  settings: JsonObject,
-  thresholds: Record<string, number>,
-  weights: Record<string, number>,
-  defaultAttempts: number,
-): Promise<Config> {
-  return request<Config>(`/v1/projects/${projectId}/configs`, {
+  description: string | null,
+): Promise<Dataset> {
+  return request<Dataset>(`/v1/projects/${projectId}/datasets`, {
     method: "POST",
-    body: JSON.stringify({
-      name,
-      version,
-      settings,
-      thresholds,
-      weights,
-      default_attempts: defaultAttempts,
-    }),
+    body: JSON.stringify({ name, description }),
   });
 }
 
-// List project frozen evaluations.
-export function listEvaluations(projectId: string): Promise<Evaluation[]> {
-  return request<Evaluation[]>(`/v1/projects/${projectId}/evaluations`);
-}
-
-// Fetch one frozen evaluation.
-export function getEvaluation(projectId: string, evaluationId: string): Promise<Evaluation> {
-  return request<Evaluation>(`/v1/projects/${projectId}/evaluations/${evaluationId}`);
-}
-
-// Create a frozen evaluation from existing immutable records.
-export function createEvaluation(
+// Scenario operations.
+export const listScenarios = (
   projectId: string,
-  candidateId: string,
-  datasetReleaseId: string,
-  configId: string,
-): Promise<Evaluation> {
-  return request<Evaluation>(`/v1/projects/${projectId}/evaluations`, {
-    method: "POST",
-    body: JSON.stringify({
-      candidate_id: candidateId,
-      dataset_release_id: datasetReleaseId,
-      config_id: configId,
-    }),
-  });
+  datasetId: string,
+): Promise<Scenario[]> =>
+  request<Scenario[]>(
+    `/v1/projects/${projectId}/datasets/${datasetId}/scenarios`,
+  );
+export function createScenario(
+  projectId: string,
+  datasetId: string,
+  payload: ScenarioCreate,
+): Promise<Scenario> {
+  return request<Scenario>(
+    `/v1/projects/${projectId}/datasets/${datasetId}/scenarios`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
 }
