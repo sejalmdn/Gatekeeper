@@ -6,12 +6,8 @@ import {
   CandidateForm,
   CandidatesPage,
 } from "./pages/Candidates";
-import {
-  DatasetDetail,
-  DatasetForm,
-  DatasetsPage,
-  ScenarioForm,
-} from "./pages/Datasets";
+import { DatasetForm } from "./pages/DatasetForm";
+import { DatasetDetail, DatasetsPage } from "./pages/Datasets";
 import { OverviewPage } from "./pages/OverviewPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { ProviderDetail, ProviderForm, ProvidersPage } from "./pages/Providers";
@@ -33,10 +29,6 @@ export default function App(): ReactElement {
           <Route path="datasets" element={<DatasetsPage />} />
           <Route path="datasets/new" element={<DatasetForm />} />
           <Route path="datasets/:recordId" element={<DatasetDetail />} />
-          <Route
-            path="datasets/:recordId/scenarios/new"
-            element={<ScenarioForm />}
-          />
         </Route>
         <Route path="*" element={<ProjectsPage />} />
       </Routes>

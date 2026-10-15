@@ -1,0 +1,56 @@
+/* Atomic dataset creation keeps metadata shallow above the scenario composer. */
+.dataset-form__metadata-fields {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(300px, 1.2fr);
+  gap: 14px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dataset-form__workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  align-items: start;
+  gap: 18px;
+}
+
+.form-page:has(.dataset-creation-form) {
+  max-width: 1400px;
+}
+
+.dataset-creation-form {
+  gap: 18px;
+  padding: 22px;
+}
+
+.dataset-creation-form .record-form-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  margin: 0 -22px -22px;
+  padding: 14px 22px;
+  border-top-color: var(--border-strong);
+  background: rgb(14 15 19 / 97%);
+  box-shadow: 0 -12px 24px rgb(0 0 0 / 24%);
+  backdrop-filter: blur(10px);
+}
+
+.dataset-form__action-summary {
+  display: grid;
+  gap: 1px;
+}
+
+.dataset-form__action-summary strong {
+  color: var(--text);
+  font-family: var(--font-display);
+}
+
+@media (max-width: 1320px) {
+  .dataset-form__workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .added-scenarios__scroll {
+    max-height: 390px;
+  }
+}

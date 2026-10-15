@@ -2,10 +2,10 @@ import type {
   Candidate,
   CandidateCreate,
   Dataset,
+  DatasetCreate,
   Project,
   Provider,
   Scenario,
-  ScenarioCreate,
 } from "./types";
 
 // API error that retains the server's useful message.
@@ -113,12 +113,11 @@ export const getDataset = (
   request<Dataset>(`/v1/projects/${projectId}/datasets/${datasetId}`);
 export function createDataset(
   projectId: string,
-  name: string,
-  description: string | null,
+  payload: DatasetCreate,
 ): Promise<Dataset> {
   return request<Dataset>(`/v1/projects/${projectId}/datasets`, {
     method: "POST",
-    body: JSON.stringify({ name, description }),
+    body: JSON.stringify(payload),
   });
 }
 
@@ -130,16 +129,3 @@ export const listScenarios = (
   request<Scenario[]>(
     `/v1/projects/${projectId}/datasets/${datasetId}/scenarios`,
   );
-export function createScenario(
-  projectId: string,
-  datasetId: string,
-  payload: ScenarioCreate,
-): Promise<Scenario> {
-  return request<Scenario>(
-    `/v1/projects/${projectId}/datasets/${datasetId}/scenarios`,
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
-    },
-  );
-}

@@ -4,7 +4,6 @@ import {
   createDataset,
   createProject,
   createProvider,
-  createScenario,
   listScenarios,
 } from "./api";
 
@@ -77,18 +76,43 @@ describe("Gatekeeper API client", () => {
     );
   });
 
-  // Create dataset metadata without embedding scenarios.
-  it("creates a dataset", async () => {
+  // Send dataset metadata and every scenario through one create request.
+  it("creates a dataset atomically", async () => {
     const fetchMock = stubRequest();
-    await createDataset("project-1", "Support", "Core support cases");
+    const payload = {
+      name: "Support",
+      description: "Core support cases",
+      scenarios: [
+        {
+          scenario_key: "welcome",
+          name: "Welcome",
+          scenario_type: "single_turn" as const,
+          input: {
+            user_message: "Hello",
+          },
+        },
+        {
+          scenario_key: "context",
+          name: "Uses context",
+          scenario_type: "multi_turn" as const,
+          input: {
+            history: [
+              {
+                role: "user",
+                content: "My order is 123.",
+              },
+            ],
+            user_message: "Where is it?",
+          },
+        },
+      ],
+    };
+    await createDataset("project-1", payload);
     expect(fetchMock).toHaveBeenCalledWith(
       "/v1/projects/project-1/datasets",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({
-          name: "Support",
-          description: "Core support cases",
-        }),
+        body: JSON.stringify(payload),
       }),
     );
   });
@@ -100,35 +124,6 @@ describe("Gatekeeper API client", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "/v1/projects/project-1/datasets/dataset-1/scenarios",
       expect.any(Object),
-    );
-  });
-
-  // Send each supported scenario input shape unchanged.
-  it.each([
-    ["single_turn", { user_message: "Hello" }],
-    [
-      "multi_turn",
-      {
-        history: [{ role: "user", content: "Earlier" }],
-        user_message: "Continue",
-      },
-    ],
-    ["tool_use", { history: [], user_message: "Find my order" }],
-  ] as const)("creates a %s scenario", async (scenarioType, input) => {
-    const fetchMock = stubRequest();
-    const payload = {
-      scenario_key: "case-1",
-      name: "Case 1",
-      scenario_type: scenarioType,
-      input,
-    };
-    await createScenario("project-1", "dataset-1", payload);
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/v1/projects/project-1/datasets/dataset-1/scenarios",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify(payload),
-      }),
     );
   });
 });

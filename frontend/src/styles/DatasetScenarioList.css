@@ -1,0 +1,31 @@
+/* Read-only scenario list emphasizes that stored evaluation inputs are immutable. */
+.dataset-scenarios > .section-title {
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.dataset-scenarios > .section-title h2,
+.dataset-scenarios > .section-title p {
+  margin-bottom: 4px;
+}
+
+.dataset-scenarios > .section-title p {
+  color: var(--muted);
+}
+
+.dataset-scenarios__list {
+  display: grid;
+  gap: 16px;
+}
+
+.dataset-scenarios__list article {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.dataset-scenarios__list h3 {
+  overflow-wrap: anywhere;
+}

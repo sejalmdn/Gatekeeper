@@ -72,3 +72,10 @@ export type CandidateCreate = Omit<
 
 // Scenario creation payload.
 export type ScenarioCreate = Omit<Scenario, "id" | "dataset_id" | "created_at">;
+
+// Atomic dataset creation payload with its immutable scenario collection.
+export interface DatasetCreate {
+  name: string;
+  description: string | null;
+  scenarios: ScenarioCreate[];
+}

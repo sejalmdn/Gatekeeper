@@ -3,6 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
+from gatekeeper.contracts.datasets import DatasetCreate
 from gatekeeper.contracts.rules import SEVERITY_WEIGHTS, RuleBindingCreate, Severity
 from gatekeeper.contracts.scenarios import ScenarioCreate
 
@@ -46,10 +47,66 @@ def test_scenario_contracts_validate_by_type() -> None:
                 "user_message": "x",
             },
         },
+        {
+            "scenario_type": "tool_use",
+            "input": {
+                "history": [{"role": "tool", "content": "unverified"}],
+                "user_message": "x",
+            },
+        },
     ]
     for invalid in invalid_inputs:
         with pytest.raises(ValidationError):
             ScenarioCreate.model_validate({"scenario_key": "x", "name": "X", **invalid})
+
+
+# Require a non-empty dataset with unique, type-valid scenario definitions.
+def test_dataset_create_contract_validates_scenario_collection() -> None:
+    scenarios = [
+        {
+            "scenario_key": "single",
+            "name": "Single turn",
+            "scenario_type": "single_turn",
+            "input": {"user_message": "Hello"},
+        },
+        {
+            "scenario_key": "multi",
+            "name": "Multi-turn",
+            "scenario_type": "multi_turn",
+            "input": {
+                "history": [{"role": "assistant", "content": "How can I help?"}],
+                "user_message": "Find my order.",
+            },
+        },
+        {
+            "scenario_key": "tool",
+            "name": "Tool use",
+            "scenario_type": "tool_use",
+            "input": {"user_message": "Look up order 123."},
+        },
+    ]
+    dataset = DatasetCreate(name="Support", scenarios=scenarios)
+    assert [scenario.scenario_type for scenario in dataset.scenarios] == [
+        "single_turn",
+        "multi_turn",
+        "tool_use",
+    ]
+
+    invalid_collections = [
+        [],
+        [scenarios[0], {**scenarios[1], "scenario_key": "single"}],
+        [
+            {
+                "scenario_key": "invalid",
+                "name": "Invalid history",
+                "scenario_type": "multi_turn",
+                "input": {"history": [], "user_message": "Continue"},
+            }
+        ],
+    ]
+    for invalid_scenarios in invalid_collections:
+        with pytest.raises(ValidationError):
+            DatasetCreate(name="Invalid", scenarios=invalid_scenarios)
 
 
 # Validate rule parameters and binding scope.

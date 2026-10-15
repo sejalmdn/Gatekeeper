@@ -7,21 +7,36 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from gatekeeper.api.dependencies import get_database
 from gatekeeper.contracts.datasets import Dataset, DatasetCreate
+from gatekeeper.contracts.scenarios import Scenario
 from gatekeeper.persistence.database import Database
 from gatekeeper.persistence.records import dataset_from_row, project_or_404, timestamp
+from gatekeeper.utils.json import canonical_json
 
 # Project-scoped dataset router group.
 router = APIRouter(prefix="/v1/projects/{project_id}/datasets")
 
 
-# Create an immutable dataset container.
+# Create an immutable dataset and its complete scenario collection atomically.
 @router.post("", response_model=Dataset, status_code=status.HTTP_201_CREATED)
 async def create_dataset(
     project_id: UUID, payload: DatasetCreate, database: Database = Depends(get_database)
 ) -> Dataset:
     dataset = Dataset(
-        id=uuid4(), project_id=project_id, created_at=timestamp(), **payload.model_dump()
+        id=uuid4(),
+        project_id=project_id,
+        name=payload.name,
+        description=payload.description,
+        created_at=timestamp(),
     )
+    scenarios = [
+        Scenario(
+            id=uuid4(),
+            dataset_id=dataset.id,
+            created_at=timestamp(),
+            **scenario.model_dump(),
+        )
+        for scenario in payload.scenarios
+    ]
     try:
         with database.connection() as connection:
             project_or_404(connection, project_id)
@@ -35,6 +50,23 @@ async def create_dataset(
                     dataset.description,
                     dataset.created_at.isoformat(),
                 ),
+            )
+            connection.executemany(
+                """INSERT INTO scenarios
+                (id, dataset_id, scenario_key, name, scenario_type, input, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                [
+                    (
+                        str(scenario.id),
+                        str(dataset.id),
+                        scenario.scenario_key,
+                        scenario.name,
+                        scenario.scenario_type,
+                        canonical_json(scenario.input),
+                        scenario.created_at.isoformat(),
+                    )
+                    for scenario in scenarios
+                ],
             )
     except sqlite3.IntegrityError as error:
         raise HTTPException(status_code=409, detail="dataset already exists") from error

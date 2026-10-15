@@ -6,6 +6,16 @@ Developers upload scenarios into immutable datasets for evaluation. A dataset ma
 scenario types. Store the type on every scenario so its input contract and applicable rules remain
 explicit.
 
+Dataset creation is atomic: one request supplies the dataset metadata and the complete, non-empty
+scenario collection. Scenario keys must be unique within that request. Gatekeeper persists the
+dataset and every scenario in one transaction, so a validation or storage failure leaves no partial
+dataset behind.
+
+Scenarios cannot be added, edited, or removed after dataset creation. Existing datasets created
+before this constraint retain their current scenarios, including empty collections. Rule bindings
+remain separately addable because they hold private evaluation configuration rather than candidate
+input.
+
 | Scenario type | Phase | Input | Evaluation focus |
 |---|---:|---|---|
 | `single_turn` | 1 | One user message | One resulting response |

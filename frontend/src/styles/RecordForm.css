@@ -30,10 +30,23 @@
 .record-form-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
   gap: 12px;
   padding-top: 20px;
   border-top: 1px solid var(--border);
+}
+
+.record-form-action-summary {
+  min-width: 0;
+  margin-right: auto;
+  color: var(--muted);
+}
+
+.record-form-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .form-row {

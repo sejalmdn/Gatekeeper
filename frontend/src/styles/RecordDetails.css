@@ -27,23 +27,6 @@
   font-size: 12px;
 }
 
-.scenario-list {
-  display: grid;
-  gap: 16px;
-}
-
-.scenario-list article {
-  padding: 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-panel);
-  min-width: 0;
-}
-
-.scenario-list h3 {
-  overflow-wrap: anywhere;
-}
-
 .policy-strip {
   padding: 16px 20px;
   border: 1px solid var(--accent-border);
