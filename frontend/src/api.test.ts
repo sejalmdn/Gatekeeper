@@ -41,7 +41,7 @@ describe("Gatekeeper API client", () => {
       name: "OpenAI",
       provider_type: "openai",
       base_url: null,
-      credential_ref: "vault://openai",
+      credential_ref: "env://GATEKEEPER_CREDENTIAL_OPENAI_PRIMARY",
     };
     await createProvider("project-1", payload);
     expect(fetchMock).toHaveBeenCalledWith(

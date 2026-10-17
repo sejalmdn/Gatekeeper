@@ -85,6 +85,7 @@ export function ProviderForm(): ReactElement {
           label="Name"
           value={name}
           onChange={setName}
+          placeholder="OpenAI primary"
         />
         <TextField
           id="provider-type"
@@ -107,7 +108,7 @@ export function ProviderForm(): ReactElement {
         label="Credential reference"
         value={credentialRef}
         onChange={setCredentialRef}
-        placeholder="vault://team/provider-key"
+        placeholder="env://GATEKEEPER_CREDENTIAL_OPENAI_PRIMARY"
       />
     </RecordForm>
   );

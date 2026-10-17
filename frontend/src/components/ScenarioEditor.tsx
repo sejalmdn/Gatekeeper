@@ -3,6 +3,7 @@ import type { ScenarioCreate, ScenarioType } from "../types";
 import {
   initialScenarioFields,
   prepareScenarioAddition,
+  scenarioPlaceholders,
   type ScenarioFields,
 } from "../utils/scenarioComposer";
 import "../styles/ScenarioEditor.css";
@@ -24,6 +25,8 @@ export function ScenarioEditor({
 
   // Shows local validation without affecting already added scenarios.
   const [error, setError] = useState<string>();
+
+  const placeholders = scenarioPlaceholders(fields.scenarioType);
 
   // Update one editor field without discarding the other entered values.
   function updateField<Key extends keyof ScenarioFields>(
@@ -60,9 +63,7 @@ export function ScenarioEditor({
     >
       <div className="scenario-editor__heading">
         <h2 id="scenario-editor-title">Scenario editor</h2>
-        <p>
-          Define candidate input only.
-        </p>
+        <p>Define candidate input only.</p>
       </div>
       <div className="scenario-editor__fields">
         <label className="form-field" htmlFor="scenario-key">
@@ -71,7 +72,7 @@ export function ScenarioEditor({
             id="scenario-key"
             value={fields.scenarioKey}
             onChange={(event) => updateField("scenarioKey", event.target.value)}
-            placeholder="refund-policy"
+            placeholder={placeholders.scenarioKey}
             disabled={disabled}
           />
         </label>
@@ -81,7 +82,7 @@ export function ScenarioEditor({
             id="scenario-name"
             value={fields.name}
             onChange={(event) => updateField("name", event.target.value)}
-            placeholder="Explains the refund policy"
+            placeholder={placeholders.name}
             disabled={disabled}
           />
         </label>
@@ -115,6 +116,7 @@ export function ScenarioEditor({
               id="scenario-history"
               value={fields.history}
               onChange={(event) => updateField("history", event.target.value)}
+              placeholder={placeholders.history}
               spellCheck={false}
               aria-describedby="scenario-history-help"
               disabled={disabled}
@@ -130,7 +132,7 @@ export function ScenarioEditor({
             id="user-message"
             value={fields.userMessage}
             onChange={(event) => updateField("userMessage", event.target.value)}
-            placeholder="What should the candidate respond to?"
+            placeholder={placeholders.userMessage}
             disabled={disabled}
           />
         </label>

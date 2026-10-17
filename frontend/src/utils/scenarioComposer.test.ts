@@ -7,6 +7,7 @@ import {
   prepareScenarioAddition,
   removeScenario,
   requireScenarios,
+  scenarioPlaceholders,
   type ScenarioFields,
 } from "./scenarioComposer";
 
@@ -23,6 +24,40 @@ function editorFields(overrides: Partial<ScenarioFields> = {}): ScenarioFields {
 
 // Local scenario composition behavior before the atomic API request.
 describe("scenario composer", () => {
+  // Provide distinct examples for every supported scenario type.
+  it.each([
+    {
+      scenarioType: "single_turn" as const,
+      expected: {
+        scenarioKey: "refund-policy",
+        name: "Explains the refund policy",
+        history: "",
+        userMessage: "What is your refund policy?",
+      },
+    },
+    {
+      scenarioType: "multi_turn" as const,
+      expected: {
+        scenarioKey: "order-follow-up",
+        name: "Uses prior order context",
+        history:
+          '[{"role":"user","content":"My order is 123."},{"role":"assistant","content":"How can I help?"}]',
+        userMessage: "Where is it?",
+      },
+    },
+    {
+      scenarioType: "tool_use" as const,
+      expected: {
+        scenarioKey: "lookup-order",
+        name: "Requests the order lookup tool",
+        history: '[{"role":"user","content":"My order is 123."}]',
+        userMessage: "Find order 123.",
+      },
+    },
+  ])("provides $scenarioType placeholders", ({ scenarioType, expected }) => {
+    expect(scenarioPlaceholders(scenarioType)).toEqual(expected);
+  });
+
   // Add and remove scenarios without mutating the existing collection.
   it("adds and removes local scenarios", () => {
     const first = buildScenario(editorFields(), []);
@@ -67,6 +102,28 @@ describe("scenario composer", () => {
         [],
       ),
     ).toThrow();
+  });
+
+  // Interpret blank history according to scenario requirements.
+  it("allows blank tool history but requires multi-turn history", () => {
+    const tool = buildScenario(
+      editorFields({
+        scenarioType: "tool_use",
+        history: " ",
+      }),
+      [],
+    );
+
+    expect(tool.input.history).toEqual([]);
+    expect(() =>
+      buildScenario(
+        editorFields({
+          scenarioType: "multi_turn",
+          history: "",
+        }),
+        [],
+      ),
+    ).toThrow(/Conversation history is required/);
   });
 
   // Return fresh editor values only after a valid scenario is prepared.

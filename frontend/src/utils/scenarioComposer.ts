@@ -15,15 +15,53 @@ export interface ScenarioAddition {
   nextFields: ScenarioFields;
 }
 
+// Examples displayed for each supported scenario type.
+export interface ScenarioPlaceholders {
+  scenarioKey: string;
+  name: string;
+  history: string;
+  userMessage: string;
+}
+
+// Type-aware examples for scenario inputs.
+const SCENARIO_PLACEHOLDERS: Record<ScenarioType, ScenarioPlaceholders> = {
+  single_turn: {
+    scenarioKey: "refund-policy",
+    name: "Explains the refund policy",
+    history: "",
+    userMessage: "What is your refund policy?",
+  },
+  multi_turn: {
+    scenarioKey: "order-follow-up",
+    name: "Uses prior order context",
+    history:
+      '[{"role":"user","content":"My order is 123."},{"role":"assistant","content":"How can I help?"}]',
+    userMessage: "Where is it?",
+  },
+  tool_use: {
+    scenarioKey: "lookup-order",
+    name: "Requests the order lookup tool",
+    history: '[{"role":"user","content":"My order is 123."}]',
+    userMessage: "Find order 123.",
+  },
+};
+
 // Create fresh initial values for the scenario editor.
 export function initialScenarioFields(): ScenarioFields {
   return {
     scenarioKey: "",
     name: "",
     scenarioType: "single_turn",
-    history: "[]",
+    history: "",
     userMessage: "",
   };
+}
+
+// Return examples matching the selected scenario type.
+export function scenarioPlaceholders(
+  scenarioType: ScenarioType,
+): ScenarioPlaceholders {
+  return SCENARIO_PLACEHOLDERS[scenarioType];
 }
 
 // Reject blank values while preserving intentional message whitespace.
@@ -36,6 +74,13 @@ function requireText(value: string, label: string): string {
 
 // Parse and fully validate the Phase 1 text-message history contract.
 function parseHistory(value: string, required: boolean): JsonObject[] {
+  if (!value.trim()) {
+    if (required) {
+      throw new Error("Conversation history is required.");
+    }
+    return [];
+  }
+
   let parsed: unknown;
   try {
     parsed = JSON.parse(value);

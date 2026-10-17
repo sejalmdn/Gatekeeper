@@ -7,6 +7,7 @@ interface JsonInputProps {
   help: string;
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
   required?: boolean;
 }
 
@@ -17,6 +18,7 @@ export function JsonInput({
   help,
   value,
   onChange,
+  placeholder,
   required = true,
 }: JsonInputProps): ReactElement {
   return (
@@ -27,6 +29,7 @@ export function JsonInput({
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
         spellCheck={false}
         aria-describedby={`${id}-help`}
         required={required}

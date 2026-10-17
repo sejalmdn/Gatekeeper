@@ -3,6 +3,8 @@
 import sqlite3
 from pathlib import Path
 
+import pytest
+
 from gatekeeper.app import create_app
 from tests.conftest import ApiClient, create_project
 
@@ -14,11 +16,50 @@ def create_provider(client: ApiClient, project_id: str) -> dict[str, object]:
         json={
             "name": "Primary",
             "provider_type": "openai",
-            "credential_ref": "env:OPENAI_API_KEY",
+            "credential_ref": "env://GATEKEEPER_CREDENTIAL_OPENAI_PRIMARY",
         },
     )
     assert response.status_code == 201
     return response.json()
+
+
+# Validate credential references without requiring their variables during creation.
+def test_provider_creation_validates_credential_reference(
+    client: ApiClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project_id = str(create_project(client)["id"])
+    variable_name = "GATEKEEPER_CREDENTIAL_NOT_CONFIGURED"
+    monkeypatch.delenv(variable_name, raising=False)
+    valid_reference = f"env://{variable_name}"
+    accepted = client.post(
+        f"/v1/projects/{project_id}/providers",
+        json={
+            "name": "Valid reference",
+            "provider_type": "openai",
+            "credential_ref": valid_reference,
+        },
+    )
+
+    assert accepted.status_code == 201
+    assert accepted.json()["credential_ref"] == valid_reference
+
+    invalid_references = [
+        "env:GATEKEEPER_CREDENTIAL_OPENAI_PRIMARY",
+        "vault://GATEKEEPER_CREDENTIAL_OPENAI_PRIMARY",
+        "env://OPENAI_API_KEY",
+        "env://GATEKEEPER_CREDENTIAL_openai",
+        "env://GATEKEEPER_CREDENTIAL_OPENAI-PRIMARY",
+    ]
+    for index, reference in enumerate(invalid_references):
+        rejected = client.post(
+            f"/v1/projects/{project_id}/providers",
+            json={
+                "name": f"Invalid reference {index}",
+                "provider_type": "openai",
+                "credential_ref": reference,
+            },
+        )
+        assert rejected.status_code == 422
 
 
 # Build a minimal valid scenario for dataset creation requests.

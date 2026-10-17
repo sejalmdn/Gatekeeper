@@ -133,13 +133,14 @@ export function CandidateForm(): ReactElement {
                 label="Name"
                 value={name}
                 onChange={setName}
+                placeholder="Support baseline"
               />
               <TextField
                 id="candidate-adapter"
                 label="Adapter"
                 value={adapter}
                 onChange={setAdapter}
-                placeholder="chat_completions"
+                placeholder="openai_responses"
               />
             </div>
             <TextField
@@ -147,7 +148,7 @@ export function CandidateForm(): ReactElement {
               label="Model name"
               value={modelName}
               onChange={setModelName}
-              placeholder="model identifier"
+              placeholder="model-or-agent-id"
             />
             <label className="form-field" htmlFor="system-prompt">
               <span>System prompt</span>
@@ -155,6 +156,7 @@ export function CandidateForm(): ReactElement {
                 id="system-prompt"
                 value={systemPrompt}
                 onChange={(event) => setSystemPrompt(event.target.value)}
+                placeholder="You are a concise customer support assistant."
               />
             </label>
             <JsonInput
@@ -177,6 +179,7 @@ export function CandidateForm(): ReactElement {
               help="Leave blank when the candidate does not require a structured response."
               value={responseFormat}
               onChange={setResponseFormat}
+              placeholder='{"type":"json_object"}'
               required={false}
             />
           </RecordForm>

@@ -120,6 +120,7 @@ export function DatasetForm(): ReactElement {
                 name: event.target.value,
               }))
             }
+            placeholder="Customer support regression"
             disabled={saving}
             required
           />
@@ -135,6 +136,7 @@ export function DatasetForm(): ReactElement {
                 description: event.target.value,
               }))
             }
+            placeholder="Core support scenarios for release comparisons"
             disabled={saving}
           />
         </label>
