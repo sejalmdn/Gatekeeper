@@ -101,7 +101,7 @@ export function ProviderTable({
   );
 }
 
-// Candidate table highlights the configured target and adapter.
+// Candidate table highlights the configured model or agent target.
 export function CandidateTable({
   candidates,
   projectId,
@@ -114,7 +114,7 @@ export function CandidateTable({
       label="Candidate records"
       rows={candidates}
       searchText={(row) =>
-        [row.id, row.name, row.adapter, row.model_name].join(" ")
+        [row.id, row.name, row.model_name].join(" ")
       }
       columns={[
         {
@@ -125,7 +125,6 @@ export function CandidateTable({
             </Link>
           ),
         },
-        { label: "Adapter", render: (row) => row.adapter },
         { label: "Model", render: (row) => row.model_name },
         { label: "Created", render: (row) => timestamp(row.created_at) },
       ]}

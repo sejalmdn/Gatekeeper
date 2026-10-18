@@ -81,7 +81,6 @@ def test_provider_and_candidate_resources_persist(tmp_path: Path) -> None:
     payload = {
         "provider_id": provider["id"],
         "name": "Support baseline",
-        "adapter": "openai_responses",
         "model_name": "example-model",
         "system_prompt": "Be concise.",
         "generation_parameters": {"temperature": 0},
@@ -252,7 +251,6 @@ def test_run_settings_and_evaluation_run_sources_are_project_scoped(client: ApiC
         json={
             "provider_id": provider["id"],
             "name": "Baseline",
-            "adapter": "fake",
             "model_name": "deterministic",
         },
     ).json()
@@ -295,3 +293,97 @@ def test_run_settings_and_evaluation_run_sources_are_project_scoped(client: ApiC
         },
     )
     assert rejected.status_code == 404
+
+
+# Freeze the provider's default adapter when a candidate is created.
+@pytest.mark.parametrize(
+    ("provider_type", "adapter"),
+    [
+        ("openai", "openai_responses"),
+        ("anthropic", "anthropic_messages"),
+        ("google", "google_generate_content"),
+        ("groq", "openai_chat_completions"),
+        ("openrouter", "openai_chat_completions"),
+    ],
+)
+def test_candidate_adapter_is_selected_by_provider(
+    client: ApiClient, provider_type: str, adapter: str
+) -> None:
+    project_id = str(create_project(client)["id"])
+    provider_response = client.post(
+        f"/v1/projects/{project_id}/providers",
+        json={
+            "name": provider_type,
+            "provider_type": provider_type,
+            "credential_ref": "env://GATEKEEPER_CREDENTIAL_TEST",
+        },
+    )
+    assert provider_response.status_code == 201
+    provider = provider_response.json()
+    payload = {
+        "provider_id": provider["id"],
+        "name": "Baseline",
+        "model_name": "example-model",
+    }
+    response = client.post(f"/v1/projects/{project_id}/candidates", json=payload)
+    assert response.status_code == 201
+    candidate = response.json()
+    assert candidate["adapter"] == adapter
+    assert client.get(
+        f"/v1/projects/{project_id}/candidates/{candidate['id']}"
+    ).json() == candidate
+    overridden = client.post(
+        f"/v1/projects/{project_id}/candidates", json={**payload, "adapter": "custom"}
+    )
+    assert overridden.status_code == 422
+
+    other_project_id = str(create_project(client, "Other")["id"])
+    assert client.post(
+        f"/v1/projects/{other_project_id}/candidates", json=payload
+    ).status_code == 404
+
+
+# Reject unsupported provider types before persisting connection metadata.
+@pytest.mark.parametrize("provider_type", ["custom", "", "OpenAI"])
+def test_provider_creation_rejects_unsupported_types(
+    client: ApiClient, provider_type: str
+) -> None:
+    project_id = str(create_project(client)["id"])
+    response = client.post(
+        f"/v1/projects/{project_id}/providers",
+        json={
+            "name": "Unsupported",
+            "provider_type": provider_type,
+            "credential_ref": "env://GATEKEEPER_CREDENTIAL_TEST",
+        },
+    )
+    assert response.status_code == 422
+    assert client.get(f"/v1/projects/{project_id}/providers").json() == []
+
+
+# Preserve historical provider and candidate records without allowing unsupported new candidates.
+def test_legacy_provider_and_candidate_remain_readable(tmp_path: Path) -> None:
+    database_path = tmp_path / "gatekeeper.db"
+    client = ApiClient(create_app(database_path))
+    project_id = str(create_project(client)["id"])
+    provider = create_provider(client, project_id)
+    payload = {
+        "provider_id": provider["id"],
+        "name": "Baseline",
+        "model_name": "example-model",
+    }
+    candidate = client.post(f"/v1/projects/{project_id}/candidates", json=payload).json()
+    with sqlite3.connect(database_path) as connection:
+        connection.execute(
+            "UPDATE providers SET provider_type = 'legacy' WHERE id = ?", (provider["id"],)
+        )
+        connection.execute(
+            "UPDATE candidates SET adapter = 'legacy_adapter' WHERE id = ?", (candidate["id"],)
+        )
+    assert client.get(f"/v1/projects/{project_id}/providers").json()[0]["provider_type"] == "legacy"
+    assert client.get(
+        f"/v1/projects/{project_id}/candidates/{candidate['id']}"
+    ).json()["adapter"] == "legacy_adapter"
+    assert client.post(
+        f"/v1/projects/{project_id}/candidates", json={**payload, "name": "New"}
+    ).status_code == 422

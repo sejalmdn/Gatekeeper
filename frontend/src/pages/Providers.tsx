@@ -1,6 +1,7 @@
 import { useState, type FormEvent, type ReactElement } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { createProvider, getProvider, listProviders } from "../api";
+import { SourceSelect } from "../components/FormFields";
 import { LoadBoundary } from "../components/Feedback";
 import { RecordDetails } from "../components/RecordDetails";
 import { RecordForm } from "../components/RecordForm";
@@ -43,6 +44,7 @@ export function ProviderForm(): ReactElement {
   const { projectId = "" } = useParams();
   const navigate = useNavigate();
   const [name, setName] = useState("");
+  // Requires an explicit choice from the supported provider services.
   const [providerType, setProviderType] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
   const [credentialRef, setCredentialRef] = useState("");
@@ -87,12 +89,34 @@ export function ProviderForm(): ReactElement {
           onChange={setName}
           placeholder="OpenAI primary"
         />
-        <TextField
+        <SourceSelect
           id="provider-type"
           label="Provider type"
           value={providerType}
           onChange={setProviderType}
-          placeholder="openai"
+          placeholder="Select a provider type"
+          options={[
+            {
+              id: "openai",
+              label: "OpenAI",
+            },
+            {
+              id: "anthropic",
+              label: "Anthropic",
+            },
+            {
+              id: "google",
+              label: "Google",
+            },
+            {
+              id: "groq",
+              label: "Groq",
+            },
+            {
+              id: "openrouter",
+              label: "OpenRouter",
+            },
+          ]}
         />
       </div>
       <TextField

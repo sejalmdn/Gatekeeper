@@ -18,7 +18,11 @@ Offline means controlled execution initiated by Gatekeeper outside live user tra
 may still be a hosted model or agent service.
 
 Candidate configuration identifies the target integration and model or agent, together with the
-prompt, tool definitions, and runtime parameters relevant to the evaluation. Authentication secrets
+prompt, tool definitions, and runtime parameters relevant to the evaluation. Supported provider types are OpenAI, Anthropic, Google,
+Groq, and OpenRouter. Gatekeeper selects and stores the backend adapter from the provider type;
+users do not supply an adapter when creating a candidate. Existing candidates retain their saved
+adapter. These configuration options do not imply that invocation adapters are implemented.
+Authentication secrets
 are referenced securely and are not stored in scenario datasets.
 
 ## Lifecycle

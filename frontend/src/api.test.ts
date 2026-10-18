@@ -59,7 +59,6 @@ describe("Gatekeeper API client", () => {
     const payload = {
       provider_id: "provider-1",
       name: "Support",
-      adapter: "responses",
       model_name: "gpt-example",
       system_prompt: "Be concise",
       generation_parameters: {},

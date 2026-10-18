@@ -29,7 +29,6 @@ class ToolDefinition(Contract):
 class CandidateCreate(Contract):
     provider_id: UUID
     name: NonEmptyString
-    adapter: NonEmptyString
     model_name: NonEmptyString
     system_prompt: str = ""
     generation_parameters: JsonObject = Field(default_factory=dict)
@@ -56,6 +55,7 @@ class CandidateCreate(Contract):
 
 # Candidate read contract.
 class Candidate(CandidateCreate):
+    adapter: NonEmptyString
     id: UUID
     project_id: UUID
     created_at: datetime

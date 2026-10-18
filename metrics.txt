@@ -1,0 +1,28 @@
+Common for all 3 scenarios
+- Latency, token usage, cost limits.. other model related metrics if available
+
+### Single-turn
+
+- Required/forbidden text
+- Regex/format validation
+- JSON and JSON Schema validation
+- Field values, ranges, and allowed sets
+- Response length, error, timeout
+- Across attempts: pass rate, stability, flakiness, output variation
+
+### Multi-turn
+
+Everything in single-turn, plus:
+
+- Correct use of values from conversation history
+- Required references to earlier turns
+- No unnecessary request for already-provided information
+- Valid response based on the supplied conversation state
+- Across attempts: context-compliance rate and stability
+
+### Tool-use
+
+- Allowed/Forbidden tool not selected
+- Arguments are valid JSON, required, forbidden, exact, and range-based argument checks
+- Values correctly copied from scenario input/history
+- Across attempts: tool-selection rate, argument-validity rate, and selection stability

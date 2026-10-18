@@ -67,7 +67,7 @@ export interface Scenario {
 // Candidate creation payload.
 export type CandidateCreate = Omit<
   Candidate,
-  "id" | "project_id" | "created_at"
+  "id" | "project_id" | "created_at" | "adapter"
 >;
 
 // Scenario creation payload.

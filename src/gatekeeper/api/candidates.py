@@ -10,6 +10,7 @@ from gatekeeper.contracts.candidates import Candidate, CandidateCreate
 from gatekeeper.persistence.database import Database
 from gatekeeper.persistence.records import candidate_from_row, project_or_404, timestamp
 from gatekeeper.utils.json import canonical_json
+from gatekeeper.utils.providers import PROVIDER_ADAPTERS
 
 # Project-scoped candidate router group.
 router = APIRouter(prefix="/v1/projects/{project_id}/candidates")
@@ -20,18 +21,25 @@ router = APIRouter(prefix="/v1/projects/{project_id}/candidates")
 async def create_candidate(
     project_id: UUID, payload: CandidateCreate, database: Database = Depends(get_database)
 ) -> Candidate:
-    candidate = Candidate(
-        id=uuid4(), project_id=project_id, created_at=timestamp(), **payload.model_dump()
-    )
     try:
         with database.connection() as connection:
             project_or_404(connection, project_id)
             provider = connection.execute(
-                "SELECT 1 FROM providers WHERE id = ? AND project_id = ?",
+                "SELECT provider_type FROM providers WHERE id = ? AND project_id = ?",
                 (str(payload.provider_id), str(project_id)),
             ).fetchone()
             if provider is None:
                 raise HTTPException(status_code=404, detail="provider not found")
+            adapter = PROVIDER_ADAPTERS.get(provider["provider_type"])
+            if adapter is None:
+                raise HTTPException(status_code=422, detail="unsupported provider type")
+            candidate = Candidate(
+                id=uuid4(),
+                project_id=project_id,
+                created_at=timestamp(),
+                adapter=adapter,
+                **payload.model_dump(),
+            )
             connection.execute(
                 """INSERT INTO candidates
                 (id, project_id, provider_id, name, adapter, model_name, system_prompt,

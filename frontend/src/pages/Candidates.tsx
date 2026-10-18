@@ -52,7 +52,6 @@ export function CandidateForm(): ReactElement {
   const providers = useLoad(() => listProviders(projectId));
   const [providerId, setProviderId] = useState("");
   const [name, setName] = useState("");
-  const [adapter, setAdapter] = useState("");
   const [modelName, setModelName] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
   const [parameters, setParameters] = useState("{}");
@@ -70,7 +69,6 @@ export function CandidateForm(): ReactElement {
       const candidate = await createCandidate(projectId, {
         provider_id: providerId,
         name,
-        adapter,
         model_name: modelName,
         system_prompt: systemPrompt,
         generation_parameters: parseObject(parameters, "Generation parameters"),
@@ -135,13 +133,6 @@ export function CandidateForm(): ReactElement {
                 onChange={setName}
                 placeholder="Support baseline"
               />
-              <TextField
-                id="candidate-adapter"
-                label="Adapter"
-                value={adapter}
-                onChange={setAdapter}
-                placeholder="openai_responses"
-              />
             </div>
             <TextField
               id="model-name"
@@ -198,7 +189,7 @@ export function CandidateDetail(): ReactElement {
       {(candidate) => (
         <RecordDetails
           title={candidate.name}
-          detail={`${candidate.adapter} · ${candidate.model_name}`}
+          detail={candidate.model_name}
           backTo={`/projects/${projectId}/candidates`}
           backLabel="Back to candidates"
           createdAt={candidate.created_at}
