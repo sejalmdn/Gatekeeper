@@ -1,42 +1,7 @@
 import type { ReactElement } from "react";
 import "../styles/FormFields.css";
 
-interface JsonInputProps {
-  id: string;
-  label: string;
-  help: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  required?: boolean;
-}
-
-// Labeled structured input for the existing JSON creation contracts.
-export function JsonInput({
-  id,
-  label,
-  help,
-  value,
-  onChange,
-  placeholder,
-  required = true,
-}: JsonInputProps): ReactElement {
-  return (
-    <label className="form-field" htmlFor={id}>
-      <span>{label}</span>
-      <small id={`${id}-help`}>{help}</small>
-      <textarea
-        id={id}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        spellCheck={false}
-        aria-describedby={`${id}-help`}
-        required={required}
-      />
-    </label>
-  );
-}
+export { JsonInput } from "./JsonInput";
 
 interface SourceSelectOption {
   id: string;

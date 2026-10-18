@@ -25,6 +25,20 @@ adapter. These configuration options do not imply that invocation adapters are i
 Authentication secrets
 are referenced securely and are not stored in scenario datasets.
 
+## Generation parameters
+
+New candidates accept only snake_case `temperature` (0–2), `top_p` (greater than 0 and at most
+1), `top_k` (positive integer), and `max_output_tokens` (positive integer). Each key may be
+omitted or set to `null` to leave that setting unspecified. The creation form starts with null
+sampling settings and a 1024-token output limit; these are editable Gatekeeper starter values,
+not provider defaults. Requests omitting the entire object use the same starter values; an
+explicit empty object leaves every setting unspecified.
+
+These are provider-neutral settings. Future invocation adapters must map them to the provider
+API and validate model support and narrower limits, rejecting unsupported explicit settings
+rather than silently discarding them. Null settings are not sent to the provider. Existing
+candidates keep their frozen generation parameters, including historical keys.
+
 ## Lifecycle
 
 1. Select the immutable candidate, dataset, rule bindings, and run settings.

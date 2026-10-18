@@ -378,12 +378,81 @@ def test_legacy_provider_and_candidate_remain_readable(tmp_path: Path) -> None:
             "UPDATE providers SET provider_type = 'legacy' WHERE id = ?", (provider["id"],)
         )
         connection.execute(
-            "UPDATE candidates SET adapter = 'legacy_adapter' WHERE id = ?", (candidate["id"],)
+            "UPDATE candidates SET adapter = 'legacy_adapter', generation_parameters = ? "
+            "WHERE id = ?",
+            ('{"seed":42}', candidate["id"]),
         )
     assert client.get(f"/v1/projects/{project_id}/providers").json()[0]["provider_type"] == "legacy"
     assert client.get(
         f"/v1/projects/{project_id}/candidates/{candidate['id']}"
     ).json()["adapter"] == "legacy_adapter"
+    assert client.get(
+        f"/v1/projects/{project_id}/candidates/{candidate['id']}"
+    ).json()["generation_parameters"] == {"seed": 42}
     assert client.post(
         f"/v1/projects/{project_id}/candidates", json={**payload, "name": "New"}
     ).status_code == 422
+
+
+# Reject unsupported names and malformed sampling settings before storing candidates.
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        {"seed": 42},
+        {"max_tokens": 1024},
+        {"top-p": 0.9},
+        {"temperature": -0.1},
+        {"temperature": 2.1},
+        {"temperature": "1"},
+        {"temperature": True},
+        {"top_p": 0},
+        {"top_p": 1.1},
+        {"top_k": 0},
+        {"top_k": 1.5},
+        {"max_output_tokens": -1},
+        {"max_output_tokens": 1.5},
+        {"max_output_tokens": True},
+    ],
+)
+def test_candidate_rejects_invalid_generation_parameters(
+    client: ApiClient, parameters: dict[str, object]
+) -> None:
+    project_id = str(create_project(client)["id"])
+    provider = create_provider(client, project_id)
+    response = client.post(
+        f"/v1/projects/{project_id}/candidates",
+        json={
+            "provider_id": provider["id"],
+            "name": "Invalid",
+            "model_name": "example-model",
+            "generation_parameters": parameters,
+        },
+    )
+    assert response.status_code == 422
+    assert client.get(f"/v1/projects/{project_id}/candidates").json() == []
+
+
+# Freeze starter settings, explicit overrides, and unspecified values consistently.
+def test_candidate_generation_parameters_defaults_and_overrides(client: ApiClient) -> None:
+    project_id = str(create_project(client)["id"])
+    provider = create_provider(client, project_id)
+    default = {"temperature": None, "top_p": None, "top_k": None, "max_output_tokens": 1024}
+    unspecified = dict.fromkeys(default)
+    overrides = {"temperature": 0, "top_p": 0.9, "top_k": 40, "max_output_tokens": 2048}
+    for index, (provided, expected) in enumerate(
+        [(None, default), ({}, unspecified), (unspecified, unspecified), (overrides, overrides)]
+    ):
+        payload = {
+            "provider_id": provider["id"],
+            "name": f"Candidate {index}",
+            "model_name": "example-model",
+        }
+        if provided is not None:
+            payload["generation_parameters"] = provided
+        response = client.post(f"/v1/projects/{project_id}/candidates", json=payload)
+        assert response.status_code == 201
+        candidate = response.json()
+        assert candidate["generation_parameters"] == expected
+        assert client.get(
+            f"/v1/projects/{project_id}/candidates/{candidate['id']}"
+        ).json()["generation_parameters"] == expected

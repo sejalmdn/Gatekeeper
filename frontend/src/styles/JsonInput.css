@@ -1,0 +1,88 @@
+/* JSON editors share the form's surfaces and expose a compact formatting action. */
+.json-input__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.json-input__heading label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.json-input__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.json-input__format {
+  padding: 5px 10px;
+  font-size: 11px;
+}
+
+.json-input__editor {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.json-input__editor:hover {
+  border-color: var(--border-strong);
+}
+
+.json-input__editor:focus-within {
+  border-color: var(--accent);
+}
+
+.json-input__editor .cm-editor {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.json-input__editor .cm-editor.cm-focused {
+  outline: none;
+}
+
+.json-input__editor .cm-scroller {
+  min-height: 190px;
+  max-height: 440px;
+  overflow: auto;
+  font-family: var(--font-code);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.json-input__editor .cm-content {
+  padding: 10px 0;
+  caret-color: var(--accent);
+}
+
+.json-input__editor .cm-gutters {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.json-input__editor .cm-placeholder {
+  color: var(--muted);
+}
+
+.json-input__editor .cm-tooltip {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.json-input .json-input__keyboard {
+  margin: 8px 0 0;
+}
+
+.json-input__error {
+  margin: 8px 0 0;
+  color: var(--error);
+  font-size: 12px;
+}
