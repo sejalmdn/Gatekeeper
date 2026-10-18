@@ -248,6 +248,19 @@ class ExpectedCallsParameters(Contract):
     allow_additional_calls: bool = False
 
 
+# Serialize parameters with defaults while retaining explicit null assertion operands.
+def normalize_parameters(parameters: Contract) -> JsonObject:
+    normalized = parameters.model_dump(mode="json", by_alias=True, exclude_none=True)
+    if isinstance(parameters, FieldAssertion) and "value" in parameters.model_fields_set:
+        normalized["value"] = parameters.value
+    if isinstance(parameters, ExpectedCallsParameters):
+        normalized["expected"] = [
+            {"tool": call.tool, "fields": [normalize_parameters(field) for field in call.fields]}
+            for call in parameters.expected
+        ]
+    return normalized
+
+
 # Supported parameter contract lookup.
 PARAMETER_CONTRACTS: dict[RuleType, type[Contract]] = {
     RuleType.METRIC_LATENCY: LatencyParameters,
@@ -298,7 +311,7 @@ class RuleBindingCreate(Contract):
     parameters: JsonObject
     applies_to: list[ScenarioType] | None = None
 
-    # Validate scope and normalize parameters for the selected evaluator.
+    # Validate scope and normalize parameters while preserving explicit null operands.
     @model_validator(mode="after")
     def validate_binding(self) -> RuleBindingCreate:
         if self.scenario_id is None and not self.applies_to:
@@ -312,7 +325,7 @@ class RuleBindingCreate(Contract):
         ):
             raise ValueError("rule type does not support every applies_to scenario type")
         parsed = PARAMETER_CONTRACTS[self.rule_type].model_validate(self.parameters)
-        self.parameters = parsed.model_dump(mode="json", by_alias=True, exclude_none=True)
+        self.parameters = normalize_parameters(parsed)
         return self
 
 
@@ -321,3 +334,9 @@ class RuleBinding(RuleBindingCreate):
     id: UUID
     dataset_id: UUID
     created_at: datetime
+
+
+# Effective rule with its origin and the applicable default replaced by an override.
+class EffectiveRuleBinding(RuleBinding):
+    source: Literal["dataset", "scenario"]
+    overridden_rule_id: UUID | None = None

@@ -17,6 +17,23 @@ Dataset-level bindings apply defaults across mixed scenario types. Scenario bind
 expectations. Applicability is explicit; a missing required observation yields `cannot_evaluate`
 rather than pass.
 
+## Rule authoring and effective rules
+
+The dataset detail page has Scenarios and Rules tabs. Developers define a check and its binding
+in one form, either as a dataset default with explicit applicable scenario types or for one
+scenario. Type-specific forms cover deterministic rules; semantic judge authoring is not enabled.
+Saved rules can be inspected but cannot yet be edited, deleted, or executed through this UI.
+
+An applicable scenario binding with the same `rule_key` completely replaces the dataset default,
+including its parameters, role, and severity. Other applicable defaults remain inherited. A default
+that does not apply to the selected scenario type is never reported as overridden.
+
+`GET /v1/projects/{project_id}/datasets/{dataset_id}/scenarios/{scenario_id}/effective-rules`
+returns the resolved rules with `source` (`dataset` or `scenario`) and `overridden_rule_id` when
+an applicable default was replaced. The endpoint and future evaluation engine share a pure rule
+resolver. This inspection does not invoke a candidate or evaluator. Rule expectations remain
+separate from immutable scenario inputs, and explicit JSON null assertion operands survive storage.
+
 ## Phase 1 evaluator context
 
 ```text

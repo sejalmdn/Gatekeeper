@@ -1,4 +1,7 @@
 import type {
+  EffectiveRuleBinding,
+  RuleBinding,
+  RuleBindingCreate,
   Candidate,
   CandidateCreate,
   Dataset,
@@ -128,4 +131,44 @@ export const listScenarios = (
 ): Promise<Scenario[]> =>
   request<Scenario[]>(
     `/v1/projects/${projectId}/datasets/${datasetId}/scenarios`,
+  );
+
+// Private dataset rule configuration operations.
+export const listRuleBindings = (
+  projectId: string,
+  datasetId: string,
+): Promise<RuleBinding[]> =>
+  request<RuleBinding[]>(
+    `/v1/projects/${projectId}/datasets/${datasetId}/rule-bindings`,
+  );
+
+export const getRuleBinding = (
+  projectId: string,
+  datasetId: string,
+  ruleId: string,
+): Promise<RuleBinding> =>
+  request<RuleBinding>(
+    `/v1/projects/${projectId}/datasets/${datasetId}/rule-bindings/${ruleId}`,
+  );
+
+export const createRuleBinding = (
+  projectId: string,
+  datasetId: string,
+  payload: RuleBindingCreate,
+): Promise<RuleBinding> =>
+  request<RuleBinding>(
+    `/v1/projects/${projectId}/datasets/${datasetId}/rule-bindings`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+
+export const listEffectiveRules = (
+  projectId: string,
+  datasetId: string,
+  scenarioId: string,
+): Promise<EffectiveRuleBinding[]> =>
+  request<EffectiveRuleBinding[]>(
+    `/v1/projects/${projectId}/datasets/${datasetId}/scenarios/${scenarioId}/effective-rules`,
   );

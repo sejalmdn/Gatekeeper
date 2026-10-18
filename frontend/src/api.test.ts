@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  createRuleBinding,
+  listRuleBindings,
+  listEffectiveRules,
   createCandidate,
   createDataset,
   createProject,
@@ -125,4 +128,43 @@ describe("Gatekeeper API client", () => {
       expect.any(Object),
     );
   });
+});
+
+// Preserve binding scope and retrieve authoritative effective rules from the backend.
+it("creates rules and reads effective scenario bindings", async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(new Response("[]", { status: 200 }));
+  vi.stubGlobal("fetch", fetchMock);
+  try {
+    const payload = {
+      scenario_id: "scenario-1",
+      rule_key: "optional-null",
+      rule_type: "response.json_field" as const,
+      role: "required" as const,
+      severity: "medium" as const,
+      parameters: { path: "/optional", operator: "equals", value: null },
+      applies_to: null,
+    };
+    await createRuleBinding("project-1", "dataset-1", payload);
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      "/v1/projects/project-1/datasets/dataset-1/rule-bindings",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    );
+    await listRuleBindings("project-1", "dataset-1");
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      "/v1/projects/project-1/datasets/dataset-1/rule-bindings",
+      expect.any(Object),
+    );
+    await listEffectiveRules("project-1", "dataset-1", "scenario-1");
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      "/v1/projects/project-1/datasets/dataset-1/scenarios/scenario-1/effective-rules",
+      expect.any(Object),
+    );
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

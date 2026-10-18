@@ -5,7 +5,6 @@ import {
   Outlet,
   useLocation,
   useParams,
-  useSearchParams,
 } from "react-router-dom";
 import { getProject } from "../api";
 import { useLoad } from "../hooks/useLoad";
@@ -32,11 +31,9 @@ export function ProjectLayout(): ReactElement {
 function Workspace({ projectId }: { projectId: string }): ReactElement {
   const state = useLoad(() => getProject(projectId));
   const { pathname } = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
   const section = pathname.split("/")[3] ?? "";
   const label =
     NAVIGATION.find((item) => item.path === section)?.label ?? "Overview";
-  const isCollection = pathname.split("/").filter(Boolean).length <= 3;
   return (
     <LoadBoundary state={state}>
       {(project) => (
@@ -98,34 +95,6 @@ function Workspace({ projectId }: { projectId: string }): ReactElement {
                   {label}
                 </span>
               </nav>
-              <div className="workspace-tools">
-                {isCollection && (
-                  <label className="workspace-search">
-                    <Icon name="search" />
-                    <input
-                      type="search"
-                      aria-label={
-                        section
-                          ? `Search ${label.toLowerCase()}`
-                          : "Search project resources"
-                      }
-                      placeholder={
-                        section
-                          ? `Search ${label.toLowerCase()}…`
-                          : "Search project resources…"
-                      }
-                      value={searchParams.get("q") ?? ""}
-                      onChange={(event) => {
-                        const next = new URLSearchParams(searchParams);
-                        if (event.target.value) {
-                          next.set("q", event.target.value);
-                        } else next.delete("q");
-                        setSearchParams(next, { replace: true });
-                      }}
-                    />
-                  </label>
-                )}
-              </div>
             </header>
             <main
               id="workspace-content"

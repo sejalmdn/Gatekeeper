@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import type { LoadState } from "../hooks/useLoad";
 import { EmptyRecord, LoadBoundary } from "./Feedback";
 import { Icon } from "./Icon";
@@ -28,6 +28,9 @@ export function RecordList<T>({
   render,
   kind,
 }: RecordListProps<T>): ReactElement {
+  // Keeps list filters in the URL so searches survive navigation and refreshes.
+  const [searchParams, setSearchParams] = useSearchParams();
+
   return (
     <section className="page-content">
       <PageHeading
@@ -40,6 +43,24 @@ export function RecordList<T>({
           </Link>
         }
       />
+      <label className="record-list-search">
+        <Icon name="search" />
+        <input
+          type="search"
+          aria-label={`Search ${title.toLowerCase()}`}
+          placeholder={`Search ${title.toLowerCase()}…`}
+          value={searchParams.get("q") ?? ""}
+          onChange={(event) => {
+            const next = new URLSearchParams(searchParams);
+            if (event.target.value) {
+              next.set("q", event.target.value);
+            } else {
+              next.delete("q");
+            }
+            setSearchParams(next, { replace: true });
+          }}
+        />
+      </label>
       <div className="record-list">
         <div className="record-list-header">
           <h2>

@@ -1,0 +1,100 @@
+/* Rule conditions and their binding scope share the existing dataset visual language. */
+.rule-form__section,
+.rule-form__parameters,
+.rule-form__assertion,
+.rule-form__calls,
+.rule-form__call,
+.rule-form__list,
+.dataset-rules__list {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.rule-form fieldset {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  padding: 20px;
+}
+
+.rule-form legend {
+  padding: 0 8px;
+  font-weight: 600;
+}
+
+.rule-form__check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rule-form__check input {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.rule-form__list-row,
+.rule-form__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rule-form__list-row input {
+  min-width: 0;
+  flex: 1;
+}
+
+.rule-form__preview,
+.dataset-rules__rule {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  padding: 20px;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+
+.rule-form__preview {
+  border-left: 3px solid var(--accent);
+}
+
+.rule-form__preview p,
+.dataset-rules__rule p {
+  margin: 12px 0;
+}
+
+.dataset-rules > .section-title,
+.dataset-rules > .form-field {
+  margin-bottom: 20px;
+}
+
+.dataset-rules__origin {
+  color: var(--muted);
+}
+
+.dataset-rules__rule summary {
+  cursor: pointer;
+}
+
+.dataset-rules__tabs {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.dataset-rules__tabs [aria-current="page"] {
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
+
+@media (max-width: 600px) {
+  .rule-form fieldset {
+    padding: 12px;
+  }
+
+  .rule-form__actions,
+  .dataset-rules > .section-title {
+    flex-wrap: wrap;
+  }
+}

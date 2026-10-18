@@ -79,3 +79,44 @@ export interface DatasetCreate {
   description: string | null;
   scenarios: ScenarioCreate[];
 }
+
+// Built-in checks available through the rule-binding contract.
+export type RuleType =
+  | "metric.latency"
+  | "metric.tokens"
+  | "metric.cost"
+  | "response.required_text"
+  | "response.forbidden_text"
+  | "response.regex"
+  | "response.json_valid"
+  | "response.json_schema"
+  | "response.json_field"
+  | "response.length"
+  | "judge.rubric"
+  | "tool.selection"
+  | "tool.argument_field"
+  | "tool.expected_calls";
+
+// Private rule configuration and its dataset or scenario scope.
+export interface RuleBindingCreate {
+  scenario_id: string | null;
+  rule_key: string;
+  rule_type: RuleType;
+  role: "required" | "scored" | "informational";
+  severity: "critical" | "high" | "medium" | "low";
+  parameters: JsonObject;
+  applies_to: ScenarioType[] | null;
+}
+
+// Persisted private rule definition.
+export interface RuleBinding extends RuleBindingCreate {
+  id: string;
+  dataset_id: string;
+  created_at: string;
+}
+
+// Resolved rule origin and replacement information for scenario inspection.
+export interface EffectiveRuleBinding extends RuleBinding {
+  source: "dataset" | "scenario";
+  overridden_rule_id: string | null;
+}

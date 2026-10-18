@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { getDataset, listDatasets, listScenarios } from "../api";
+import { DatasetRules } from "../components/DatasetRules";
 import { DatasetScenarioList } from "../components/DatasetScenarioList";
 import { LoadBoundary } from "../components/Feedback";
 import { RecordDetails } from "../components/RecordDetails";
@@ -36,6 +37,10 @@ export function DatasetDetail(): ReactElement {
   // Reads the project and dataset scopes for immutable detail requests.
   const { projectId = "", recordId = "" } = useParams();
 
+  // Keeps the selected dataset section addressable without changing its inputs.
+  const [searchParams] = useSearchParams();
+  const rulesSelected = searchParams.get("tab") === "rules";
+
   // Loads immutable dataset metadata and scenarios for inspection together.
   const state = useLoad(async () => ({
     dataset: await getDataset(projectId, recordId),
@@ -51,7 +56,32 @@ export function DatasetDetail(): ReactElement {
           backLabel="Back to datasets"
           createdAt={dataset.created_at}
         >
-          <DatasetScenarioList scenarios={scenarios} />
+          <nav className="dataset-rules__tabs" aria-label="Dataset sections">
+            <Link
+              to="?tab=scenarios"
+              aria-current={!rulesSelected ? "page" : undefined}
+            >
+              Scenarios
+            </Link>
+            <Link
+              to="?tab=rules"
+              aria-current={rulesSelected ? "page" : undefined}
+            >
+              Rules
+            </Link>
+          </nav>
+          {rulesSelected ? (
+            <DatasetRules
+              projectId={projectId}
+              datasetId={recordId}
+              scenarios={scenarios}
+            />
+          ) : (
+            <DatasetScenarioList
+              scenarios={scenarios}
+              ruleCreatePath={`/projects/${projectId}/datasets/${recordId}/rules/new`}
+            />
+          )}
         </RecordDetails>
       )}
     </LoadBoundary>

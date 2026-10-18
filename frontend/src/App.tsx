@@ -6,6 +6,7 @@ import {
   CandidateForm,
   CandidatesPage,
 } from "./pages/Candidates";
+import { RuleForm } from "./pages/RuleForm";
 import { DatasetForm } from "./pages/DatasetForm";
 import { DatasetDetail, DatasetsPage } from "./pages/Datasets";
 import { OverviewPage } from "./pages/OverviewPage";
@@ -28,6 +29,7 @@ export default function App(): ReactElement {
           <Route path="candidates/:recordId" element={<CandidateDetail />} />
           <Route path="datasets" element={<DatasetsPage />} />
           <Route path="datasets/new" element={<DatasetForm />} />
+          <Route path="datasets/:recordId/rules/new" element={<RuleForm />} />
           <Route path="datasets/:recordId" element={<DatasetDetail />} />
         </Route>
         <Route path="*" element={<ProjectsPage />} />

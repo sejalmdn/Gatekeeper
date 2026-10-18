@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { Link } from "react-router-dom";
 import type { Scenario } from "../types";
 import { JsonBlock } from "./RecordData";
 import "../styles/DatasetScenarioList.css";
@@ -6,8 +7,10 @@ import "../styles/DatasetScenarioList.css";
 // Shows the immutable scenarios stored with a dataset.
 export function DatasetScenarioList({
   scenarios,
+  ruleCreatePath,
 }: {
   scenarios: Scenario[];
+  ruleCreatePath?: string;
 }): ReactElement {
   return (
     <section className="dataset-scenarios detail-section">
@@ -33,6 +36,14 @@ export function DatasetScenarioList({
               </div>
               <p>{scenario.scenario_key}</p>
               <JsonBlock value={scenario.input} />
+              {ruleCreatePath && (
+                <Link
+                  className="quiet-link"
+                  to={`${ruleCreatePath}?scenario=${scenario.id}`}
+                >
+                  Add rule
+                </Link>
+              )}
             </article>
           ))}
         </div>

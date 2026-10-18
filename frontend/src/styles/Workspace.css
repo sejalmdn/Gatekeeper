@@ -158,31 +158,6 @@
 .workspace-breadcrumb > span:not(.badge) {
   color: var(--subtle);
 }
-.workspace-tools {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.workspace-search {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.workspace-search > .icon {
-  position: absolute;
-  left: 10px;
-  width: 14px;
-  color: var(--muted);
-}
-.workspace-search input {
-  width: 240px;
-  padding: 8px 10px 8px 32px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface-raised);
-  color: var(--text);
-  font-size: 10px;
-}
 .workspace-content {
   max-width: 1660px;
   margin: auto;
