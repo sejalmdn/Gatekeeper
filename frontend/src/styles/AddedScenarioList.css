@@ -1,4 +1,4 @@
-/* Added scenarios stay compact while preserving full read-only inspection. */
+/* Scenario summaries open into a transcript with a distinct new-message boundary. */
 .added-scenarios {
   min-width: 0;
   border: 1px solid var(--border-strong);
@@ -8,26 +8,64 @@
 }
 
 .added-scenarios__heading {
-  padding: 16px;
+  padding: 20px 22px;
   border-bottom: 1px solid var(--border);
 }
 
 .added-scenarios__heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0;
 }
 
+.added-scenarios__count {
+  min-width: 24px;
+  padding: 1px 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-family: var(--font-code);
+  font-size: 11px;
+  text-align: center;
+}
+
+.added-scenarios__heading p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .added-scenarios__scroll {
-  min-height: 280px;
-  max-height: clamp(430px, calc(100vh - 320px), 680px);
+  max-height: 720px;
   overflow-y: auto;
   scrollbar-color: var(--border-strong) var(--surface);
 }
 
 .added-scenarios__empty {
-  margin: 0;
-  padding: 30px 18px;
-  color: var(--muted);
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 36px 22px;
   text-align: center;
+}
+
+.added-scenarios__empty > .icon {
+  width: 24px;
+  height: 24px;
+  color: var(--subtle);
+}
+
+.added-scenarios__empty strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.added-scenarios__empty p {
+  max-width: 50ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
 }
 
 .added-scenarios__list {
@@ -36,37 +74,28 @@
   list-style: none;
 }
 
-.added-scenarios__list > li {
-  border-bottom: 1px solid var(--border);
-}
-
-.added-scenarios__list > li:last-child {
-  border-bottom: 0;
+.added-scenarios__item + .added-scenarios__item {
+  border-top: 1px solid var(--border);
 }
 
 .added-scenarios__row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 24px;
+  gap: 20px;
   width: 100%;
-  min-height: 46px;
-  padding: 10px 13px;
+  padding: 20px 22px;
   border: 0;
   border-radius: 0;
   background: transparent;
   color: var(--text);
+  font-weight: 400;
   text-align: left;
 }
 
 .added-scenarios__row:hover,
 .added-scenarios__row[aria-expanded="true"] {
-  background: var(--surface-hover);
+  background: var(--surface-raised);
   color: var(--text);
-}
-
-.added-scenarios__row[aria-expanded="true"] {
-  box-shadow: inset 3px 0 0 var(--cyan);
 }
 
 .added-scenarios__row:focus-visible {
@@ -75,97 +104,204 @@
   outline-offset: -3px;
 }
 
-.added-scenarios__row span:first-child {
+.added-scenarios__summary {
+  display: grid;
   min-width: 0;
-  overflow-wrap: anywhere;
-  font-family: var(--font-display);
-  font-weight: 700;
+  gap: 8px;
 }
 
-.added-scenarios__row span:last-child {
-  color: var(--cyan);
+.added-scenarios__identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.added-scenarios__identity strong {
+  overflow-wrap: anywhere;
+  font-family: var(--font-display);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.added-scenarios__type {
+  padding: 2px 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  color: var(--muted);
   font-size: 10px;
   white-space: nowrap;
 }
 
-.added-scenarios__details {
-  padding: 13px 15px 15px;
-  border-top: 1px solid var(--border);
-  background: var(--surface-raised);
-}
-
-.added-scenarios__details dl {
-  display: grid;
-  gap: 12px;
-  margin: 0;
-}
-
-.added-scenarios__details dl > div {
-  display: grid;
-  gap: 3px;
-}
-
-.added-scenarios__details dt {
+.added-scenarios__metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
   color: var(--subtle);
   font-size: 10px;
 }
 
-.added-scenarios__details dd {
-  margin: 0;
+.added-scenarios__metadata code {
+  color: var(--cyan);
+  font-family: var(--font-code);
+  overflow-wrap: anywhere;
+}
+
+.added-scenarios__preview {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.8;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
-.added-scenarios__history {
+.added-scenarios__disclosure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtle);
+}
+
+.added-scenarios__row[aria-expanded="true"] .added-scenarios__disclosure .icon {
+  transform: rotate(90deg);
+}
+
+.added-scenarios__details {
+  padding: 4px 22px 20px;
+  background: var(--surface-raised);
+}
+
+.added-scenarios__details h3 {
+  margin: 0;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+  color: var(--subtle);
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.added-scenarios__conversation {
   display: grid;
-  gap: 8px;
-  margin: 2px 0 0;
+  gap: 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.added-scenarios__history li {
+.added-scenarios__message {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  gap: 8px;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 20px;
+  padding: 16px 18px;
+  border-left: 2px solid var(--border-strong);
 }
 
-.added-scenarios__history strong {
-  color: var(--cyan);
-  font-size: 10px;
+.added-scenarios__message + .added-scenarios__message {
+  border-top: 1px solid var(--border);
+}
+
+.added-scenarios__message-label {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.added-scenarios__message-label strong {
   font-weight: 500;
+}
+
+.added-scenarios__message-label span {
+  color: var(--subtle);
+  font-size: 10px;
+}
+
+.added-scenarios__message p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.added-scenarios__message--current {
+  border-left-color: var(--cyan);
+  background: var(--cyan-soft);
+}
+
+.added-scenarios__message--current .added-scenarios__message-label strong {
+  color: var(--cyan);
+}
+
+.added-scenarios__message--current p {
+  color: var(--text);
+}
+
+.added-scenarios__footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
 }
 
 .added-scenarios__confirmation {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+  gap: 10px;
   color: var(--muted);
+  font-size: 11px;
 }
 
 .added-scenarios__remove {
-  margin-top: 16px;
-  color: var(--error);
+  color: var(--muted);
 }
 
 .added-scenarios__confirmation button,
 .added-scenarios__remove {
   min-height: 32px;
-  padding: 5px 9px;
+  padding: 5px 10px;
 }
 
 .added-scenarios__confirm {
-  border-color: rgb(248 113 113 / 35%);
-  background: rgb(248 113 113 / 10%);
+  border-color: var(--error);
+  background: transparent;
   color: var(--error);
 }
 
 .added-scenarios__confirm:hover {
-  background: rgb(248 113 113 / 18%);
-  color: var(--error);
+  background: var(--error);
+  color: var(--canvas);
+}
+
+@media (max-width: 640px) {
+  .added-scenarios__row {
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .added-scenarios__heading,
+  .added-scenarios__details {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .added-scenarios__message {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .added-scenarios__message-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
 }

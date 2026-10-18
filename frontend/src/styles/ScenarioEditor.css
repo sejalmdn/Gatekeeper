@@ -15,15 +15,33 @@
   gap: 16px;
 }
 
-.scenario-editor__heading h2,
-.scenario-editor__heading p {
+.scenario-editor__heading h2 {
   margin: 0;
 }
 
-.scenario-editor__heading p {
-  max-width: 62ch;
+.scenario-editor__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--muted);
-  text-align: right;
+}
+
+.scenario-editor__toggle:hover {
+  background: transparent;
+  color: var(--text);
+}
+
+.scenario-editor__toggle .icon {
+  transform: rotate(90deg);
+}
+
+.scenario-editor__toggle[aria-expanded="true"] .icon {
+  transform: rotate(-90deg);
 }
 
 .scenario-editor__fields {

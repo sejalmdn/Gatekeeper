@@ -50,8 +50,7 @@ function Workspace({ projectId }: { projectId: string }): ReactElement {
             </div>
             <Link className="workspace-project" to="/" title="Switch project">
               <Icon name="folder" />
-              <span>{project.name}</span>
-              <Icon name="chevron" />
+              <span title={project.name}>{project.name}</span>
             </Link>
             <div className="workspace-nav-label">Navigation</div>
             <nav className="workspace-nav" aria-label="Project navigation">
@@ -126,10 +125,6 @@ function Workspace({ projectId }: { projectId: string }): ReactElement {
                     />
                   </label>
                 )}
-                <span className="workspace-mode">
-                  <Icon name="lock" />
-                  Control plane
-                </span>
               </div>
             </header>
             <main

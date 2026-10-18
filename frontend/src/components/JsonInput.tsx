@@ -16,6 +16,7 @@ interface JsonInputProps {
   placeholder?: string;
   required?: boolean;
   actions?: ReactNode;
+  disabled?: boolean;
 }
 
 // Edits JSON with syntax feedback, accessible labels, and optional explicit formatting.
@@ -28,6 +29,7 @@ export function JsonInput({
   placeholder,
   required = true,
   actions,
+  disabled = false,
 }: JsonInputProps): ReactElement {
   const error = jsonInputError(value, required);
   const invalid = error !== undefined;
@@ -49,15 +51,16 @@ export function JsonInput({
         "aria-describedby": `${id}-help ${id}-keyboard${invalid ? ` ${id}-error` : ""}`,
         "aria-required": String(required),
         "aria-invalid": String(invalid),
+        "aria-disabled": String(disabled),
         spellcheck: "false",
       }),
     ],
-    [id, required, invalid],
+    [id, required, invalid, disabled],
   );
 
   // Formats only complete JSON on request, leaving invalid or unfinished input untouched.
   function formatJson(): void {
-    if (invalid || !value.trim()) return;
+    if (disabled || invalid || !value.trim()) return;
     onChange(JSON.stringify(JSON.parse(value), null, 2));
   }
 
@@ -73,7 +76,7 @@ export function JsonInput({
             className="quiet-button json-input__format"
             type="button"
             onClick={formatJson}
-            disabled={invalid || !value.trim()}
+            disabled={disabled || invalid || !value.trim()}
             aria-label={`Format JSON for ${label}`}
           >
             Format JSON
@@ -87,6 +90,8 @@ export function JsonInput({
         onChange={onChange}
         extensions={extensions}
         theme="dark"
+        editable={!disabled}
+        readOnly={disabled}
         placeholder={placeholder}
         indentWithTab={false}
         basicSetup={{

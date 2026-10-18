@@ -3,6 +3,7 @@ import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { EditorView } from "@codemirror/view";
 import { insertNewlineAndIndent } from "@codemirror/commands";
+import { EditorState } from "@codemirror/state";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { JsonInput } from "./JsonInput";
 
@@ -10,9 +11,11 @@ import { JsonInput } from "./JsonInput";
 function EditorForm({
   initialValue,
   required = true,
+  disabled = false,
 }: {
   initialValue: string;
   required?: boolean;
+  disabled?: boolean;
 }) {
   // Retains edits so errors and formatting follow the current document.
   const [value, setValue] = useState(initialValue);
@@ -26,6 +29,7 @@ function EditorForm({
         value={value}
         onChange={setValue}
         required={required}
+        disabled={disabled}
       />
     </form>
   );
@@ -143,6 +147,25 @@ describe("JSON input", () => {
       insertNewlineAndIndent(view);
     });
     expect(view.state.doc.toString()).toBe("{\n  \n}");
+  });
+
+  // Lock both typing and formatting during a pending dataset save, then restore editing.
+  it("preserves JSON and disables editing while saving", async () => {
+    const initialValue = '[{"role":"user","content":"Order 123"}]';
+    await act(async () =>
+      root.render(<EditorForm initialValue={initialValue} disabled />),
+    );
+    expect(editor().state.facet(EditorState.readOnly)).toBe(true);
+    expect(editor().contentDOM.getAttribute("contenteditable")).toBe("false");
+    expect(formatButton().disabled).toBe(true);
+    expect(editor().state.doc.toString()).toBe(initialValue);
+
+    await act(async () =>
+      root.render(<EditorForm initialValue={initialValue} />),
+    );
+    expect(editor().state.facet(EditorState.readOnly)).toBe(false);
+    expect(formatButton().disabled).toBe(false);
+    expect(editor().state.doc.toString()).toBe(initialValue);
   });
 
   // Required and optional blank editors retain distinct validity states.

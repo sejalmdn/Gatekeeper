@@ -9,7 +9,7 @@
 
 .dataset-form__workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 18px;
 }
@@ -45,12 +45,3 @@
   font-family: var(--font-display);
 }
 
-@media (max-width: 1320px) {
-  .dataset-form__workspace {
-    grid-template-columns: 1fr;
-  }
-
-  .added-scenarios__scroll {
-    max-height: 390px;
-  }
-}

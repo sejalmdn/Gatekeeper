@@ -100,6 +100,7 @@ Goal: readability. ESLint enforces TypeScript, React Hooks, and selected layout 
 - No inline styles. Styles live in `styles/`, with class names prefixed by the component name.
 - Define component props in a named interface immediately above the component when there are five
   or more fields. Inline object types are acceptable for fewer than five fields. Do not use `any`.
+- After defining a block in css, add a new line break before adding another block.
 
 ### Comments
 

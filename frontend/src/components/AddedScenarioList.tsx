@@ -1,5 +1,6 @@
 import { useId, useState, type ReactElement } from "react";
 import type { JsonObject, ScenarioCreate, ScenarioType } from "../types";
+import { Icon } from "./Icon";
 import "../styles/AddedScenarioList.css";
 
 interface AddedScenarioListProps {
@@ -50,7 +51,7 @@ function historyFor(input: JsonObject): HistoryMessage[] {
   });
 }
 
-// Shows added scenarios with one read-only detail row expanded at a time.
+// Shows scenario summaries and their ordered input conversations for review.
 export function AddedScenarioList({
   scenarios,
   disabled,
@@ -81,13 +82,24 @@ export function AddedScenarioList({
   return (
     <section className="added-scenarios" aria-labelledby={`${listId}-title`}>
       <div className="added-scenarios__heading">
-        <h2 id={`${listId}-title`}>Added scenarios</h2>
+        <div>
+          <h2 id={`${listId}-title`}>
+            Added scenarios
+            <span className="added-scenarios__count">{scenarios.length}</span>
+          </h2>
+          <p>Review each input before creating the dataset.</p>
+        </div>
       </div>
-      <div className="added-scenarios__scroll" aria-live="polite">
+      <div className="added-scenarios__scroll">
         {scenarios.length === 0 ? (
-          <p className="added-scenarios__empty">
-            Added scenarios will appear here.
-          </p>
+          <div className="added-scenarios__empty">
+            <Icon name="dataset" />
+            <strong>No scenarios added yet</strong>
+            <p>
+              Complete the form above and select Add scenario to start your
+              dataset.
+            </p>
+          </div>
         ) : (
           <ul className="added-scenarios__list">
             {scenarios.map((scenario, index) => {
@@ -99,7 +111,10 @@ export function AddedScenarioList({
                   ? scenario.input.user_message
                   : "";
               return (
-                <li key={`${scenario.scenario_key}-${index}`}>
+                <li
+                  className="added-scenarios__item"
+                  key={`${scenario.scenario_key}-${index}`}
+                >
                   <button
                     className="added-scenarios__row"
                     type="button"
@@ -108,70 +123,87 @@ export function AddedScenarioList({
                     aria-controls={detailsId}
                     disabled={disabled}
                   >
-                    <span>{scenario.scenario_key}</span>
-                    <span>{formatScenarioType(scenario.scenario_type)}</span>
+                    <span className="added-scenarios__summary">
+                      <span className="added-scenarios__identity">
+                        <strong>{scenario.name}</strong>
+                        <span className="added-scenarios__type">
+                          {formatScenarioType(scenario.scenario_type)}
+                        </span>
+                      </span>
+                      <span className="added-scenarios__metadata">
+                        <code>{scenario.scenario_key}</code>
+                        <span>
+                          {history.length > 0
+                            ? `${history.length} earlier ${history.length === 1 ? "message" : "messages"}`
+                            : "No conversation history"}
+                        </span>
+                      </span>
+                      <span className="added-scenarios__preview">
+                        {userMessage}
+                      </span>
+                    </span>
+                    <span className="added-scenarios__disclosure">
+                      <Icon name="chevron" />
+                    </span>
                   </button>
                   {expanded && (
                     <div className="added-scenarios__details" id={detailsId}>
-                      <dl>
-                        <div>
-                          <dt>Name</dt>
-                          <dd>{scenario.name}</dd>
-                        </div>
-                        <div>
-                          <dt>User message</dt>
-                          <dd>{userMessage}</dd>
-                        </div>
-                        {history.length > 0 && (
-                          <div>
-                            <dt>Conversation history</dt>
-                            <dd>
-                              <ol className="added-scenarios__history">
-                                {history.map((message, messageIndex) => (
-                                  <li key={`${message.role}-${messageIndex}`}>
-                                    <strong>
-                                      {message.role === "user"
-                                        ? "User"
-                                        : "Assistant"}
-                                    </strong>
-                                    <span>{message.content}</span>
-                                  </li>
-                                ))}
-                              </ol>
-                            </dd>
+                      <h3>Conversation input</h3>
+                      <ol className="added-scenarios__conversation">
+                        {history.map((message, messageIndex) => (
+                          <li
+                            className="added-scenarios__message"
+                            key={`${message.role}-${messageIndex}`}
+                          >
+                            <div className="added-scenarios__message-label">
+                              <strong>
+                                {message.role === "user" ? "User" : "Assistant"}
+                              </strong>
+                              <span>History</span>
+                            </div>
+                            <p>{message.content}</p>
+                          </li>
+                        ))}
+                        <li className="added-scenarios__message added-scenarios__message--current">
+                          <div className="added-scenarios__message-label">
+                            <strong>User</strong>
+                            <span>New message</span>
                           </div>
+                          <p>{userMessage}</p>
+                        </li>
+                      </ol>
+                      <div className="added-scenarios__footer">
+                        {confirmingIndex === index ? (
+                          <div className="added-scenarios__confirmation">
+                            <span>Remove this scenario?</span>
+                            <button
+                              className="quiet-button"
+                              type="button"
+                              onClick={() => setConfirmingIndex(null)}
+                              disabled={disabled}
+                            >
+                              Keep
+                            </button>
+                            <button
+                              className="added-scenarios__confirm"
+                              type="button"
+                              onClick={() => confirmRemoval(index)}
+                              disabled={disabled}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            className="quiet-button added-scenarios__remove"
+                            type="button"
+                            onClick={() => setConfirmingIndex(index)}
+                            disabled={disabled}
+                          >
+                            Remove scenario
+                          </button>
                         )}
-                      </dl>
-                      {confirmingIndex === index ? (
-                        <div className="added-scenarios__confirmation">
-                          <span>Remove this scenario?</span>
-                          <button
-                            className="quiet-button"
-                            type="button"
-                            onClick={() => setConfirmingIndex(null)}
-                            disabled={disabled}
-                          >
-                            Keep
-                          </button>
-                          <button
-                            className="added-scenarios__confirm"
-                            type="button"
-                            onClick={() => confirmRemoval(index)}
-                            disabled={disabled}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          className="quiet-button added-scenarios__remove"
-                          type="button"
-                          onClick={() => setConfirmingIndex(index)}
-                          disabled={disabled}
-                        >
-                          Remove scenario
-                        </button>
-                      )}
+                      </div>
                     </div>
                   )}
                 </li>

@@ -36,10 +36,6 @@ export function ProjectsPage(): ReactElement {
     <div className="projects-shell hud-grid">
       <header className="projects-header">
         <Brand />
-        <span className="badge badge-cyan">
-          <Icon name="lock" />
-          Control plane
-        </span>
       </header>
       <main className="projects-page">
         <PageHeading
