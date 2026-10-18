@@ -2,9 +2,9 @@
 .scenario-editor {
   min-width: 0;
   padding: 22px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius-panel);
-  background: var(--surface-raised);
+  background: var(--surface);
 }
 
 .scenario-editor__heading,
@@ -13,6 +13,16 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .scenario-editor__fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .scenario-editor .json-input__heading {
+    flex-wrap: wrap;
+  }
 }
 
 .scenario-editor__heading h2 {

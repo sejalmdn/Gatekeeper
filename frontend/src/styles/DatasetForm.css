@@ -30,7 +30,7 @@
   margin: 0 -22px -22px;
   padding: 14px 22px;
   border-top-color: var(--border-strong);
-  background: rgb(14 15 19 / 97%);
+  background: var(--surface);
   box-shadow: 0 -12px 24px rgb(0 0 0 / 24%);
   backdrop-filter: blur(10px);
 }
