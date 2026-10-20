@@ -5,6 +5,21 @@ import { RuleAssertionFields } from "./RuleAssertionFields";
 import { RuleExpectedCalls } from "./RuleExpectedCalls";
 import { RuleTextList } from "./RuleTextList";
 
+const OPTION_LABELS: Record<string, string> = {
+  all: "All listed text",
+  any: "Any listed text",
+  search: "Find anywhere in the response",
+  fullmatch: "Match the entire response",
+  characters: "Characters",
+  words: "Words",
+};
+
+const REGEX_FLAGS: { value: string; label: string }[] = [
+  { value: "IGNORECASE", label: "Ignore uppercase and lowercase differences" },
+  { value: "MULTILINE", label: "Treat each line as a separate line" },
+  { value: "DOTALL", label: "Allow a dot to match line breaks" },
+];
+
 // Renders type-specific parameters using text, numeric, list, and structured-value controls.
 export function RuleParameterFields({
   definition,
@@ -23,7 +38,10 @@ export function RuleParameterFields({
         const id = `rule-param-${field.key}`;
         if (field.kind === "list") {
           return (
-            <div key={field.key}>
+            <div
+              className="rule-form__parameter rule-form__parameter--wide"
+              key={field.key}
+            >
               {field.key === "allowed" && (
                 <label className="rule-form__check">
                   <input
@@ -67,7 +85,10 @@ export function RuleParameterFields({
         }
         if (field.kind === "checkbox") {
           return (
-            <label className="rule-form__check" key={field.key}>
+            <label
+              className="rule-form__check rule-form__parameter rule-form__parameter--wide"
+              key={field.key}
+            >
               <input
                 id={id}
                 type="checkbox"
@@ -88,27 +109,35 @@ export function RuleParameterFields({
         }
         if (field.kind === "json") {
           return (
-            <JsonInput
+            <div
+              className="rule-form__parameter rule-form__parameter--wide"
               key={field.key}
-              disabled={disabled}
-              id={id}
-              label={field.label}
-              help="Enter the schema as a JSON object."
-              value={draft.fields[field.key] ?? ""}
-              onChange={(value) =>
-                onChange({
-                  ...draft,
-                  fields: {
-                    ...draft.fields,
-                    [field.key]: value,
-                  },
-                })
-              }
-            />
+            >
+              <JsonInput
+                disabled={disabled}
+                id={id}
+                label={field.label}
+                help="Enter the schema as a JSON object."
+                value={draft.fields[field.key] ?? ""}
+                onChange={(value) =>
+                  onChange({
+                    ...draft,
+                    fields: {
+                      ...draft.fields,
+                      [field.key]: value,
+                    },
+                  })
+                }
+              />
+            </div>
           );
         }
         return (
-          <label className="form-field" htmlFor={id} key={field.key}>
+          <label
+            className="form-field rule-form__parameter"
+            htmlFor={id}
+            key={field.key}
+          >
             <span>
               {field.label}
               {field.optional && " (optional)"}
@@ -128,7 +157,9 @@ export function RuleParameterFields({
                 }
               >
                 {field.options?.map((option) => (
-                  <option key={option}>{option}</option>
+                  <option key={option} value={option}>
+                    {OPTION_LABELS[option] ?? option}
+                  </option>
                 ))}
               </select>
             ) : (
@@ -154,56 +185,62 @@ export function RuleParameterFields({
         );
       })}
       {definition.type === "response.regex" && (
-        <fieldset>
-          <legend>Regex flags</legend>
-          {["IGNORECASE", "MULTILINE", "DOTALL"].map((flag) => (
-            <label className="rule-form__check" key={flag}>
+        <fieldset className="rule-form__parameter--wide">
+          <legend>Pattern options</legend>
+          {REGEX_FLAGS.map((flag) => (
+            <label className="rule-form__check" key={flag.value}>
               <input
                 type="checkbox"
-                checked={draft.checks[flag] ?? false}
+                checked={draft.checks[flag.value] ?? false}
                 onChange={(event) =>
                   onChange({
                     ...draft,
                     checks: {
                       ...draft.checks,
-                      [flag]: event.target.checked,
+                      [flag.value]: event.target.checked,
                     },
                   })
                 }
               />
-              {flag}
+              {flag.label}
             </label>
           ))}
         </fieldset>
       )}
       {(definition.type === "response.json_field" ||
         definition.type === "tool.argument_field") && (
-        <RuleAssertionFields
-          disabled={disabled}
-          id="rule-assertion"
-          value={draft.assertion}
-          onChange={(assertion) =>
-            onChange({
-              ...draft,
-              assertion,
-            })
-          }
-        />
+        <div className="rule-form__parameter--wide">
+          <RuleAssertionFields
+            disabled={disabled}
+            id="rule-assertion"
+            value={draft.assertion}
+            onChange={(assertion) =>
+              onChange({
+                ...draft,
+                assertion,
+              })
+            }
+          />
+        </div>
       )}
       {definition.type === "tool.expected_calls" && (
-        <RuleExpectedCalls
-          disabled={disabled}
-          calls={draft.calls}
-          onChange={(calls) =>
-            onChange({
-              ...draft,
-              calls,
-            })
-          }
-        />
+        <div className="rule-form__parameter--wide">
+          <RuleExpectedCalls
+            disabled={disabled}
+            calls={draft.calls}
+            onChange={(calls) =>
+              onChange({
+                ...draft,
+                calls,
+              })
+            }
+          />
+        </div>
       )}
       {definition.type === "response.json_valid" && (
-        <p>This check requires no parameters.</p>
+        <p className="rule-form__parameter--wide">
+          This check requires no parameters.
+        </p>
       )}
     </div>
   );

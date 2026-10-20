@@ -1,77 +1,75 @@
 import { useState, type ReactElement } from "react";
-import { Link } from "react-router-dom";
-import { listRuleBindings } from "../api";
-import { useLoad } from "../hooks/useLoad";
-import type { Scenario } from "../types";
-import { EffectiveRules } from "./EffectiveRules";
-import { LoadBoundary } from "./Feedback";
-import { RuleBindingList } from "./RuleBindingList";
+import { Link, useSearchParams } from "react-router-dom";
+import type { Dataset, Scenario } from "../types";
+import { DatasetRuleView } from "./DatasetRuleView";
 import "../styles/RuleForm.css";
 
-// Lists private dataset rules and lets developers inspect each scenario's effective conditions.
+interface DatasetRulesProps {
+  projectId: string;
+  dataset: Dataset;
+  scenarios: Scenario[];
+}
+
+// Makes the dataset rule area the single place to inspect and create rules.
 export function DatasetRules({
   projectId,
-  datasetId,
+  dataset,
   scenarios,
-}: {
-  projectId: string;
-  datasetId: string;
-  scenarios: Scenario[];
-}): ReactElement {
-  // Selects either all saved bindings or one scenario's resolved rule set.
-  const [scenarioId, setScenarioId] = useState("");
+}: DatasetRulesProps): ReactElement {
+  // Keeps the inspect/add mode addressable in the dataset URL.
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Reads saved rules independently from immutable dataset inputs.
-  const state = useLoad(() => listRuleBindings(projectId, datasetId));
-  const createPath = `/projects/${projectId}/datasets/${datasetId}/rules/new`;
+  // Forces authoritative inspection data to reload after a successful save.
+  const [inspectionRevision, setInspectionRevision] = useState(0);
+  const mode = searchParams.get("view") === "add" ? "add" : "inspect";
+  const initialScenarioId = searchParams.get("scenario") ?? "";
+
+  // Returns to inspection while preserving the dataset's outer rule tab.
+  function showInspector(): void {
+    setSearchParams({ tab: "rules", view: "inspect" });
+  }
+
+  // Reloads saved bindings before showing the inspection view.
+  function finishSave(): void {
+    setInspectionRevision((current) => current + 1);
+    showInspector();
+  }
 
   return (
     <section className="dataset-rules detail-section">
       <div className="section-title">
         <div>
-          <h2>Rules</h2>
+          <h2>Evaluation rules</h2>
           <p>
             Private expectations used to evaluate candidate responses and tool
             requests.
           </p>
         </div>
+      </div>
+      <nav className="dataset-rules__inner-tabs" aria-label="Evaluation rules">
         <Link
-          className="button"
-          to={scenarioId ? `${createPath}?scenario=${scenarioId}` : createPath}
+          to="?tab=rules&view=inspect"
+          aria-current={mode === "inspect" ? "page" : undefined}
+        >
+          Inspect rules
+        </Link>
+        <Link
+          to="?tab=rules&view=add"
+          aria-current={mode === "add" ? "page" : undefined}
         >
           Add rule
         </Link>
-      </div>
-      <label className="form-field" htmlFor="rules-scenario">
-        <span>Inspect rules</span>
-        <select
-          id="rules-scenario"
-          value={scenarioId}
-          onChange={(event) => setScenarioId(event.target.value)}
-        >
-          <option value="">All saved bindings</option>
-          {scenarios.map((scenario) => (
-            <option key={scenario.id} value={scenario.id}>
-              Effective rules: {scenario.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      {scenarioId ? (
-        <EffectiveRules
-          key={scenarioId}
-          projectId={projectId}
-          datasetId={datasetId}
-          scenarioId={scenarioId}
-          scenarios={scenarios}
-        />
-      ) : (
-        <LoadBoundary state={state}>
-          {(bindings) => (
-            <RuleBindingList bindings={bindings} scenarios={scenarios} />
-          )}
-        </LoadBoundary>
-      )}
+      </nav>
+      <DatasetRuleView
+        key={mode === "inspect" ? `inspect-${inspectionRevision}` : "add"}
+        projectId={projectId}
+        dataset={dataset}
+        scenarios={scenarios}
+        mode={mode}
+        initialScenarioId={initialScenarioId}
+        onCancel={showInspector}
+        onSaved={finishSave}
+      />
     </section>
   );
 }

@@ -1,0 +1,111 @@
+/* Uniform reference tables keep check behavior and evidence compatibility comparable. */
+.evaluation-checks {
+  max-width: 1180px;
+}
+
+.evaluation-checks > .boundary-note {
+  margin-top: 0;
+}
+
+.evaluation-checks > .boundary-note code {
+  margin-left: 0.45em;
+  color: var(--warning);
+  font-family: var(--font-code);
+}
+
+.evaluation-checks__categories {
+  display: grid;
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.evaluation-checks__panel {
+  min-width: 0;
+}
+
+.evaluation-checks__panel h2 {
+  margin: 0 0 10px;
+}
+
+.evaluation-checks__table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.evaluation-checks__panel:has(.evaluation-checks__panel-note)
+  .evaluation-checks__table-scroll {
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+}
+
+.evaluation-checks table {
+  width: 100%;
+  min-width: 900px;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.evaluation-checks__check-column {
+  width: 18%;
+}
+
+.evaluation-checks__purpose-column {
+  width: 29%;
+}
+
+.evaluation-checks__configuration-column {
+  width: 27%;
+}
+
+.evaluation-checks__scenarios-column {
+  width: 26%;
+}
+
+.evaluation-checks th,
+.evaluation-checks td {
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.evaluation-checks thead th {
+  background: var(--surface-raised);
+  color: var(--subtle);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.evaluation-checks tbody th {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.evaluation-checks td {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.evaluation-checks tbody tr:last-child th,
+.evaluation-checks tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.evaluation-checks__scenarios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.evaluation-checks__panel-note {
+  margin: 0;
+  padding: 14px 20px;
+  border: 1px solid var(--border);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-panel) var(--radius-panel);
+  background: var(--cyan-soft);
+  color: var(--muted);
+  font-size: 11px;
+}

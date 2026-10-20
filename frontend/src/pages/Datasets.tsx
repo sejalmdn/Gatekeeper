@@ -64,23 +64,20 @@ export function DatasetDetail(): ReactElement {
               Scenarios
             </Link>
             <Link
-              to="?tab=rules"
+              to="?tab=rules&view=inspect"
               aria-current={rulesSelected ? "page" : undefined}
             >
-              Rules
+              Evaluation rules
             </Link>
           </nav>
           {rulesSelected ? (
             <DatasetRules
               projectId={projectId}
-              datasetId={recordId}
+              dataset={dataset}
               scenarios={scenarios}
             />
           ) : (
-            <DatasetScenarioList
-              scenarios={scenarios}
-              ruleCreatePath={`/projects/${projectId}/datasets/${recordId}/rules/new`}
-            />
+            <DatasetScenarioList scenarios={scenarios} />
           )}
         </RecordDetails>
       )}

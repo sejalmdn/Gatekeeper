@@ -1,4 +1,4 @@
-import { useMemo, type ReactElement, type ReactNode } from "react";
+import { useMemo, useState, type ReactElement, type ReactNode } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { indentUnit } from "@codemirror/language";
@@ -31,8 +31,12 @@ export function JsonInput({
   actions,
   disabled = false,
 }: JsonInputProps): ReactElement {
+  // Delays inline feedback until the user has changed this editor.
+  const [edited, setEdited] = useState(false);
+
   const error = jsonInputError(value, required);
-  const invalid = error !== undefined;
+  const visibleError = edited ? error : undefined;
+  const invalid = visibleError !== undefined;
 
   // Keeps editor configuration stable while ordinary text edits update the controlled value.
   const extensions = useMemo(
@@ -42,6 +46,7 @@ export function JsonInput({
       EditorView.lineWrapping,
       lintGutter(),
       linter((view) => {
+        if (!edited) return [];
         if (!required && !view.state.doc.toString().trim()) return [];
         return jsonParseLinter()(view);
       }),
@@ -55,12 +60,18 @@ export function JsonInput({
         spellcheck: "false",
       }),
     ],
-    [id, required, invalid, disabled],
+    [id, required, invalid, disabled, edited],
   );
+
+  // Starts live validation with the first user edit and forwards the value.
+  function updateValue(nextValue: string): void {
+    setEdited(true);
+    onChange(nextValue);
+  }
 
   // Formats only complete JSON on request, leaving invalid or unfinished input untouched.
   function formatJson(): void {
-    if (disabled || invalid || !value.trim()) return;
+    if (disabled || error || !value.trim()) return;
     onChange(JSON.stringify(JSON.parse(value), null, 2));
   }
 
@@ -76,7 +87,7 @@ export function JsonInput({
             className="quiet-button json-input__format"
             type="button"
             onClick={formatJson}
-            disabled={disabled || invalid || !value.trim()}
+            disabled={disabled || Boolean(error) || !value.trim()}
             aria-label={`Format JSON for ${label}`}
           >
             Format JSON
@@ -87,7 +98,7 @@ export function JsonInput({
       <CodeMirror
         className="json-input__editor"
         value={value}
-        onChange={onChange}
+        onChange={updateValue}
         extensions={extensions}
         theme="dark"
         editable={!disabled}
@@ -104,9 +115,9 @@ export function JsonInput({
         Two-space indentation. Tab moves to the next field; Ctrl+] indents a
         selection.
       </small>
-      {error && (
+      {visibleError && (
         <p id={`${id}-error`} className="json-input__error" aria-live="polite">
-          {error}
+          {visibleError}
         </p>
       )}
     </div>

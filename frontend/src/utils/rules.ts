@@ -15,11 +15,24 @@ export interface RuleField {
   integer?: boolean;
 }
 
+export type AuthorableRuleType = Exclude<RuleType, "judge.rubric">;
+
 export interface RuleDefinition {
-  type: RuleType;
+  type: AuthorableRuleType;
   label: string;
   types: ScenarioType[];
   fields: RuleField[];
+}
+
+export interface RuleCategory {
+  label: string;
+  types: AuthorableRuleType[];
+}
+
+export interface RuleSeverityOption {
+  value: RuleBindingCreate["severity"];
+  label: string;
+  weight: number;
 }
 
 const responseTypes: ScenarioType[] = ["single_turn", "multi_turn"];
@@ -74,7 +87,7 @@ export const RULE_DEFINITIONS: RuleDefinition[] = [
     fields: [
       {
         key: "pattern",
-        label: "Pattern (Python regex)",
+        label: "Pattern",
         kind: "text",
       },
       {
@@ -253,6 +266,43 @@ export const RULE_DEFINITIONS: RuleDefinition[] = [
   },
 ];
 
+// Groups authorable checks by the evidence they inspect in every frontend view.
+export const RULE_CATEGORIES: RuleCategory[] = [
+  {
+    label: "Response content",
+    types: [
+      "response.required_text",
+      "response.forbidden_text",
+      "response.regex",
+      "response.length",
+    ],
+  },
+  {
+    label: "JSON structure",
+    types: [
+      "response.json_valid",
+      "response.json_schema",
+      "response.json_field",
+    ],
+  },
+  {
+    label: "Tool requests",
+    types: ["tool.selection", "tool.argument_field", "tool.expected_calls"],
+  },
+  {
+    label: "Speed, tokens, or cost",
+    types: ["metric.latency", "metric.tokens", "metric.cost"],
+  },
+];
+
+// Keeps scored-rule weight labels aligned across authoring and inspection.
+export const RULE_SEVERITY_OPTIONS: RuleSeverityOption[] = [
+  { value: "critical", label: "Critical", weight: 4 },
+  { value: "high", label: "High", weight: 3 },
+  { value: "medium", label: "Medium", weight: 2 },
+  { value: "low", label: "Low", weight: 1 },
+];
+
 export interface AssertionDraft {
   path: string;
   operator: string;
@@ -322,9 +372,9 @@ function parseJson(value: string, label: string): unknown {
 // Require coherent operands while preserving explicit JSON null and root pointers.
 export function serializeAssertion(draft: AssertionDraft): JsonObject {
   if (draft.path && !draft.path.startsWith("/"))
-    throw new Error("JSON Pointer must start with /.");
+    throw new Error("Field path must start with /.");
   if (/~(?![01])/.test(draft.path))
-    throw new Error("JSON Pointer contains an invalid escape.");
+    throw new Error("Field path contains an invalid escape.");
   const result: JsonObject = {
     path: draft.path,
     operator: draft.operator,
@@ -521,7 +571,7 @@ export function validateBindingScope(
   payload: RuleBindingCreate,
   bindings: RuleBindingCreate[],
 ): void {
-  if (!payload.rule_key.trim()) throw new Error("Rule key is required.");
+  if (!payload.rule_key.trim()) throw new Error("Rule name is required.");
   if (!payload.scenario_id && !payload.applies_to?.length)
     throw new Error("Select at least one scenario type.");
   if (
@@ -532,7 +582,7 @@ export function validateBindingScope(
     )
   ) {
     throw new Error(
-      "This rule key already exists in the selected scope. Choose another key.",
+      "This rule name already exists in the selected scope. Choose another name.",
     );
   }
 }

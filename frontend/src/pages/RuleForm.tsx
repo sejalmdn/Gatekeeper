@@ -1,43 +1,20 @@
 import type { ReactElement } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
-import { getDataset, listRuleBindings, listScenarios } from "../api";
-import { LoadBoundary } from "../components/Feedback";
-import { RuleEditor } from "../components/RuleEditor";
-import { useLoad } from "../hooks/useLoad";
+import { Navigate, useParams, useSearchParams } from "react-router-dom";
 
-// Loads dataset scope before opening the private rule definition form.
+// Redirects legacy rule-authoring links into the dataset's canonical rule tab.
 export function RuleForm(): ReactElement {
-  // Reads ownership and the optional scenario shortcut from the route.
+  // Reads the legacy route scopes used to build the canonical dataset URL.
   const { projectId = "", recordId = "" } = useParams();
 
-  // Keeps a scenario shortcut in the URL so the form can be bookmarked.
+  // Preserves an old scenario shortcut while redirecting saved links.
   const [searchParams] = useSearchParams();
-
-  // Loads the immutable scenarios and current keys required for scope validation.
-  const state = useLoad(async () => {
-    const [dataset, scenarios, bindings] = await Promise.all([
-      getDataset(projectId, recordId),
-      listScenarios(projectId, recordId),
-      listRuleBindings(projectId, recordId),
-    ]);
-    return {
-      dataset,
-      scenarios,
-      bindings,
-    };
-  });
-
+  const scenario = searchParams.get("scenario");
+  const query = new URLSearchParams({ tab: "rules", view: "add" });
+  if (scenario) query.set("scenario", scenario);
   return (
-    <LoadBoundary state={state}>
-      {({ dataset, scenarios, bindings }) => (
-        <RuleEditor
-          projectId={projectId}
-          dataset={dataset}
-          scenarios={scenarios}
-          bindings={bindings}
-          initialScenarioId={searchParams.get("scenario") ?? ""}
-        />
-      )}
-    </LoadBoundary>
+    <Navigate
+      replace
+      to={`/projects/${projectId}/datasets/${recordId}?${query.toString()}`}
+    />
   );
 }

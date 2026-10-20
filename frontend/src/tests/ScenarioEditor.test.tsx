@@ -3,7 +3,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { EditorView } from "@codemirror/view";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { ScenarioEditor } from "./ScenarioEditor";
+import { ScenarioEditor } from "../components/ScenarioEditor";
 
 let container: HTMLDivElement;
 let root: Root;
@@ -36,6 +36,31 @@ async function enter(id: string, value: string): Promise<void> {
     element.dispatchEvent(new Event(event, { bubbles: true }));
   });
 }
+
+// Delay required history feedback until the developer starts editing JSON.
+it("keeps multi-turn history calm until its first edit", async () => {
+  await act(async () =>
+    root.render(
+      <ScenarioEditor scenarios={[]} disabled={false} onAdd={vi.fn()} />,
+    ),
+  );
+  await enter("scenario-type", "multi_turn");
+  const view = EditorView.findFromDOM(
+    container.querySelector(".cm-editor") as HTMLElement,
+  )!;
+  expect(container.querySelector("#scenario-history-error")).toBeNull();
+  expect(view.contentDOM.getAttribute("aria-invalid")).toBe("false");
+  await act(async () =>
+    view.dispatch({
+      changes: {
+        from: 0,
+        insert: "{",
+      },
+    }),
+  );
+  expect(container.querySelector("#scenario-history-error")).not.toBeNull();
+  expect(view.contentDOM.getAttribute("aria-invalid")).toBe("true");
+});
 
 // Verify history edits survive collapse and reach the validated scenario payload.
 it.each(["multi_turn", "tool_use"])(

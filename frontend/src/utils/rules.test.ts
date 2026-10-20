@@ -385,5 +385,5 @@ it("validates binding keys and scopes", () => {
       },
       [],
     ),
-  ).toThrow("Rule key");
+  ).toThrow("Rule name");
 });

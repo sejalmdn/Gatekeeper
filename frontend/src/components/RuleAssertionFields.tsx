@@ -3,17 +3,17 @@ import { JsonInput } from "./JsonInput";
 import type { AssertionDraft } from "../utils/rules";
 
 const OPERATORS = [
-  "exists",
-  "not_exists",
-  "equals",
-  "not_equals",
-  "in",
-  "not_in",
-  "gt",
-  "gte",
-  "lt",
-  "lte",
-  "between",
+  ["exists", "Exists"],
+  ["not_exists", "Does not exist"],
+  ["equals", "Equals"],
+  ["not_equals", "Does not equal"],
+  ["in", "Is one of"],
+  ["not_in", "Is not one of"],
+  ["gt", "Is greater than"],
+  ["gte", "Is greater than or equal to"],
+  ["lt", "Is less than"],
+  ["lte", "Is less than or equal to"],
+  ["between", "Is between"],
 ];
 
 // Edits a JSON Pointer assertion with only the operands required by its operator.
@@ -41,7 +41,7 @@ export function RuleAssertionFields({
   return (
     <div className="rule-form__assertion">
       <label className="form-field" htmlFor={`${id}-path`}>
-        <span>JSON Pointer</span>
+        <span>Field path</span>
         <input
           id={`${id}-path`}
           value={value.path}
@@ -66,8 +66,10 @@ export function RuleAssertionFields({
             })
           }
         >
-          {OPERATORS.map((operator) => (
-            <option key={operator}>{operator}</option>
+          {OPERATORS.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
           ))}
         </select>
       </label>

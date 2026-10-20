@@ -7,6 +7,15 @@ interface RuleTextListProps {
   onChange: (values: string[]) => void;
 }
 
+const ITEM_LABELS: Record<string, string> = {
+  "Required text": "required text",
+  "Forbidden text": "forbidden text",
+  "Require all tools": "required tool",
+  "Require any tool": "alternative tool",
+  "Allowed tools": "allowed tool",
+  "Forbidden tools": "forbidden tool",
+};
+
 // Edits repeatable text or tool names without delimiter-based ambiguity.
 export function RuleTextList({
   id,
@@ -14,6 +23,7 @@ export function RuleTextList({
   values,
   onChange,
 }: RuleTextListProps): ReactElement {
+  const itemLabel = ITEM_LABELS[label] ?? label.toLowerCase();
   return (
     <fieldset className="rule-form__list">
       <legend>{label}</legend>
@@ -38,7 +48,7 @@ export function RuleTextList({
             aria-label={`Remove ${label} ${index + 1}`}
             onClick={() => onChange(values.filter((_, i) => i !== index))}
           >
-            Remove
+            Remove {itemLabel}
           </button>
         </div>
       ))}
@@ -47,7 +57,7 @@ export function RuleTextList({
         type="button"
         onClick={() => onChange([...values, ""])}
       >
-        Add entry
+        Add {itemLabel}
       </button>
     </fieldset>
   );

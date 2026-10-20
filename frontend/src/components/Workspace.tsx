@@ -21,6 +21,19 @@ const NAVIGATION: { path: string; label: string; icon: IconName }[] = [
   { path: "datasets", label: "Datasets", icon: "dataset" },
 ];
 
+// Reference navigation documents concepts shared across project records.
+const REFERENCE_NAVIGATION: {
+  path: string;
+  label: string;
+  icon: IconName;
+}[] = [
+  {
+    path: "evaluation-checks",
+    label: "Evaluation checks",
+    icon: "evaluation",
+  },
+];
+
 // Remount route-bound readers when project or record parameters change.
 export function ProjectLayout(): ReactElement {
   const { projectId = "" } = useParams();
@@ -33,7 +46,9 @@ function Workspace({ projectId }: { projectId: string }): ReactElement {
   const { pathname } = useLocation();
   const section = pathname.split("/")[3] ?? "";
   const label =
-    NAVIGATION.find((item) => item.path === section)?.label ?? "Overview";
+    [...NAVIGATION, ...REFERENCE_NAVIGATION].find(
+      (item) => item.path === section,
+    )?.label ?? "Overview";
   return (
     <LoadBoundary state={state}>
       {(project) => (
@@ -56,6 +71,18 @@ function Workspace({ projectId }: { projectId: string }): ReactElement {
                   key={item.path}
                   end={!item.path}
                   to={`/projects/${projectId}${item.path ? `/${item.path}` : ""}`}
+                >
+                  <Icon name={item.icon} />
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </nav>
+            <div className="workspace-nav-label">Reference</div>
+            <nav className="workspace-nav" aria-label="Project reference">
+              {REFERENCE_NAVIGATION.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={`/projects/${projectId}/${item.path}`}
                 >
                   <Icon name={item.icon} />
                   <span>{item.label}</span>

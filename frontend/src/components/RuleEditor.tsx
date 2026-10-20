@@ -1,5 +1,4 @@
 import { useRef, useState, type FormEvent, type ReactElement } from "react";
-import { useNavigate } from "react-router-dom";
 import { ApiError, createRuleBinding } from "../api";
 import type {
   Dataset,
@@ -8,16 +7,22 @@ import type {
   Scenario,
   ScenarioType,
 } from "../types";
+import { messageFor } from "../utils/format";
 import {
   initialRuleDraft,
   RULE_DEFINITIONS,
+  RULE_SEVERITY_OPTIONS,
   serializeParameters,
   summarizeRule,
   validateBindingScope,
+  type RuleDefinition,
+  type RuleDraft,
 } from "../utils/rules";
-import { messageFor } from "../utils/format";
-import { RecordForm } from "./RecordForm";
-import { RuleParameterFields } from "./RuleParameterFields";
+import { RuleCheckSection } from "./RuleCheckSection";
+import { RuleEffectSection } from "./RuleEffectSection";
+import { RuleExpectationSection } from "./RuleExpectationSection";
+import { RuleReviewSection } from "./RuleReviewSection";
+import { RuleScopeSection } from "./RuleScopeSection";
 import "../styles/RuleForm.css";
 
 interface RuleEditorProps {
@@ -26,132 +31,251 @@ interface RuleEditorProps {
   scenarios: Scenario[];
   bindings: RuleBinding[];
   initialScenarioId: string;
+  onCancel: () => void;
+  onSaved: () => void;
 }
 
-// Defines a check and its binding together while keeping private expectations out of inputs.
+type SectionId = "scope" | "check" | "expectation" | "effect" | "review";
+
+interface FormError {
+  section: SectionId;
+  message: string;
+}
+
+const SCENARIO_TYPES: ScenarioType[] = [
+  "single_turn",
+  "multi_turn",
+  "tool_use",
+];
+
+// Defines a private check through five collapsible, state-preserving sections.
 export function RuleEditor({
   projectId,
   dataset,
   scenarios,
   bindings,
   initialScenarioId,
+  onCancel,
+  onSaved,
 }: RuleEditorProps): ReactElement {
   const initialScenario = scenarios.find(
     (scenario) => scenario.id === initialScenarioId,
   );
-  const initialDefinition = RULE_DEFINITIONS.find((item) =>
-    item.types.includes(initialScenario?.scenario_type ?? "single_turn"),
-  )!;
-  const navigate = useNavigate();
-  const back = `/projects/${projectId}/datasets/${dataset.id}?tab=rules`;
 
-  // Holds the chosen scenario or the dataset-default scope.
-  const [scenarioId, setScenarioId] = useState(initialScenarioId);
+  // Chooses dataset-wide or scenario-specific applicability.
+  const [scope, setScope] = useState<"dataset" | "scenario">(
+    initialScenario ? "scenario" : "dataset",
+  );
 
-  // Selects the built-in check and its independent parameter draft.
-  const [definition, setDefinition] = useState(initialDefinition);
+  // Retains the selected scenario while the user moves between scopes.
+  const [scenarioId, setScenarioId] = useState(initialScenario?.id ?? "");
 
-  // Preserves unfinished expectations through validation and server failures.
-  const [draft, setDraft] = useState(() => initialRuleDraft(initialDefinition));
+  // Retains explicit dataset-wide applicability across scope and section changes.
+  const [appliesTo, setAppliesTo] = useState<ScenarioType[]>([]);
 
-  // Records the compatible scenario types for a dataset-level default.
-  const [appliesTo, setAppliesTo] = useState<ScenarioType[]>(["single_turn"]);
+  // Holds the selected built-in check until a scope makes it incompatible.
+  const [definition, setDefinition] = useState<RuleDefinition>();
 
-  // Identifies the logical rule used for duplicates and scenario overrides.
+  // Preserves the selected check's parameters while sections collapse.
+  const [draft, setDraft] = useState<RuleDraft>();
+
+  // Identifies the rule and enables scenario replacement by exact name.
   const [ruleKey, setRuleKey] = useState("");
 
-  // Determines whether results control passing, contribute scores, or only report.
+  // Determines whether failure controls passing, scoring, or reporting.
   const [role, setRole] = useState<RuleBindingCreate["role"]>("required");
 
-  // Records product-defined importance without exposing custom scoring weights.
+  // Preserves the scored-rule weight while other roles use the neutral API value.
   const [severity, setSeverity] =
     useState<RuleBindingCreate["severity"]>("medium");
 
-  // Surfaces local and backend validation failures without discarding edits.
-  const [error, setError] = useState<string>();
+  // Places validation and request feedback in the relevant section.
+  const [error, setError] = useState<FormError>();
 
-  // Locks the form until its create request finishes.
+  // Locks all authoring controls until a create request finishes.
   const [saving, setSaving] = useState(false);
 
-  // Prevents duplicate submissions before the pending render is applied.
+  // Prevents a second submit before React applies the pending state.
   const submitting = useRef(false);
 
-  const scenario = scenarios.find((item) => item.id === scenarioId);
-  const compatible = RULE_DEFINITIONS.filter(
-    (item) => !scenario || item.types.includes(scenario.scenario_type),
+  // Opens the first invalid section even when the user collapsed it.
+  const sectionRefs = useRef<Partial<Record<SectionId, HTMLDetailsElement>>>(
+    {},
   );
+
+  const scenario = scenarios.find((item) => item.id === scenarioId);
+  const datasetTypes = SCENARIO_TYPES.filter((type) =>
+    scenarios.some((item) => item.scenario_type === type),
+  );
+  const compatibleDefinitions = RULE_DEFINITIONS.filter((item) => {
+    if (scope === "scenario") {
+      return scenario ? item.types.includes(scenario.scenario_type) : false;
+    }
+    return (
+      appliesTo.length > 0 &&
+      appliesTo.every((type) => item.types.includes(type))
+    );
+  });
   const defaultRule = bindings.find(
     (binding) =>
+      scope === "scenario" &&
       binding.scenario_id === null &&
       binding.rule_key === ruleKey &&
       scenario &&
       binding.applies_to?.includes(scenario.scenario_type),
   );
-  let preview = "Complete the check parameters to preview its condition.";
-  try {
-    preview = summarizeRule(
-      definition.type,
-      serializeParameters(definition, draft),
-    );
-  } catch {
-    /* Incomplete input is expected while defining a condition. */
-  }
 
-  // Reset parameter shape only when choosing a different built-in check.
-  function chooseDefinition(type: string): void {
-    const next = RULE_DEFINITIONS.find((item) => item.type === type)!;
-    setDefinition(next);
-    setDraft(initialRuleDraft(next));
-    setAppliesTo((current) => {
-      const retained = current.filter((item) => next.types.includes(item));
-      return retained.length ? retained : [...next.types];
-    });
-    setError(undefined);
-  }
-
-  // Keep scenario-scoped checks compatible when the target scope changes.
-  function chooseScope(id: string): void {
-    setScenarioId(id);
-    const target = scenarios.find((item) => item.id === id);
-    if (target && !definition.types.includes(target.scenario_type)) {
-      chooseDefinition(
-        RULE_DEFINITIONS.find((item) =>
-          item.types.includes(target.scenario_type),
-        )!.type,
+  let expectation = "Choose a check to configure its expectation.";
+  if (definition && draft) {
+    try {
+      expectation = summarizeRule(
+        definition.type,
+        serializeParameters(definition, draft),
       );
+    } catch {
+      expectation = `${definition.label} needs more information.`;
     }
+  }
+
+  const scopeReview =
+    scope === "scenario" && scenario
+      ? `only ${scenario.name}`
+      : `selected scenario types in this dataset (${appliesTo.map((type) => type.replaceAll("_", " ")).join(", ") || "none"})`;
+  const replacementReview = defaultRule
+    ? ` It replaces the dataset-wide rule named “${ruleKey}” for this scenario.`
+    : "";
+  const effectReview =
+    role === "required"
+      ? "causes the scenario to fail"
+      : role === "scored"
+        ? "contributes to scoring"
+        : "is reported only";
+  const severityOption = RULE_SEVERITY_OPTIONS.find(
+    (option) => option.value === severity,
+  );
+  const submittedSeverity = role === "scored" ? severity : "medium";
+
+  // Opens a section and associates a specific error with it.
+  function showError(section: SectionId, message: string): void {
+    const target = sectionRefs.current[section];
+    if (target) target.open = true;
+    setError({ section, message });
+  }
+
+  // Clears the selected check only when a scope cannot support it.
+  function retainCompatibleCheck(
+    nextScope: "dataset" | "scenario",
+    nextScenarioId: string,
+    nextAppliesTo: ScenarioType[] = appliesTo,
+  ): void {
+    if (!definition) return;
+    const nextScenario = scenarios.find((item) => item.id === nextScenarioId);
+    const compatible =
+      nextScope === "dataset"
+        ? nextAppliesTo.length > 0 &&
+          nextAppliesTo.every((type) => definition.types.includes(type))
+        : !nextScenario ||
+          definition.types.includes(nextScenario.scenario_type);
+    if (!compatible) {
+      setDefinition(undefined);
+      setDraft(undefined);
+    }
+  }
+
+  // Changes applicability without discarding a still-compatible expectation.
+  function chooseScope(nextScope: "dataset" | "scenario"): void {
+    setScope(nextScope);
+    retainCompatibleCheck(nextScope, scenarioId);
     setError(undefined);
   }
 
-  // Persist validated private configuration; backend remains authoritative for racing writes.
+  // Selects one scenario and removes a check only if its type is incompatible.
+  function chooseScenario(nextScenarioId: string): void {
+    setScenarioId(nextScenarioId);
+    retainCompatibleCheck("scenario", nextScenarioId);
+    setError(undefined);
+  }
+
+  // Updates dataset applicability in canonical order and clears incompatible expectations.
+  function chooseDatasetType(type: ScenarioType, checked: boolean): void {
+    const selected = new Set(appliesTo);
+    if (checked) selected.add(type);
+    else selected.delete(type);
+    const nextAppliesTo = SCENARIO_TYPES.filter(
+      (item) => datasetTypes.includes(item) && selected.has(item),
+    );
+    setAppliesTo(nextAppliesTo);
+    retainCompatibleCheck("dataset", scenarioId, nextAppliesTo);
+    setError(undefined);
+  }
+
+  // Starts a clean parameter draft when the user deliberately selects a check.
+  function chooseDefinition(type: string): void {
+    const next = RULE_DEFINITIONS.find((item) => item.type === type);
+    setDefinition(next);
+    setDraft(next ? initialRuleDraft(next) : undefined);
+    setError(undefined);
+  }
+
+  // Persists validated private configuration while retaining failed drafts.
   async function submit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (submitting.current) return;
     setError(undefined);
+
+    if (scope === "scenario" && !scenario) {
+      showError(
+        "scope",
+        "Choose the specific scenario this rule should apply to.",
+      );
+      return;
+    }
+    if (scope === "dataset" && appliesTo.length === 0) {
+      showError("scope", "Select at least one dataset scenario type.");
+      return;
+    }
+    if (!definition || !draft) {
+      showError("check", "Choose what Gatekeeper should check.");
+      return;
+    }
+
+    let parameters: RuleBindingCreate["parameters"];
     try {
-      if (scenarioId && !scenario)
-        throw new Error("Select a scenario from this dataset.");
-      const payload: RuleBindingCreate = {
-        scenario_id: scenarioId || null,
-        rule_key: ruleKey,
-        rule_type: definition.type,
-        role,
-        severity,
-        parameters: serializeParameters(definition, draft),
-        applies_to: scenarioId ? null : appliesTo,
-      };
+      parameters = serializeParameters(definition, draft);
+    } catch (failure) {
+      showError("expectation", messageFor(failure));
+      return;
+    }
+
+    const payload: RuleBindingCreate = {
+      scenario_id: scope === "scenario" ? scenarioId : null,
+      rule_key: ruleKey,
+      rule_type: definition.type,
+      role,
+      severity: submittedSeverity,
+      parameters,
+      applies_to: scope === "dataset" ? appliesTo : null,
+    };
+    try {
       validateBindingScope(payload, bindings);
-      submitting.current = true;
-      setSaving(true);
+    } catch (failure) {
+      showError("review", messageFor(failure));
+      return;
+    }
+
+    submitting.current = true;
+    setSaving(true);
+    try {
       await createRuleBinding(projectId, dataset.id, payload);
-      navigate(back);
+      onSaved();
     } catch (failure) {
       if (failure instanceof ApiError && failure.status === 409) {
-        setError(
-          "This rule key already exists in the selected scope. Choose another key.",
+        showError(
+          "review",
+          "This rule name already exists in the selected scope. Choose another name.",
         );
       } else {
-        setError(messageFor(failure));
+        showError("review", messageFor(failure));
       }
     } finally {
       submitting.current = false;
@@ -159,159 +283,104 @@ export function RuleEditor({
     }
   }
 
+  let showReviewSummary = false;
+  if (
+    ruleKey.trim() &&
+    definition &&
+    draft &&
+    ((scope === "scenario" && scenario) ||
+      (scope === "dataset" && appliesTo.length > 0))
+  ) {
+    try {
+      validateBindingScope(
+        {
+          scenario_id: scope === "scenario" ? scenarioId : null,
+          rule_key: ruleKey,
+          rule_type: definition.type,
+          role,
+          severity: submittedSeverity,
+          parameters: serializeParameters(definition, draft),
+          applies_to: scope === "dataset" ? appliesTo : null,
+        },
+        bindings,
+      );
+      showReviewSummary = true;
+    } catch {
+      showReviewSummary = false;
+    }
+  }
+  const weightReview =
+    role === "scored" && severityOption
+      ? ` with ${severityOption.label} weight (${severityOption.weight})`
+      : "";
+  const reviewSummary = `“${ruleKey}” applies to ${scopeReview}. It checks: ${expectation} A failure ${effectReview}${weightReview}.${replacementReview}`;
   return (
-    <RecordForm
-      title="Add rule"
-      detail={`Define a private evaluation check for ${dataset.name}.`}
-      submitLabel="Save rule"
-      pendingLabel="Saving rule…"
-      caption="Private evaluation configuration"
-      saving={saving}
-      error={error}
+    <form
+      className="rule-form rule-form--embedded"
       onSubmit={submit}
-      onCancel={() => navigate(back)}
-      className="rule-form"
+      aria-busy={saving}
+      noValidate
     >
-      <fieldset className="rule-form__section" disabled={saving}>
-        <legend>Apply to</legend>
-        <label className="form-field" htmlFor="rule-scope">
-          <span>Scope</span>
-          <select
-            id="rule-scope"
-            value={scenarioId}
-            onChange={(event) => chooseScope(event.target.value)}
-          >
-            <option value="">Dataset default</option>
-            {scenarios.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name} ({item.scenario_key})
-              </option>
-            ))}
-          </select>
-        </label>
-        {scenario && (
-          <p>
-            Applies only to this {scenario.scenario_type.replaceAll("_", " ")}{" "}
-            scenario.
-          </p>
-        )}
-        {!scenarioId && (
-          <fieldset>
-            <legend>Applicable scenario types</legend>
-            {(["single_turn", "multi_turn", "tool_use"] as ScenarioType[]).map(
-              (type) => (
-                <label className="rule-form__check" key={type}>
-                  <input
-                    type="checkbox"
-                    checked={appliesTo.includes(type)}
-                    disabled={!definition.types.includes(type)}
-                    onChange={(event) =>
-                      setAppliesTo((current) =>
-                        event.target.checked
-                          ? [...current, type]
-                          : current.filter((item) => item !== type),
-                      )
-                    }
-                  />
-                  {type.replaceAll("_", " ")}
-                </label>
-              ),
-            )}
-            <p>Available types depend on the selected check.</p>
-          </fieldset>
-        )}
-      </fieldset>
-      <fieldset className="rule-form__section" disabled={saving}>
-        <legend>Check</legend>
-        <label className="form-field" htmlFor="rule-type">
-          <span>Check type</span>
-          <select
-            id="rule-type"
-            value={definition.type}
-            onChange={(event) => chooseDefinition(event.target.value)}
-          >
-            {compatible.map((item) => (
-              <option key={item.type} value={item.type}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <RuleParameterFields
-          disabled={saving}
-          definition={definition}
-          draft={draft}
-          onChange={setDraft}
-        />
-      </fieldset>
-      <fieldset className="rule-form__section" disabled={saving}>
-        <legend>Result behavior</legend>
-        <label className="form-field" htmlFor="rule-key">
-          <span>Rule key</span>
-          <input
-            id="rule-key"
-            value={ruleKey}
-            required
-            onChange={(event) => setRuleKey(event.target.value)}
-          />
-          <small>
-            Unique in this scope. Reuse a dataset default’s key to replace it
-            for one scenario.
-          </small>
-        </label>
-        <label className="form-field" htmlFor="rule-role">
-          <span>Role</span>
-          <select
-            id="rule-role"
-            value={role}
-            onChange={(event) =>
-              setRole(event.target.value as RuleBindingCreate["role"])
-            }
-          >
-            <option value="required">Required — controls pass/fail</option>
-            <option value="scored">Scored — contributes to scoring</option>
-            <option value="informational">
-              Informational — observations only
-            </option>
-          </select>
-        </label>
-        <label className="form-field" htmlFor="rule-severity">
-          <span>Severity</span>
-          <select
-            id="rule-severity"
-            value={severity}
-            onChange={(event) =>
-              setSeverity(event.target.value as RuleBindingCreate["severity"])
-            }
-          >
-            {["critical", "high", "medium", "low"].map((item) => (
-              <option key={item}>{item}</option>
-            ))}
-          </select>
-          <small>
-            Scored rules use fixed weights: critical 4, high 3, medium 2, low 1.
-          </small>
-        </label>
-      </fieldset>
-      <aside className="rule-form__preview" aria-live="polite">
-        <h2>Rule preview</h2>
-        <p>{preview}</p>
-        <p>
-          {scenario
-            ? `Applies to ${scenario.name}.`
-            : `Dataset default for ${appliesTo.join(", ") || "no selected types"}.`}
-        </p>
-        {defaultRule && (
-          <p>
-            This rule completely replaces dataset default “{ruleKey}” for this
-            scenario.
-          </p>
-        )}
-        <small>
-          Saving defines the check. Evaluation results will be available when
-          execution is implemented.
-        </small>
-      </aside>
-    </RecordForm>
+      <RuleScopeSection
+        scope={scope}
+        scenarioId={scenarioId}
+        scenarios={scenarios}
+        datasetTypes={datasetTypes}
+        appliesTo={appliesTo}
+        saving={saving}
+        error={error?.section === "scope" ? error.message : undefined}
+        sectionRef={(node) => {
+          if (node) sectionRefs.current.scope = node;
+        }}
+        onScopeChange={chooseScope}
+        onScenarioChange={chooseScenario}
+        onDatasetTypeChange={chooseDatasetType}
+      />
+      <RuleCheckSection
+        scope={scope}
+        scenario={scenario}
+        compatibleDefinitions={compatibleDefinitions}
+        definition={definition}
+        saving={saving}
+        error={error?.section === "check" ? error.message : undefined}
+        sectionRef={(node) => {
+          if (node) sectionRefs.current.check = node;
+        }}
+        onChoose={chooseDefinition}
+      />
+      <RuleExpectationSection
+        definition={definition}
+        draft={draft}
+        saving={saving}
+        error={error?.section === "expectation" ? error.message : undefined}
+        sectionRef={(node) => {
+          if (node) sectionRefs.current.expectation = node;
+        }}
+        onChange={setDraft}
+      />
+      <RuleEffectSection
+        role={role}
+        severity={severity}
+        saving={saving}
+        error={error?.section === "effect" ? error.message : undefined}
+        sectionRef={(node) => {
+          if (node) sectionRefs.current.effect = node;
+        }}
+        onRoleChange={setRole}
+        onSeverityChange={setSeverity}
+      />
+      <RuleReviewSection
+        ruleKey={ruleKey}
+        summary={reviewSummary}
+        showSummary={showReviewSummary}
+        saving={saving}
+        error={error?.section === "review" ? error.message : undefined}
+        sectionRef={(node) => {
+          if (node) sectionRefs.current.review = node;
+        }}
+        onRuleKeyChange={setRuleKey}
+        onCancel={onCancel}
+      />
+    </form>
   );
 }

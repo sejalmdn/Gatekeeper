@@ -5,7 +5,7 @@ import { EditorView } from "@codemirror/view";
 import { insertNewlineAndIndent } from "@codemirror/commands";
 import { EditorState } from "@codemirror/state";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { JsonInput } from "./JsonInput";
+import { JsonInput } from "../components/JsonInput";
 
 // Exercise controlled editor changes with the same value flow used by creation forms.
 function EditorForm({
@@ -168,17 +168,32 @@ describe("JSON input", () => {
     expect(editor().state.doc.toString()).toBe(initialValue);
   });
 
-  // Required and optional blank editors retain distinct validity states.
+  // Blank editors remain calm until the user begins editing.
   it.each([true, false])(
-    "handles empty JSON with required=%s",
+    "delays empty JSON feedback with required=%s",
     async (required) => {
       await act(async () =>
         root.render(<EditorForm initialValue="" required={required} />),
       );
-      expect(editor().contentDOM.getAttribute("aria-invalid")).toBe(
-        String(required),
-      );
+      expect(editor().contentDOM.getAttribute("aria-invalid")).toBe("false");
+      expect(container.querySelector("#test-json-error")).toBeNull();
       expect(formatButton().disabled).toBe(true);
     },
   );
+
+  // Start live required-value validation with the first editor change.
+  it("reveals a required JSON error after the first edit", async () => {
+    await act(async () => root.render(<EditorForm initialValue="" />));
+    const view = editor();
+    await act(async () =>
+      view.dispatch({
+        changes: {
+          from: 0,
+          insert: "{",
+        },
+      }),
+    );
+    expect(container.querySelector("#test-json-error")).not.toBeNull();
+    expect(view.contentDOM.getAttribute("aria-invalid")).toBe("true");
+  });
 });

@@ -9,6 +9,7 @@ import {
 import { RuleForm } from "./pages/RuleForm";
 import { DatasetForm } from "./pages/DatasetForm";
 import { DatasetDetail, DatasetsPage } from "./pages/Datasets";
+import { EvaluationChecks } from "./pages/EvaluationChecks";
 import { OverviewPage } from "./pages/OverviewPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { ProviderDetail, ProviderForm, ProvidersPage } from "./pages/Providers";
@@ -31,6 +32,7 @@ export default function App(): ReactElement {
           <Route path="datasets/new" element={<DatasetForm />} />
           <Route path="datasets/:recordId/rules/new" element={<RuleForm />} />
           <Route path="datasets/:recordId" element={<DatasetDetail />} />
+          <Route path="evaluation-checks" element={<EvaluationChecks />} />
         </Route>
         <Route path="*" element={<ProjectsPage />} />
       </Routes>
