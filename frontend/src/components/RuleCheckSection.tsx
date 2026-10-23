@@ -3,7 +3,6 @@ import type { Scenario } from "../types";
 import { RULE_CATEGORIES, type RuleDefinition } from "../utils/rules";
 
 interface RuleCheckSectionProps {
-  scope: "dataset" | "scenario";
   scenario?: Scenario;
   compatibleDefinitions: RuleDefinition[];
   definition?: RuleDefinition;
@@ -15,7 +14,6 @@ interface RuleCheckSectionProps {
 
 // Groups the compatible built-in checks by the evidence they inspect.
 export function RuleCheckSection({
-  scope,
   scenario,
   compatibleDefinitions,
   definition,
@@ -64,14 +62,9 @@ export function RuleCheckSection({
             })}
           </select>
         </label>
-        {scope === "scenario" && !scenario && (
+        {!scenario && (
           <p className="rule-form__note" id="rule-type-help">
             Choose a scenario first to see compatible checks.
-          </p>
-        )}
-        {compatibleDefinitions.length === 0 && scope === "dataset" && (
-          <p className="rule-form__note" id="rule-type-help">
-            Select at least one dataset scenario type to see compatible checks.
           </p>
         )}
         {error && (

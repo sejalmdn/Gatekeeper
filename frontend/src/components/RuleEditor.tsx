@@ -5,7 +5,6 @@ import type {
   RuleBinding,
   RuleBindingCreate,
   Scenario,
-  ScenarioType,
 } from "../types";
 import { messageFor } from "../utils/format";
 import {
@@ -42,12 +41,6 @@ interface FormError {
   message: string;
 }
 
-const SCENARIO_TYPES: ScenarioType[] = [
-  "single_turn",
-  "multi_turn",
-  "tool_use",
-];
-
 // Defines a private check through five collapsible, state-preserving sections.
 export function RuleEditor({
   projectId,
@@ -62,16 +55,8 @@ export function RuleEditor({
     (scenario) => scenario.id === initialScenarioId,
   );
 
-  // Chooses dataset-wide or scenario-specific applicability.
-  const [scope, setScope] = useState<"dataset" | "scenario">(
-    initialScenario ? "scenario" : "dataset",
-  );
-
-  // Retains the selected scenario while the user moves between scopes.
+  // Keeps the rule bound to one explicitly selected scenario.
   const [scenarioId, setScenarioId] = useState(initialScenario?.id ?? "");
-
-  // Retains explicit dataset-wide applicability across scope and section changes.
-  const [appliesTo, setAppliesTo] = useState<ScenarioType[]>([]);
 
   // Holds the selected built-in check until a scope makes it incompatible.
   const [definition, setDefinition] = useState<RuleDefinition>();
@@ -79,7 +64,7 @@ export function RuleEditor({
   // Preserves the selected check's parameters while sections collapse.
   const [draft, setDraft] = useState<RuleDraft>();
 
-  // Identifies the rule and enables scenario replacement by exact name.
+  // Identifies the rule within the selected scenario.
   const [ruleKey, setRuleKey] = useState("");
 
   // Determines whether failure controls passing, scoring, or reporting.
@@ -104,25 +89,8 @@ export function RuleEditor({
   );
 
   const scenario = scenarios.find((item) => item.id === scenarioId);
-  const datasetTypes = SCENARIO_TYPES.filter((type) =>
-    scenarios.some((item) => item.scenario_type === type),
-  );
-  const compatibleDefinitions = RULE_DEFINITIONS.filter((item) => {
-    if (scope === "scenario") {
-      return scenario ? item.types.includes(scenario.scenario_type) : false;
-    }
-    return (
-      appliesTo.length > 0 &&
-      appliesTo.every((type) => item.types.includes(type))
-    );
-  });
-  const defaultRule = bindings.find(
-    (binding) =>
-      scope === "scenario" &&
-      binding.scenario_id === null &&
-      binding.rule_key === ruleKey &&
-      scenario &&
-      binding.applies_to?.includes(scenario.scenario_type),
+  const compatibleDefinitions = RULE_DEFINITIONS.filter((item) =>
+    scenario ? item.types.includes(scenario.scenario_type) : false,
   );
 
   let expectation = "Choose a check to configure its expectation.";
@@ -137,13 +105,9 @@ export function RuleEditor({
     }
   }
 
-  const scopeReview =
-    scope === "scenario" && scenario
-      ? `only ${scenario.name}`
-      : `selected scenario types in this dataset (${appliesTo.map((type) => type.replaceAll("_", " ")).join(", ") || "none"})`;
-  const replacementReview = defaultRule
-    ? ` It replaces the dataset-wide rule named “${ruleKey}” for this scenario.`
-    : "";
+  const scopeReview = scenario
+    ? `only ${scenario.name}`
+    : "a selected scenario";
   const effectReview =
     role === "required"
       ? "causes the scenario to fail"
@@ -162,50 +126,17 @@ export function RuleEditor({
     setError({ section, message });
   }
 
-  // Clears the selected check only when a scope cannot support it.
-  function retainCompatibleCheck(
-    nextScope: "dataset" | "scenario",
-    nextScenarioId: string,
-    nextAppliesTo: ScenarioType[] = appliesTo,
-  ): void {
-    if (!definition) return;
+  // Retains expectations when the newly selected scenario supports the check.
+  function chooseScenario(nextScenarioId: string): void {
     const nextScenario = scenarios.find((item) => item.id === nextScenarioId);
-    const compatible =
-      nextScope === "dataset"
-        ? nextAppliesTo.length > 0 &&
-          nextAppliesTo.every((type) => definition.types.includes(type))
-        : !nextScenario ||
-          definition.types.includes(nextScenario.scenario_type);
-    if (!compatible) {
+    setScenarioId(nextScenarioId);
+    if (
+      !nextScenario ||
+      (definition && !definition.types.includes(nextScenario.scenario_type))
+    ) {
       setDefinition(undefined);
       setDraft(undefined);
     }
-  }
-
-  // Changes applicability without discarding a still-compatible expectation.
-  function chooseScope(nextScope: "dataset" | "scenario"): void {
-    setScope(nextScope);
-    retainCompatibleCheck(nextScope, scenarioId);
-    setError(undefined);
-  }
-
-  // Selects one scenario and removes a check only if its type is incompatible.
-  function chooseScenario(nextScenarioId: string): void {
-    setScenarioId(nextScenarioId);
-    retainCompatibleCheck("scenario", nextScenarioId);
-    setError(undefined);
-  }
-
-  // Updates dataset applicability in canonical order and clears incompatible expectations.
-  function chooseDatasetType(type: ScenarioType, checked: boolean): void {
-    const selected = new Set(appliesTo);
-    if (checked) selected.add(type);
-    else selected.delete(type);
-    const nextAppliesTo = SCENARIO_TYPES.filter(
-      (item) => datasetTypes.includes(item) && selected.has(item),
-    );
-    setAppliesTo(nextAppliesTo);
-    retainCompatibleCheck("dataset", scenarioId, nextAppliesTo);
     setError(undefined);
   }
 
@@ -223,15 +154,11 @@ export function RuleEditor({
     if (submitting.current) return;
     setError(undefined);
 
-    if (scope === "scenario" && !scenario) {
+    if (!scenario) {
       showError(
         "scope",
         "Choose the specific scenario this rule should apply to.",
       );
-      return;
-    }
-    if (scope === "dataset" && appliesTo.length === 0) {
-      showError("scope", "Select at least one dataset scenario type.");
       return;
     }
     if (!definition || !draft) {
@@ -248,13 +175,13 @@ export function RuleEditor({
     }
 
     const payload: RuleBindingCreate = {
-      scenario_id: scope === "scenario" ? scenarioId : null,
+      scenario_id: scenarioId,
       rule_key: ruleKey,
       rule_type: definition.type,
       role,
       severity: submittedSeverity,
       parameters,
-      applies_to: scope === "dataset" ? appliesTo : null,
+      applies_to: null,
     };
     try {
       validateBindingScope(payload, bindings);
@@ -272,7 +199,7 @@ export function RuleEditor({
       if (failure instanceof ApiError && failure.status === 409) {
         showError(
           "review",
-          "This rule name already exists in the selected scope. Choose another name.",
+          "This rule name already exists for this scenario. Choose another name.",
         );
       } else {
         showError("review", messageFor(failure));
@@ -284,23 +211,17 @@ export function RuleEditor({
   }
 
   let showReviewSummary = false;
-  if (
-    ruleKey.trim() &&
-    definition &&
-    draft &&
-    ((scope === "scenario" && scenario) ||
-      (scope === "dataset" && appliesTo.length > 0))
-  ) {
+  if (ruleKey.trim() && definition && draft && scenario) {
     try {
       validateBindingScope(
         {
-          scenario_id: scope === "scenario" ? scenarioId : null,
+          scenario_id: scenarioId,
           rule_key: ruleKey,
           rule_type: definition.type,
           role,
           severity: submittedSeverity,
           parameters: serializeParameters(definition, draft),
-          applies_to: scope === "dataset" ? appliesTo : null,
+          applies_to: null,
         },
         bindings,
       );
@@ -313,7 +234,7 @@ export function RuleEditor({
     role === "scored" && severityOption
       ? ` with ${severityOption.label} weight (${severityOption.weight})`
       : "";
-  const reviewSummary = `“${ruleKey}” applies to ${scopeReview}. It checks: ${expectation} A failure ${effectReview}${weightReview}.${replacementReview}`;
+  const reviewSummary = `“${ruleKey}” applies to ${scopeReview}. It checks: ${expectation} A failure ${effectReview}${weightReview}.`;
   return (
     <form
       className="rule-form rule-form--embedded"
@@ -322,22 +243,16 @@ export function RuleEditor({
       noValidate
     >
       <RuleScopeSection
-        scope={scope}
         scenarioId={scenarioId}
         scenarios={scenarios}
-        datasetTypes={datasetTypes}
-        appliesTo={appliesTo}
         saving={saving}
         error={error?.section === "scope" ? error.message : undefined}
         sectionRef={(node) => {
           if (node) sectionRefs.current.scope = node;
         }}
-        onScopeChange={chooseScope}
         onScenarioChange={chooseScenario}
-        onDatasetTypeChange={chooseDatasetType}
       />
       <RuleCheckSection
-        scope={scope}
         scenario={scenario}
         compatibleDefinitions={compatibleDefinitions}
         definition={definition}

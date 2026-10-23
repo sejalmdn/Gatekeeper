@@ -43,12 +43,7 @@ export function DatasetRuleView({
             onSaved={onSaved}
           />
         ) : (
-          <DatasetRuleInspector
-            projectId={projectId}
-            datasetId={dataset.id}
-            scenarios={scenarios}
-            bindings={bindings}
-          />
+          <DatasetRuleInspector scenarios={scenarios} bindings={bindings} />
         )
       }
     </LoadBoundary>

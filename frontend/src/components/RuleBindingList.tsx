@@ -7,7 +7,7 @@ import {
 } from "../utils/rules";
 import { JsonBlock } from "./RecordData";
 
-// Shows saved conditions, scope, and effective-rule provenance without presenting scores.
+// Shows saved scenario checks and their private expectations without presenting scores.
 export function RuleBindingList({
   bindings,
   scenarios,
@@ -15,16 +15,17 @@ export function RuleBindingList({
   bindings: (RuleBinding | EffectiveRuleBinding)[];
   scenarios: Scenario[];
 }): ReactElement {
-  if (!bindings.length) {
+  const scenarioBindings = bindings.filter((rule) => rule.scenario_id !== null);
+  if (!scenarioBindings.length) {
     return (
       <p className="empty-state">
-        No rules in this scope. Add a rule to define an evaluation check.
+        No scenario rules yet. Add a rule to define an evaluation check.
       </p>
     );
   }
   return (
     <div className="dataset-rules__list">
-      {bindings.map((rule) => {
+      {scenarioBindings.map((rule) => {
         const scenario = scenarios.find((item) => item.id === rule.scenario_id);
         const definition = RULE_DEFINITIONS.find(
           (item) => item.type === rule.rule_type,
@@ -49,20 +50,7 @@ export function RuleBindingList({
             </div>
             <p>{definition?.label ?? rule.rule_type}</p>
             <p>{summarizeRule(rule.rule_type, rule.parameters)}</p>
-            <p>
-              {scenario
-                ? `Scenario: ${scenario.name}`
-                : `Dataset-wide: ${rule.applies_to?.join(", ")}`}
-            </p>
-            {"source" in rule && (
-              <p className="dataset-rules__origin">
-                {rule.source === "dataset"
-                  ? "Inherited from a dataset-wide rule"
-                  : "Scenario-specific"}
-                {rule.overridden_rule_id &&
-                  " · Replaces the dataset-wide rule with the same name"}
-              </p>
-            )}
+            <p>Scenario: {scenario?.name ?? rule.scenario_id}</p>
             <details>
               <summary>Definition details</summary>
               <p>Check: {rule.rule_type}</p>

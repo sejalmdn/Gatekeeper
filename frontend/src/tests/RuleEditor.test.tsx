@@ -71,7 +71,7 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-// Open either a dataset-wide editor or a scenario shortcut.
+// Opens an editor with an optional scenario shortcut.
 async function renderEditor(
   initialScenarioId = "",
   bindings: RuleBinding[] = [],
@@ -116,14 +116,6 @@ async function choose(name: string, value: string): Promise<void> {
   await act(async () => input.click());
 }
 
-// Toggle one of the dataset-wide scenario-type checkboxes.
-async function chooseDatasetType(value: string): Promise<void> {
-  const input = container.querySelector<HTMLInputElement>(
-    `input[name="rule-applies-to"][value="${value}"]`,
-  )!;
-  await act(async () => input.click());
-}
-
 // Return the currently available check values without the placeholder.
 function availableChecks(): string[] {
   return [...container.querySelectorAll<HTMLOptionElement>("#rule-type option")]
@@ -160,122 +152,60 @@ it("filters scenario checks by the selected scenario", async () => {
   ).toBe("");
 });
 
-// Require an explicit dataset subset and reopen its section on an empty submission.
-it("starts with only present dataset types unselected and requires one", async () => {
+// Require a scenario and prevent authoring a dataset-wide binding.
+it("requires a scenario and exposes no dataset scope controls", async () => {
+  const create = vi.spyOn(api, "createRuleBinding");
   await renderEditor();
-  const typeInputs = [
-    ...container.querySelectorAll<HTMLInputElement>(
-      'input[name="rule-applies-to"]',
-    ),
-  ];
-  expect(typeInputs.map((input) => input.value)).toEqual([
-    "single_turn",
-    "tool_use",
-  ]);
-  expect(typeInputs.every((input) => !input.checked)).toBe(true);
+  expect(container.querySelector('input[name="rule-scope"]')).toBeNull();
+  expect(container.querySelector('input[name="rule-applies-to"]')).toBeNull();
   expect(
-    (container.querySelector("#rule-type") as HTMLSelectElement).disabled,
+    container.querySelector<HTMLSelectElement>("#rule-type")?.disabled,
   ).toBe(true);
-  const scopeSection = container.querySelector<HTMLDetailsElement>(
+  const section = container.querySelector<HTMLDetailsElement>(
     ".rule-form > details",
   )!;
-  scopeSection.open = false;
+  section.open = false;
   await submit();
-  expect(scopeSection.open).toBe(true);
+  expect(section.open).toBe(true);
   expect(container.querySelector('[role="alert"]')?.textContent).toContain(
-    "Select at least one dataset scenario type",
+    "Choose the specific scenario",
   );
+  expect(create).not.toHaveBeenCalled();
 });
 
-// Keep an empty immutable dataset explicit and prevent check selection.
-it("shows no dataset type choices when the dataset has no scenarios", async () => {
+// Keep a legacy empty dataset from producing an unbound rule.
+it("disables scenario selection when the dataset has no scenarios", async () => {
   await renderEditor("", [], []);
-  expect(
-    container.querySelectorAll('input[name="rule-applies-to"]'),
-  ).toHaveLength(0);
   expect(container.textContent).toContain(
-    "This dataset has no scenarios available for a dataset-wide rule.",
+    "no scenarios available for rule binding",
   );
   expect(
-    (container.querySelector("#rule-type") as HTMLSelectElement).disabled,
+    container.querySelector<HTMLSelectElement>("#rule-scenario")?.disabled,
+  ).toBe(true);
+  expect(
+    container.querySelector<HTMLSelectElement>("#rule-type")?.disabled,
   ).toBe(true);
 });
 
-// Intersect compatibility across dataset types and retain only valid parameter drafts.
-it("filters dataset checks for every selected type", async () => {
-  await renderEditor();
-  await chooseDatasetType("single_turn");
-  expect(availableChecks()).toContain("response.json_valid");
-  expect(availableChecks()).toContain("metric.latency");
-  expect(availableChecks()).not.toContain("tool.selection");
-
+// Preserve compatible expectations when moving between response scenarios.
+it("retains response checks when selecting a multi-turn scenario", async () => {
+  await renderEditor("single", [], [scenarios[0], multiTurnScenario]);
   await enter("rule-type", "response.regex");
-  await enter("rule-param-pattern", "kept-until-incompatible");
-  await chooseDatasetType("tool_use");
-  expect(availableChecks()).toEqual([
-    "metric.latency",
-    "metric.tokens",
-    "metric.cost",
-  ]);
+  await enter("rule-param-pattern", "ORD-[0-9]+");
+  await enter("rule-scenario", "multi");
   expect(
-    (container.querySelector("#rule-type") as HTMLSelectElement).value,
-  ).toBe("");
-  await chooseDatasetType("single_turn");
-  expect(availableChecks()).toContain("tool.selection");
-  expect(availableChecks()).toContain("metric.latency");
-  expect(availableChecks()).not.toContain("response.json_valid");
-  await chooseDatasetType("single_turn");
-  await chooseDatasetType("tool_use");
-  await enter("rule-type", "response.regex");
-  expect(
-    (container.querySelector("#rule-param-pattern") as HTMLInputElement).value,
-  ).toBe("");
-
-  await enter("rule-type", "metric.latency");
-  await enter("rule-param-max_ms", "2500");
-  await chooseDatasetType("tool_use");
-  expect(
-    (container.querySelector("#rule-type") as HTMLSelectElement).value,
-  ).toBe("metric.latency");
-  expect(
-    (container.querySelector("#rule-param-max_ms") as HTMLInputElement).value,
-  ).toBe("2500");
-});
-
-// Treat single-turn and multi-turn response evidence alike for dataset rules.
-it("offers response, JSON, and metric checks for both response scenario types", async () => {
-  await renderEditor("", [], [scenarios[0], multiTurnScenario]);
-  await chooseDatasetType("single_turn");
-  await chooseDatasetType("multi_turn");
-  expect(
-    [...container.querySelectorAll("#rule-type optgroup")].map((group) =>
-      group.getAttribute("label"),
-    ),
-  ).toEqual(["Response content", "JSON structure", "Speed, tokens, or cost"]);
+    container.querySelector<HTMLInputElement>("#rule-param-pattern")?.value,
+  ).toBe("ORD-[0-9]+");
   expect(availableChecks()).not.toContain("tool.selection");
 });
 
-// Preserve explicit applicability across scope changes and serialize it canonically.
-it("saves the selected dataset types in canonical order", async () => {
+// Preserve failed drafts and bind retries only to the selected scenario.
+it("saves a scenario binding and retains a rejected draft", async () => {
   const create = vi
     .spyOn(api, "createRuleBinding")
     .mockRejectedValueOnce(new api.ApiError(422, "Rule was rejected"))
     .mockResolvedValueOnce({} as RuleBinding);
-  await renderEditor();
-  await chooseDatasetType("tool_use");
-  await chooseDatasetType("single_turn");
-  await choose("rule-scope", "scenario");
-  await choose("rule-scope", "dataset");
-  expect(
-    container.querySelector<HTMLInputElement>(
-      'input[name="rule-applies-to"][value="single_turn"]',
-    )?.checked,
-  ).toBe(true);
-  expect(
-    container.querySelector<HTMLInputElement>(
-      'input[name="rule-applies-to"][value="tool_use"]',
-    )?.checked,
-  ).toBe(true);
+  await renderEditor("tool");
   await enter("rule-type", "metric.latency");
   await enter("rule-param-max_ms", "2500");
   await enter("rule-key", "latency");
@@ -284,19 +214,17 @@ it("saves the selected dataset types in canonical order", async () => {
     "Rule was rejected",
   );
   expect(
-    (container.querySelector("#rule-param-max_ms") as HTMLInputElement).value,
+    container.querySelector<HTMLInputElement>("#rule-param-max_ms")?.value,
   ).toBe("2500");
   await submit();
   expect(create).toHaveBeenLastCalledWith("p", "d", {
-    scenario_id: null,
+    scenario_id: "tool",
     rule_key: "latency",
     rule_type: "metric.latency",
     role: "required",
     severity: "medium",
-    parameters: {
-      max_ms: 2500,
-    },
-    applies_to: ["single_turn", "tool_use"],
+    parameters: { max_ms: 2500 },
+    applies_to: null,
   });
   expect(onSaved).toHaveBeenCalledOnce();
 });
@@ -323,7 +251,7 @@ it("starts expanded, retains collapsed values, and reopens invalid configuration
       (section) => section.querySelector("summary small") === null,
     ),
   ).toBe(true);
-  await chooseDatasetType("single_turn");
+  await enter("rule-scenario", "single");
   await enter("rule-type", "response.regex");
   await enter("rule-param-pattern", "kept-value");
   sections[2].open = false;
@@ -439,33 +367,32 @@ it("presents expectation controls without changing their draft behavior", async 
   ).not.toBeNull();
 });
 
-// Explain exact-name replacement and reject same-scope duplicate names locally.
-it("shows replacement review and blocks duplicate names", async () => {
+// Enforce rule-name uniqueness within a scenario without showing dataset inheritance.
+it("blocks duplicate scenario names and omits dataset replacement wording", async () => {
   const create = vi.spyOn(api, "createRuleBinding");
   const binding: RuleBinding = {
-    id: "default",
+    id: "specific",
     dataset_id: "d",
-    scenario_id: null,
+    scenario_id: "single",
     rule_key: "contract",
     rule_type: "response.json_valid",
     parameters: {},
     role: "required",
     severity: "medium",
-    applies_to: ["single_turn"],
+    applies_to: null,
     created_at: dataset.created_at,
   };
   await renderEditor("single", [binding]);
   await enter("rule-type", "response.json_valid");
   await enter("rule-key", "contract");
-  expect(container.textContent).toContain(
-    "replaces the dataset-wide rule named “contract”",
-  );
-  await choose("rule-scope", "dataset");
-  await chooseDatasetType("single_turn");
-  await enter("rule-type", "response.json_valid");
+  expect(container.textContent).not.toContain("dataset-wide");
   await submit();
   expect(create).not.toHaveBeenCalled();
   expect(container.querySelector('[role="alert"]')?.textContent).toContain(
     "already exists",
   );
+  await enter("rule-scenario", "tool");
+  await enter("rule-type", "metric.latency");
+  await enter("rule-param-max_ms", "2500");
+  expect(container.textContent).toContain("Rule summary");
 });

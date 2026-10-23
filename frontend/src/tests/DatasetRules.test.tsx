@@ -4,12 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import * as api from "../api";
-import type {
-  Dataset,
-  EffectiveRuleBinding,
-  RuleBinding,
-  Scenario,
-} from "../types";
+import type { Dataset, RuleBinding, Scenario } from "../types";
 import { DatasetRules } from "../components/DatasetRules";
 
 let container: HTMLDivElement;
@@ -24,15 +19,15 @@ const scenarios: Scenario[] = ["single", "other"].map((id) => ({
   created_at: "2026-01-01T00:00:00Z",
 }));
 const binding: RuleBinding = {
-  id: "default",
+  id: "specific",
   dataset_id: "d",
-  scenario_id: null,
+  scenario_id: "single",
   rule_key: "contract",
   rule_type: "response.json_valid",
   parameters: {},
   role: "required",
   severity: "medium",
-  applies_to: ["single_turn"],
+  applies_to: null,
   created_at: "2026-01-01T00:00:00Z",
 };
 const dataset: Dataset = {
@@ -103,67 +98,50 @@ async function selectScenario(id: string): Promise<void> {
   });
 }
 
-// Give an empty collection one canonical add tab and show read failures explicitly.
-it("provides rule views and surfaces effective-rule failures", async () => {
-  vi.spyOn(api, "listRuleBindings").mockResolvedValue([]);
-  vi.spyOn(api, "listEffectiveRules").mockRejectedValue(
-    new Error("Could not read rules"),
-  );
+// Give an empty collection a canonical add tab and surface binding read failures.
+it("provides rule views and surfaces binding failures", async () => {
+  vi.spyOn(api, "listRuleBindings")
+    .mockResolvedValueOnce([])
+    .mockRejectedValueOnce(new Error("Could not read rules"));
   await renderPanel();
-  expect(container.textContent).toContain("No rules in this scope");
+  expect(container.textContent).toContain("No scenario rules yet");
   expect(
     [...container.querySelectorAll("a")].map((link) =>
       link.getAttribute("href"),
     ),
   ).toContain("/?tab=rules&view=add");
-  await selectScenario("single");
+  await follow("Add rule");
   expect(container.textContent).toContain("Could not read rules");
 });
 
-// Render backend provenance and ignore a pending scenario response after changing scope.
-it("shows inherited and replacement origins without mixing scenario responses", async () => {
-  vi.spyOn(api, "listRuleBindings").mockResolvedValue([binding]);
-  let finishSingle: (rules: EffectiveRuleBinding[]) => void = () => undefined;
-  const effective = vi
-    .spyOn(api, "listEffectiveRules")
-    .mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          finishSingle = resolve;
-        }),
-    )
-    .mockResolvedValueOnce([
-      { ...binding, source: "dataset", overridden_rule_id: null },
-      {
-        ...binding,
-        id: "override",
-        rule_key: "specific",
-        scenario_id: "other",
-        applies_to: null,
-        source: "scenario",
-        overridden_rule_id: "original",
-      },
-    ]);
+// Hide stored dataset defaults and inspect only directly bound scenario rules.
+it("filters scenario bindings without exposing dataset rules or inheritance", async () => {
+  vi.spyOn(api, "listRuleBindings").mockResolvedValue([
+    binding,
+    {
+      ...binding,
+      id: "default",
+      rule_key: "hidden-default",
+      scenario_id: null,
+      applies_to: ["single_turn"],
+    },
+    { ...binding, id: "other", scenario_id: "other", rule_key: "other-check" },
+  ]);
+  const effective = vi.spyOn(api, "listEffectiveRules");
   await renderPanel();
-  expect(container.textContent).toContain("Dataset-wide: single_turn");
-  await selectScenario("single");
+  expect(container.textContent).not.toContain("hidden-default");
+  expect(container.textContent).not.toContain("Dataset-wide");
+  expect(container.textContent).toContain("contract");
+  expect(container.textContent).toContain("other-check");
   await selectScenario("other");
-  expect(effective).toHaveBeenLastCalledWith("p", "d", "other");
-  expect(container.textContent).toContain("Inherited from a dataset-wide rule");
-  expect(container.textContent).toContain("Replaces the dataset-wide rule");
-  await act(async () =>
-    finishSingle([
-      {
-        ...binding,
-        rule_key: "stale-response",
-        source: "dataset",
-        overridden_rule_id: null,
-      },
-    ]),
-  );
-  expect(container.textContent).not.toContain("stale-response");
+  expect(container.textContent).not.toContain("contract");
+  expect(container.textContent).toContain("other-check");
+  await selectScenario("single");
+  expect(container.textContent).toContain("contract");
+  expect(container.textContent).not.toContain("other-check");
   await selectScenario("");
-  expect(container.textContent).not.toContain("Replaces the dataset-wide rule");
+  expect(container.textContent).toContain("other-check");
+  expect(effective).not.toHaveBeenCalled();
 });
 
 // Keep weight out of badges unless the saved rule contributes to scoring.
@@ -222,13 +200,7 @@ it("returns to inspection and refreshes saved rules", async () => {
   );
 
   await follow("Add rule");
-  await act(async () =>
-    container
-      .querySelector<HTMLInputElement>(
-        'input[name="rule-applies-to"][value="single_turn"]',
-      )!
-      .click(),
-  );
+  await enter("rule-scenario", "single");
   await enter("rule-type", "response.json_valid");
   await enter("rule-key", "contract");
   await act(async () => {
@@ -237,7 +209,7 @@ it("returns to inspection and refreshes saved rules", async () => {
       .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   });
   expect(list).toHaveBeenCalledTimes(5);
-  expect(container.textContent).toContain("Dataset-wide: single_turn");
+  expect(container.textContent).toContain("Scenario: single");
   expect(container.querySelector('[aria-current="page"]')?.textContent).toBe(
     "Inspect rules",
   );

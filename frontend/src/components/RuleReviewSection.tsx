@@ -40,10 +40,7 @@ export function RuleReviewSection({
             value={ruleKey}
             onChange={(event) => onRuleKeyChange(event.target.value)}
           />
-          <small>
-            Names are unique within a scope. An exact dataset-wide name can be
-            reused to replace that rule for one scenario.
-          </small>
+          <small>Names are unique within the selected scenario.</small>
         </label>
         {showSummary && (
           <div className="rule-form__review-summary" aria-live="polite">
