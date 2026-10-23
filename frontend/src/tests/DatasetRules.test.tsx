@@ -165,7 +165,7 @@ it("shows saved weight only for scored rules", async () => {
   ]);
   await renderPanel();
   const badges = [
-    ...container.querySelectorAll(".dataset-rules__rule .badge"),
+    ...container.querySelectorAll(".rule-binding-list__badge"),
   ].map((item) => item.textContent);
   expect(badges).toEqual([
     "Required",
@@ -209,7 +209,9 @@ it("returns to inspection and refreshes saved rules", async () => {
       .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   });
   expect(list).toHaveBeenCalledTimes(5);
-  expect(container.textContent).toContain("Scenario: single");
+  expect(
+    container.querySelector(".rule-binding-list__scenario h3")?.textContent,
+  ).toBe("single");
   expect(container.querySelector('[aria-current="page"]')?.textContent).toBe(
     "Inspect rules",
   );

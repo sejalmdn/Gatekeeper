@@ -1,6 +1,5 @@
 /* Rule inspection and authoring form one focused workbench inside a dataset. */
 .dataset-rules__inspector,
-.dataset-rules__list,
 .rule-form,
 .rule-form__parameters,
 .rule-form__assertion,
@@ -40,30 +39,6 @@
 .dataset-rules__inner-tabs [aria-current="page"] {
   color: var(--accent);
   background: var(--accent-soft);
-}
-
-.dataset-rules__inspector > .form-field {
-  margin-bottom: 4px;
-}
-
-.dataset-rules__rule {
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-panel);
-  background: var(--surface);
-  overflow-wrap: anywhere;
-}
-
-.dataset-rules__rule p {
-  margin: 12px 0;
-}
-
-.dataset-rules__origin {
-  color: var(--muted);
-}
-
-.dataset-rules__rule summary {
-  cursor: pointer;
 }
 
 .rule-form--embedded {
