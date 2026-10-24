@@ -1,21 +1,15 @@
 import { useState, type FormEvent, type ReactElement } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import {
-  createCandidate,
-  getCandidate,
-  listCandidates,
-  listProviders,
-} from "../api";
+import { createCandidate, listCandidates, listProviders } from "../api";
 import { LoadBoundary } from "../components/Feedback";
 import { JsonInput, SourceSelect } from "../components/FormFields";
-import { JsonBlock } from "../components/RecordData";
-import { RecordDetails } from "../components/RecordDetails";
 import { RecordForm } from "../components/RecordForm";
 import { RecordList } from "../components/RecordList";
 import { CandidateTable } from "../components/RecordTable";
 import { useLoad } from "../hooks/useLoad";
 import type { ToolDefinition } from "../types";
 import { messageFor, parseArray, parseObject } from "../utils/format";
+import { CandidateDetailContent } from "./CandidateDetailContent";
 
 // Shows the shared tool format without enabling a tool until the user adds it.
 const sampleTool: ToolDefinition = {
@@ -287,50 +281,12 @@ export function CandidateForm(): ReactElement {
 // Candidate detail page.
 export function CandidateDetail(): ReactElement {
   const { projectId = "", recordId = "" } = useParams();
-  const state = useLoad(() => getCandidate(projectId, recordId));
   return (
-    <LoadBoundary state={state}>
-      {(candidate) => (
-        <RecordDetails
-          title={candidate.name}
-          detail={candidate.model_name}
-          backTo={`/projects/${projectId}/candidates`}
-          backLabel="Back to candidates"
-          createdAt={candidate.created_at}
-        >
-          <section className="detail-section detail-grid">
-            <div>
-              <h2>Provider</h2>
-              <p>
-                <Link
-                  to={`/projects/${projectId}/providers/${candidate.provider_id}`}
-                >
-                  View provider
-                </Link>
-              </p>
-            </div>
-            <div>
-              <h2>System prompt</h2>
-              <p>{candidate.system_prompt || "None"}</p>
-            </div>
-          </section>
-          <section className="detail-section">
-            <h2>Generation parameters</h2>
-            <JsonBlock value={candidate.generation_parameters} />
-          </section>
-          <section className="detail-section">
-            <h2>Tool definitions</h2>
-            <JsonBlock value={candidate.tool_definitions} />
-          </section>
-          {candidate.response_format && (
-            <section className="detail-section">
-              <h2>Response format</h2>
-              <JsonBlock value={candidate.response_format} />
-            </section>
-          )}
-        </RecordDetails>
-      )}
-    </LoadBoundary>
+    <CandidateDetailContent
+      key={`${projectId}-${recordId}`}
+      projectId={projectId}
+      candidateId={recordId}
+    />
   );
 }
 

@@ -10,18 +10,22 @@ interface Column<T> {
   render: (row: T) => ReactNode;
 }
 
+interface RecordTableProps<T> {
+  label: string;
+  rows: T[];
+  columns: Column<T>[];
+  searchText: (row: T) => string;
+  className?: string;
+}
+
 // Shared semantic table with a keyboard-scrollable container for narrow screens.
 export function RecordTable<T extends { id: string }>({
   label,
   rows,
   columns,
   searchText,
-}: {
-  label: string;
-  rows: T[];
-  columns: Column<T>[];
-  searchText: (row: T) => string;
-}): ReactElement {
+  className = "",
+}: RecordTableProps<T>): ReactElement {
   const [params] = useSearchParams();
   const query = (params.get("q") ?? "").trim().toLowerCase();
   const visibleRows = rows.filter((row) =>
@@ -34,7 +38,7 @@ export function RecordTable<T extends { id: string }>({
       aria-label={label}
       tabIndex={0}
     >
-      <table className="record-table">
+      <table className={`record-table ${className}`.trim()}>
         <caption className="record-table-caption">{label}</caption>
         <thead>
           <tr>
@@ -113,9 +117,7 @@ export function CandidateTable({
     <RecordTable
       label="Candidate records"
       rows={candidates}
-      searchText={(row) =>
-        [row.id, row.name, row.model_name].join(" ")
-      }
+      searchText={(row) => [row.id, row.name, row.model_name].join(" ")}
       columns={[
         {
           label: "Candidate",
@@ -143,6 +145,7 @@ export function DatasetTable({
   return (
     <RecordTable
       label="Dataset records"
+      className="record-table--datasets"
       rows={datasets}
       searchText={(row) => [row.id, row.name, row.description].join(" ")}
       columns={[

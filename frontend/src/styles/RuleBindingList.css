@@ -32,7 +32,7 @@
 
 .rule-binding-list__eyebrow {
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--font-size-label);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -41,7 +41,7 @@
   margin: 5px 0 8px;
   color: var(--text);
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: var(--font-size-h3);
   line-height: 1.4;
 }
 
@@ -52,13 +52,13 @@
   margin: 0;
   color: var(--muted);
   font-family: var(--font-code);
-  font-size: 11px;
+  font-size: var(--font-size-body);
 }
 
 .rule-binding-list__count {
   flex-shrink: 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-label);
   white-space: nowrap;
 }
 
@@ -79,7 +79,7 @@
   margin: 0;
   color: var(--text);
   font-family: var(--font-code);
-  font-size: 13px;
+  font-size: var(--font-size-h4);
   font-weight: 600;
   line-height: 1.6;
 }
@@ -87,7 +87,7 @@
 .rule-binding-list__expectation {
   margin: 0;
   color: var(--text);
-  font-size: 12px;
+  font-size: var(--font-size-body);
   line-height: 1.8;
 }
 
@@ -103,7 +103,7 @@
   border: 1px solid var(--border-strong);
   border-radius: 4px;
   color: var(--cyan);
-  font-size: 10px;
+  font-size: var(--font-size-label);
   line-height: 1.6;
 }
 
@@ -113,7 +113,7 @@
   border: 1px solid var(--border-strong);
   border-radius: 4px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--font-size-label);
   line-height: 1.6;
 }
 
@@ -137,7 +137,7 @@
   padding: 4px 0;
   color: var(--muted);
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--font-size-label);
 }
 
 .rule-binding-list__details > summary:hover,
@@ -162,7 +162,7 @@
 .rule-binding-list__definition p {
   margin: 0 0 12px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-body);
 }
 
 .rule-binding-list__definition code {

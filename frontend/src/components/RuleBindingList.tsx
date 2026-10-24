@@ -5,7 +5,7 @@ import {
   RULE_SEVERITY_OPTIONS,
   summarizeRule,
 } from "../utils/rules";
-import { JsonBlock } from "./RecordData";
+import { JsonViewer } from "./JsonViewer";
 import "../styles/RuleBindingList.css";
 
 // Groups private checks by scenario with full-width descriptions and expandable definitions.
@@ -94,7 +94,10 @@ export function RuleBindingList({
                       <p>
                         Check: <code>{rule.rule_type}</code>
                       </p>
-                      <JsonBlock value={rule.parameters} />
+                      <JsonViewer
+                        value={rule.parameters}
+                        label={`${rule.rule_key} definition`}
+                      />
                     </div>
                   </details>
                 </article>

@@ -13,7 +13,7 @@
 }
 
 .projects-header > span {
-  font-size: 12px;
+  font-size: var(--font-size-label);
   color: var(--muted);
 }
 
@@ -47,11 +47,11 @@
 
 .project-directory-heading h2 {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--font-size-h2);
 }
 
 .project-directory-heading > span {
-  font-size: 11px;
+  font-size: var(--font-size-label);
   color: var(--cyan);
 }
 
@@ -88,14 +88,14 @@
 
 .project-directory-name strong {
   display: block;
-  font-size: 14px;
+  font-size: var(--font-size-body);
   overflow-wrap: anywhere;
 }
 
 .project-directory-name small {
   display: block;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-body);
   margin-top: 4px;
 }
 
@@ -116,7 +116,7 @@
 }
 
 .project-directory-empty p {
-  font-size: 12px;
+  font-size: var(--font-size-body);
   margin: 0;
 }
 
@@ -139,7 +139,7 @@
 
 .project-create > p {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--font-size-body);
   margin-bottom: 24px;
 }
 
@@ -157,7 +157,7 @@
   gap: 8px;
   align-items: center;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-body);
   margin-top: 48px;
 }
 

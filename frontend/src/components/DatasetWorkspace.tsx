@@ -4,7 +4,7 @@ import { useDatasetBindings } from "../hooks/useDatasetBindings";
 import type { Dataset, Scenario } from "../types";
 import { DatasetHeader } from "./DatasetHeader";
 import { DatasetScenarioList } from "./DatasetScenarioList";
-import { JsonBlock } from "./RecordData";
+import { JsonViewer } from "./JsonViewer";
 import { RuleBindingList } from "./RuleBindingList";
 import { RuleEditor } from "./RuleEditor";
 import "../styles/DatasetWorkspace.css";
@@ -170,7 +170,10 @@ export function DatasetWorkspace({
             </header>
             <details className="dataset-workspace__input">
               <summary>Input</summary>
-              <JsonBlock value={selected.input} />
+              <JsonViewer
+                value={selected.input}
+                label={`${selected.name} input`}
+              />
             </details>
             <section
               className="dataset-workspace__rules"

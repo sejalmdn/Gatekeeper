@@ -73,18 +73,18 @@
 .evaluation-checks thead th {
   background: var(--surface-raised);
   color: var(--subtle);
-  font-size: 11px;
+  font-size: var(--font-size-label);
   font-weight: 700;
 }
 
 .evaluation-checks tbody th {
   color: var(--text);
-  font-size: 12px;
+  font-size: var(--font-size-body);
 }
 
 .evaluation-checks td {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-body);
   line-height: 1.6;
 }
 
@@ -107,5 +107,5 @@
   border-radius: 0 0 var(--radius-panel) var(--radius-panel);
   background: var(--cyan-soft);
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-body);
 }

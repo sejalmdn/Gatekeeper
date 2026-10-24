@@ -21,20 +21,20 @@
 
 .dataset-header__identity h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: var(--font-size-h1);
   line-height: 1.4;
 }
 
 .dataset-header__identity p {
   margin: 8px 0 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-body);
   line-height: 1.8;
 }
 
 .dataset-header__back {
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: var(--font-size-link);
 }
 
 .dataset-header__back .icon {
@@ -63,7 +63,7 @@
 .dataset-header__stats dt {
   margin-bottom: 14px;
   color: var(--subtle);
-  font-size: 10px;
+  font-size: var(--font-size-label);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -77,7 +77,7 @@
 .dataset-header__value {
   color: var(--text);
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: var(--font-size-stat);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1.5;
@@ -88,13 +88,13 @@
 }
 
 .dataset-header__created {
-  font-size: 12px;
+  font-size: var(--font-size-body);
 }
 
 .dataset-header__coverage-label {
   margin: 4px 0 0;
   color: var(--subtle);
-  font-size: 11px;
+  font-size: var(--font-size-label);
 }
 
 @container (min-width: 601px) and (max-width: 850px) {
@@ -110,7 +110,7 @@
 
 .dataset-header__time {
   color: var(--subtle);
-  font-size: 11px;
+  font-size: var(--font-size-body);
 }
 
 @container (max-width: 600px) {
@@ -121,7 +121,7 @@
   }
 
   .dataset-header__identity h1 {
-    font-size: 24px;
+    font-size: var(--font-size-h1);
   }
 
   .dataset-header__stats {

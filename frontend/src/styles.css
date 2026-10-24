@@ -25,11 +25,20 @@
   --font-body: "JetBrains Mono", "Cascadia Code", monospace;
   --font-code: var(--font-body);
   --font-display: "Space Mono", "JetBrains Mono", monospace;
+  --font-size-body: 15px;
+  --font-size-label: 14px;
+  --font-size-link: 14px;
+  --font-size-h1: 28px;
+  --font-size-h2: 20px;
+  --font-size-h3: 17px;
+  --font-size-h4: 16px;
+  --font-size-stat: 24px;
+  --font-size-stat-large: 32px;
   font-family: var(--font-body);
   font-synthesis: none;
   background: var(--canvas);
   color: var(--text);
-  font-size: 15px;
+  font-size: var(--font-size-body);
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
 }
@@ -51,9 +60,11 @@ input,
 select,
 textarea {
   font: inherit;
+  font-size: var(--font-size-body);
 }
 a {
   color: var(--text);
+  font-size: var(--font-size-link);
   text-underline-offset: 4px;
 }
 a:hover {
@@ -77,28 +88,52 @@ textarea {
 h1,
 h2,
 h3,
+h4,
 p {
   margin-top: 0;
 }
 h1,
 h2,
-h3 {
+h3,
+h4 {
   font-family: var(--font-display);
   color: #f9fafb;
 }
 h1 {
-  font-size: clamp(20px, 2.1vw, 25px);
+  font-size: var(--font-size-h1);
   line-height: 1.4;
   letter-spacing: -0.04em;
 }
 h2 {
-  font-size: 14px;
+  font-size: var(--font-size-h2);
   line-height: 1.5;
   font-weight: 700;
 }
 h3 {
-  font-size: 13px;
+  font-size: var(--font-size-h3);
   font-weight: 700;
+}
+h4 {
+  font-size: var(--font-size-h4);
+  font-weight: 700;
+}
+p,
+small,
+pre {
+  font-size: var(--font-size-body);
+}
+code {
+  font-size: inherit;
+}
+label,
+legend,
+dt,
+summary,
+th {
+  font-size: var(--font-size-label);
+}
+p a {
+  font-size: inherit;
 }
 button,
 .button {
@@ -112,7 +147,7 @@ button,
   border-radius: var(--radius);
   background: var(--accent);
   color: var(--accent-ink);
-  font-size: 11px;
+  font-size: var(--font-size-body);
   font-weight: 600;
   line-height: 1.5;
   cursor: pointer;
@@ -143,7 +178,7 @@ button:disabled {
   color: var(--text);
 }
 .quiet-link {
-  font-size: 11px;
+  font-size: var(--font-size-link);
   white-space: nowrap;
 }
 .page-content {
@@ -175,7 +210,7 @@ button:disabled {
   border-radius: 4px;
   background: var(--surface-raised);
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--font-size-label);
   font-weight: 500;
   line-height: 1.5;
 }

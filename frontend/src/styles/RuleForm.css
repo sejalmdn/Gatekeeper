@@ -44,7 +44,7 @@
 .rule-form__section > summary > span {
   color: var(--text);
   font-family: var(--font-display);
-  font-size: 13px;
+  font-size: var(--font-size-h3);
   font-weight: 700;
 }
 
@@ -117,13 +117,17 @@
 
 .rule-form__choices span {
   color: var(--text);
-  font-size: 12px;
+  font-size: var(--font-size-body);
+}
+
+.rule-form__choices strong {
+  font-size: var(--font-size-label);
 }
 
 .rule-form__choices small {
   margin-top: 3px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--font-size-body);
 }
 
 .rule-form__type-options,
@@ -144,7 +148,7 @@
 .rule-form__list legend {
   padding: 0 7px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-label);
   font-weight: 600;
 }
 
@@ -159,7 +163,7 @@
   align-items: center;
   gap: 9px;
   color: var(--text);
-  font-size: 12px;
+  font-size: var(--font-size-label);
   cursor: pointer;
 }
 
@@ -217,7 +221,7 @@
   border-radius: 4px;
   background: var(--surface-raised);
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--font-size-label);
 }
 
 .rule-form__check-type::before {
@@ -313,7 +317,7 @@
 .rule-form__note {
   margin: 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-body);
 }
 
 .rule-form__review {
@@ -387,7 +391,7 @@
 
 .rule-form__scenario-context span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-label);
 }
 
 .rule-form__list {
@@ -405,13 +409,13 @@
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border);
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--font-size-label);
 }
 
 .rule-form__list-heading small {
   margin-left: auto;
   color: var(--subtle);
-  font-size: 10px;
+  font-size: var(--font-size-label);
 }
 
 .rule-form__list-total {
@@ -448,7 +452,7 @@
   border-radius: 4px;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 10px;
+  font-size: var(--font-size-label);
 }
 
 .rule-form__list-row input {
@@ -456,7 +460,7 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  font-size: 12px;
+  font-size: var(--font-size-body);
 }
 
 .rule-form__list-row:focus-within {
@@ -483,7 +487,7 @@
 
 .rule-form__list-entry input {
   flex: 1;
-  font-size: 12px;
+  font-size: var(--font-size-body);
 }
 
 .rule-form__list-entry button {
@@ -501,7 +505,7 @@
 .rule-form__list-help {
   margin: 0;
   color: var(--subtle);
-  font-size: 10px;
+  font-size: var(--font-size-body);
   line-height: 1.6;
 }
 

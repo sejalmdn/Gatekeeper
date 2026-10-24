@@ -24,7 +24,7 @@
 
 .section-title > span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-label);
 }
 
 .policy-strip {
@@ -37,7 +37,7 @@
 .policy-strip > span {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-label);
 }
 
 .policy-strip > strong {
@@ -45,7 +45,7 @@
   margin-top: 4px;
   font-family: var(--font-display);
   color: var(--accent);
-  font-size: 15px;
+  font-size: var(--font-size-body);
 }
 
 .detail-section > details {
@@ -57,7 +57,7 @@
 }
 
 .detail-section > details > summary {
-  font-size: 13px;
+  font-size: var(--font-size-label);
   cursor: pointer;
   overflow-wrap: anywhere;
 }

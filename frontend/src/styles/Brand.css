@@ -22,7 +22,7 @@
 .brand-copy strong {
   display: block;
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: var(--font-size-h3);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #fff;
@@ -30,5 +30,5 @@
 .brand-copy small {
   display: block;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--font-size-label);
 }

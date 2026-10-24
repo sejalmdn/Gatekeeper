@@ -21,7 +21,7 @@
 .record-table th {
   background: var(--surface-raised);
   padding: 12px 20px;
-  font-size: 14px;
+  font-size: var(--font-size-label);
   color: var(--muted);
   font-weight: 500;
   text-transform: uppercase;
@@ -32,7 +32,7 @@
 .record-table td {
   border-top: 1px solid var(--border);
   padding: 20px;
-  font-size: 14px;
+  font-size: var(--font-size-body);
   vertical-align: middle;
   color: var(--muted);
   min-width: 140px;
@@ -59,7 +59,7 @@
 
 .record-table td:last-child {
   white-space: nowrap;
-  font-size: 14px;
+  font-size: var(--font-size-body);
 }
 
 .table-cell-stack {
@@ -69,12 +69,12 @@
 
 .table-cell-stack strong {
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--font-size-body);
   font-weight: 500;
 }
 
 .table-cell-stack small {
-  font-size: 14px;
+  font-size: var(--font-size-body);
   color: var(--muted);
 }
 
@@ -88,7 +88,7 @@
   border-radius: 5px;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 14px;
+  font-size: var(--font-size-link);
 }
 
 .table-action:hover {
@@ -98,5 +98,28 @@
 .record-table td.record-table-empty {
   padding: 36px 20px;
   text-align: center;
+  white-space: normal;
+}
+
+/* Dataset descriptions absorb the space saved by wrapping creation timestamps. */
+.record-table--datasets {
+  table-layout: fixed;
+}
+
+.record-table--datasets th:first-child {
+  width: 28%;
+}
+
+.record-table--datasets th:last-child {
+  width: 180px;
+}
+
+.record-table--datasets td {
+  min-width: 0;
+  max-width: none;
+  vertical-align: top;
+}
+
+.record-table--datasets td:last-child {
   white-space: normal;
 }

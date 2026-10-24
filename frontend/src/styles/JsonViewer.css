@@ -1,0 +1,40 @@
+.json-viewer {
+  min-width: 0;
+}
+
+.json-viewer .cm-editor {
+  background: var(--canvas);
+  color: var(--text);
+}
+
+.json-viewer .cm-editor.cm-focused {
+  outline: none;
+}
+
+.json-viewer .cm-scroller {
+  max-height: 680px;
+  overflow: auto;
+  font-family: var(--font-code);
+  font-size: var(--font-size-body);
+  line-height: 1.8;
+}
+
+.json-viewer .cm-content {
+  padding: 14px 0;
+}
+
+.json-viewer .cm-line {
+  padding-inline: 12px;
+}
+
+.json-viewer .cm-gutters {
+  padding-block: 14px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--subtle);
+}
+
+.json-viewer [role="textbox"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}

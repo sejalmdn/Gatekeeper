@@ -17,7 +17,7 @@
 
 .record-list-header h2 {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--font-size-h2);
 }
 
 .record-list-header h2 > span {
@@ -27,7 +27,7 @@
   border-radius: 4px;
   padding: 2px 7px;
   font-family: var(--font-body);
-  font-size: 10px;
+  font-size: var(--font-size-label);
   margin-left: 10px;
 }
 
@@ -36,7 +36,7 @@
   align-items: center;
   gap: 6px;
   color: var(--cyan);
-  font-size: 10px;
+  font-size: var(--font-size-body);
 }
 
 .record-list-note .icon {
@@ -68,5 +68,5 @@
   border-radius: var(--radius);
   background: var(--surface-raised);
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--font-size-body);
 }

@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: var(--font-size-label);
   color: var(--muted);
   border-bottom: 1px solid var(--border);
   padding-bottom: 16px;
@@ -72,7 +72,7 @@
   background: var(--surface-raised);
   color: var(--cyan);
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--font-size-label);
 }
 
 .source-preview > summary::after {
@@ -90,6 +90,6 @@
 }
 .form-boundary {
   margin: 0;
-  font-size: 11px;
+  font-size: var(--font-size-body);
   color: var(--muted);
 }

@@ -3,7 +3,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-family: var(--font-code);
-  font-size: 12px;
+  font-size: var(--font-size-body);
   line-height: 1.8;
   margin: 0;
   max-height: 440px;
@@ -31,10 +31,10 @@
 
 .record-metadata dt {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-label);
 }
 
 .record-metadata dd {
   margin: 4px 0 0;
-  font-size: 12px;
+  font-size: var(--font-size-body);
 }
