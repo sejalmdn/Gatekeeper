@@ -96,6 +96,15 @@ function copyButton(label: string): HTMLButtonElement {
 it("shows identity, parameter values, tools, and configured response format", async () => {
   await renderPage();
   expect(container.querySelector("h1")?.textContent).toBe("Support baseline");
+  const header = container.querySelector(".candidate-details__header")!;
+  expect(
+    header.querySelector(
+      'a[href="/projects/p/evaluation-runs/new?candidate=c"]',
+    )?.textContent,
+  ).toBe("Run Evaluation");
+  expect(
+    header.querySelector('a[href="/projects/p/candidates"]'),
+  ).not.toBeNull();
   expect(
     container.querySelector('a[href="/projects/p/providers/provider"]')
       ?.textContent,

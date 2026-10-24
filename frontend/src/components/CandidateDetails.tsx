@@ -47,13 +47,22 @@ export function CandidateDetails({
             </span>
           </div>
         </div>
-        <Link
-          className="candidate-details__back"
-          to={`/projects/${projectId}/candidates`}
-        >
-          <Icon name="arrow" />
-          Back to candidates
-        </Link>
+        <div className="candidate-details__actions">
+          <Link
+            className="candidate-details__back"
+            to={`/projects/${projectId}/candidates`}
+          >
+            <Icon name="arrow" />
+            Back to candidates
+          </Link>
+          <Link
+            className="button"
+            to={`/projects/${projectId}/evaluation-runs/new?candidate=${candidate.id}`}
+          >
+            <Icon name="evaluation" />
+            Run Evaluation
+          </Link>
+        </div>
       </header>
 
       <CandidatePrompt prompt={candidate.system_prompt} />

@@ -366,6 +366,39 @@ it("presents expectation controls without changing their draft behavior", async 
   ).not.toBeNull();
 });
 
+// Keep the sample illustrative until explicitly inserted, then save it as a schema.
+it("previews and inserts a sample JSON schema without overwriting input", async () => {
+  const create = vi
+    .spyOn(api, "createRuleBinding")
+    .mockResolvedValue({} as RuleBinding);
+  await renderEditor("single");
+  await enter("rule-type", "response.json_schema");
+  const placeholder = container.querySelector(".cm-placeholder")!;
+  const sample = JSON.parse(placeholder.textContent!);
+  expect(sample).toMatchObject({
+    type: "object",
+    required: ["message", "total"],
+    additionalProperties: false,
+  });
+  await submit();
+  expect(create).not.toHaveBeenCalled();
+  const insert = [...container.querySelectorAll<HTMLButtonElement>("button")]
+    .find((button) => button.textContent === "Add sample schema")!;
+  expect(insert.disabled).toBe(false);
+  await act(async () => insert.click());
+  expect(container.querySelector(".cm-placeholder")).toBeNull();
+  expect(insert.disabled).toBe(true);
+  await submit();
+  expect(create).toHaveBeenCalledWith(
+    "p",
+    "d",
+    expect.objectContaining({
+      rule_type: "response.json_schema",
+      parameters: { schema: sample },
+    }),
+  );
+});
+
 // Save a generated name with the next available version in the selected scenario.
 it("generates a versioned rule name and saves it without manual naming", async () => {
   const create = vi

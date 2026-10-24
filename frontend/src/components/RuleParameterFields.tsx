@@ -5,6 +5,25 @@ import { RuleAssertionFields } from "./RuleAssertionFields";
 import { RuleExpectedCalls } from "./RuleExpectedCalls";
 import { RuleTextList } from "./RuleTextList";
 
+const SAMPLE_JSON_SCHEMA = JSON.stringify(
+  {
+    type: "object",
+    properties: {
+      message: {
+        type: "string",
+      },
+      total: {
+        type: "number",
+        minimum: 0,
+      },
+    },
+    required: ["message", "total"],
+    additionalProperties: false,
+  },
+  null,
+  2,
+);
+
 const OPTION_LABELS: Record<string, string> = {
   all: "All listed text",
   any: "Any listed text",
@@ -119,6 +138,28 @@ export function RuleParameterFields({
                 label={field.label}
                 help="Enter the schema as a JSON object."
                 value={draft.fields[field.key] ?? ""}
+                placeholder={SAMPLE_JSON_SCHEMA}
+                actions={
+                  <button
+                    className="quiet-button json-input__format"
+                    type="button"
+                    disabled={
+                      disabled || Boolean(draft.fields[field.key]?.trim())
+                    }
+                    title="Insert the example into an empty schema field"
+                    onClick={() =>
+                      onChange({
+                        ...draft,
+                        fields: {
+                          ...draft.fields,
+                          [field.key]: SAMPLE_JSON_SCHEMA,
+                        },
+                      })
+                    }
+                  >
+                    Add sample schema
+                  </button>
+                }
                 onChange={(value) =>
                   onChange({
                     ...draft,

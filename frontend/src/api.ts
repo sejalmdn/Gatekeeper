@@ -9,6 +9,10 @@ import type {
   Project,
   Provider,
   Scenario,
+  RunSettings,
+  RunSettingsCreate,
+  EvaluationRun,
+  EvaluationRunCreate,
 } from "./types";
 
 // API error that retains the server's useful message.
@@ -172,3 +176,37 @@ export const listEffectiveRules = (
   request<EffectiveRuleBinding[]>(
     `/v1/projects/${projectId}/datasets/${datasetId}/scenarios/${scenarioId}/effective-rules`,
   );
+
+// Evaluation setup uses existing backend records without starting execution.
+export const listRunSettings = (projectId: string): Promise<RunSettings[]> =>
+  request<RunSettings[]>(`/v1/projects/${projectId}/run-settings`);
+
+export const createRunSettings = (
+  projectId: string,
+  payload: RunSettingsCreate,
+): Promise<RunSettings> =>
+  request<RunSettings>(`/v1/projects/${projectId}/run-settings`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export const getRunSettings = (
+  projectId: string,
+  settingsId: string,
+): Promise<RunSettings> =>
+  request<RunSettings>(`/v1/projects/${projectId}/run-settings/${settingsId}`);
+
+export const createEvaluationRun = (
+  projectId: string,
+  payload: EvaluationRunCreate,
+): Promise<EvaluationRun> =>
+  request<EvaluationRun>(`/v1/projects/${projectId}/evaluation-runs`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export const getEvaluationRun = (
+  projectId: string,
+  runId: string,
+): Promise<EvaluationRun> =>
+  request<EvaluationRun>(`/v1/projects/${projectId}/evaluation-runs/${runId}`);

@@ -120,3 +120,35 @@ export interface EffectiveRuleBinding extends RuleBinding {
   source: "dataset" | "scenario";
   overridden_rule_id: string | null;
 }
+
+// Immutable settings used by a pending evaluation run.
+export interface RunSettingsCreate {
+  name: string;
+  attempts_per_scenario: number;
+  timeout_ms: number;
+  pass_threshold: number;
+}
+
+// Saved project-level evaluation settings.
+export interface RunSettings extends RunSettingsCreate {
+  id: string;
+  project_id: string;
+  created_at: string;
+}
+
+// References selected when preparing an evaluation.
+export interface EvaluationRunCreate {
+  candidate_id: string;
+  dataset_id: string;
+  run_settings_id: string;
+}
+
+// Run lifecycle metadata; pending records do not imply execution.
+export interface EvaluationRun extends EvaluationRunCreate {
+  id: string;
+  project_id: string;
+  status: "pending" | "running" | "completed" | "failed";
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}

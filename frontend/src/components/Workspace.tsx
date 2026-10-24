@@ -46,9 +46,11 @@ function Workspace({ projectId }: { projectId: string }): ReactElement {
   const { pathname } = useLocation();
   const section = pathname.split("/")[3] ?? "";
   const label =
-    [...NAVIGATION, ...REFERENCE_NAVIGATION].find(
-      (item) => item.path === section,
-    )?.label ?? "Overview";
+    section === "evaluation-runs"
+      ? "Evaluations"
+      : ([...NAVIGATION, ...REFERENCE_NAVIGATION].find(
+          (item) => item.path === section,
+        )?.label ?? "Overview");
   return (
     <LoadBoundary state={state}>
       {(project) => (

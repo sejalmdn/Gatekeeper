@@ -41,6 +41,12 @@ candidates keep their frozen generation parameters, including historical keys.
 
 ## Lifecycle
 
+The current frontend can prepare an evaluation from a candidate's **Run Evaluation** action.
+Setup selects a candidate and dataset and saves attempts per scenario, timeout, and pass threshold
+through the existing run-settings and evaluation-run APIs. Matching saved settings are reused.
+The resulting run remains pending; setup does not invoke a provider, freeze rule bindings, or
+produce evaluation results. Execution and frozen evaluation configuration remain future work.
+
 1. Select the immutable candidate, dataset, rule bindings, and run settings.
 2. Create a distinct execution ID for every scenario attempt.
 3. Load the scenario input and build the target invocation without private evaluation fields.

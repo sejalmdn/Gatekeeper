@@ -1,0 +1,32 @@
+/* Source choices and run settings form distinct, readable configuration groups. */
+.evaluation-setup-form__fields {
+  min-width: 0;
+  margin: 0;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.evaluation-setup-form__fields legend {
+  padding: 0 8px;
+  color: var(--muted);
+  font-size: var(--font-size-label);
+}
+
+.evaluation-setup-form__settings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.evaluation-setup-form__help {
+  margin: 16px 0 0;
+  color: var(--muted);
+}
+
+@media (max-width: 800px) {
+  .evaluation-setup-form__settings,
+  .evaluation-setup-form .form-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
