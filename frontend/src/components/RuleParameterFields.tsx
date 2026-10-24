@@ -103,7 +103,7 @@ export function RuleParameterFields({
                   })
                 }
               />
-              {field.label}
+              <span>{field.label}</span>
             </label>
           );
         }

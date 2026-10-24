@@ -24,6 +24,11 @@ export function RuleExpectationSection({
     <details className="rule-form__section" open ref={sectionRef}>
       <summary>
         <span>3. Configure the expectation</span>
+        {definition && (
+          <small className="rule-form__check-type">
+            Check type: {definition.label}
+          </small>
+        )}
       </summary>
       <fieldset disabled={saving}>
         <legend className="rule-form__visually-hidden">
@@ -31,8 +36,8 @@ export function RuleExpectationSection({
         </legend>
         {definition && draft ? (
           <div className="rule-form__expectation-workspace">
-            <h3>{definition.label}</h3>
             <RuleParameterFields
+              key={definition.type}
               disabled={saving}
               definition={definition}
               draft={draft}

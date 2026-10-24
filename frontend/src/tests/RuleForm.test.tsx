@@ -30,7 +30,7 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-// Preserve old bookmarks and scenario shortcuts in the canonical add-rule tab.
+// Preserve old bookmarks and scenario shortcuts in the scenario-bound authoring view.
 it("redirects the old new-rule route", async () => {
   await act(async () =>
     root.render(
@@ -51,6 +51,6 @@ it("redirects the old new-rule route", async () => {
     ),
   );
   expect(container.textContent).toBe(
-    "/projects/p/datasets/d?tab=rules&view=add&scenario=s",
+    "/projects/p/datasets/d?scenario=s&view=add",
   );
 });

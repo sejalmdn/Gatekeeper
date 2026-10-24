@@ -8,13 +8,15 @@ import {
 import { JsonBlock } from "./RecordData";
 import "../styles/RuleBindingList.css";
 
-// Groups private checks by scenario with aligned expectations and expandable definitions.
+// Groups private checks by scenario with full-width descriptions and expandable definitions.
 export function RuleBindingList({
   bindings,
   scenarios,
+  hideScenarioHeader = false,
 }: {
   bindings: (RuleBinding | EffectiveRuleBinding)[];
   scenarios: Scenario[];
+  hideScenarioHeader?: boolean;
 }): ReactElement {
   const scenarioBindings = bindings.filter((rule) => rule.scenario_id !== null);
   if (!scenarioBindings.length) {
@@ -37,26 +39,23 @@ export function RuleBindingList({
         );
         return (
           <section className="rule-binding-list__group" key={scenarioId}>
-            <header className="rule-binding-list__scenario">
-              <div className="rule-binding-list__scenario-identity">
-                <span className="rule-binding-list__eyebrow">Scenario</span>
-                <h3>{scenario?.name ?? scenarioId}</h3>
-                {scenario && (
-                  <p className="rule-binding-list__scenario-meta">
-                    <span>{scenario.scenario_key}</span>
-                    <span>{scenario.scenario_type.replaceAll("_", " ")}</span>
-                  </p>
-                )}
-              </div>
-              <span className="rule-binding-list__count">
-                {rules.length} {rules.length === 1 ? "rule" : "rules"}
-              </span>
-            </header>
-            <div className="rule-binding-list__columns" aria-hidden="true">
-              <span>Rule / check</span>
-              <span>Expectation</span>
-              <span>Result role</span>
-            </div>
+            {!hideScenarioHeader && (
+              <header className="rule-binding-list__scenario">
+                <div className="rule-binding-list__scenario-identity">
+                  <span className="rule-binding-list__eyebrow">Scenario</span>
+                  <h3>{scenario?.name ?? scenarioId}</h3>
+                  {scenario && (
+                    <p className="rule-binding-list__scenario-meta">
+                      <span>{scenario.scenario_key}</span>
+                      <span>{scenario.scenario_type.replaceAll("_", " ")}</span>
+                    </p>
+                  )}
+                </div>
+                <span className="rule-binding-list__count">
+                  {rules.length} {rules.length === 1 ? "rule" : "rules"}
+                </span>
+              </header>
+            )}
             {rules.map((rule) => {
               const definition = RULE_DEFINITIONS.find(
                 (item) => item.type === rule.rule_type,
@@ -72,19 +71,18 @@ export function RuleBindingList({
                 <article className="rule-binding-list__rule" key={rule.id}>
                   <div className="rule-binding-list__identity">
                     <h4>{rule.rule_key}</h4>
-                    <p>{definition?.label ?? rule.rule_type}</p>
                   </div>
                   <p className="rule-binding-list__expectation">
                     {summarizeRule(rule.rule_type, rule.parameters)}
                   </p>
-                  <div className="rule-binding-list__role">
-                    <span className="rule-binding-list__role-label">
-                      Result role
+                  <div className="rule-binding-list__metadata">
+                    <span className="rule-binding-list__type">
+                      Type: {definition?.label ?? rule.rule_type}
                     </span>
                     <span
                       className={`rule-binding-list__badge rule-binding-list__badge--${rule.role}`}
                     >
-                      {role}
+                      Result: {role}
                       {rule.role === "scored" && severity
                         ? ` · ${severity.label} weight (${severity.weight})`
                         : ""}

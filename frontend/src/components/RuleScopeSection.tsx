@@ -3,6 +3,7 @@ import type { Scenario } from "../types";
 
 interface RuleScopeSectionProps {
   scenarioId: string;
+  locked?: boolean;
   scenarios: Scenario[];
   saving: boolean;
   error?: string;
@@ -13,6 +14,7 @@ interface RuleScopeSectionProps {
 // Selects the scenario whose response or tool requests the rule checks.
 export function RuleScopeSection({
   scenarioId,
+  locked = false,
   scenarios,
   saving,
   error,
@@ -26,22 +28,31 @@ export function RuleScopeSection({
       </summary>
       <fieldset disabled={saving}>
         <legend className="rule-form__visually-hidden">Rule scenario</legend>
-        <label className="form-field" htmlFor="rule-scenario">
-          <span>Scenario</span>
-          <select
-            id="rule-scenario"
-            value={scenarioId}
-            disabled={scenarios.length === 0}
-            onChange={(event) => onScenarioChange(event.target.value)}
-          >
-            <option value="">Choose a scenario</option>
-            {scenarios.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name} ({item.scenario_key})
-              </option>
-            ))}
-          </select>
-        </label>
+        {locked ? (
+          <p className="rule-form__scenario-context">
+            <strong>
+              {scenarios.find((scenario) => scenario.id === scenarioId)?.name}
+            </strong>
+            <span>This rule applies only to this scenario.</span>
+          </p>
+        ) : (
+          <label className="form-field" htmlFor="rule-scenario">
+            <span>Scenario</span>
+            <select
+              id="rule-scenario"
+              value={scenarioId}
+              disabled={scenarios.length === 0}
+              onChange={(event) => onScenarioChange(event.target.value)}
+            >
+              <option value="">Choose a scenario</option>
+              {scenarios.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name} ({item.scenario_key})
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {scenarios.length === 0 && (
           <p className="rule-form__note">
             This dataset has no scenarios available for rule binding.

@@ -1,13 +1,10 @@
 import type { ReactElement } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
-import { getDataset, listDatasets, listScenarios } from "../api";
-import { DatasetRules } from "../components/DatasetRules";
-import { DatasetScenarioList } from "../components/DatasetScenarioList";
-import { LoadBoundary } from "../components/Feedback";
-import { RecordDetails } from "../components/RecordDetails";
+import { useParams } from "react-router-dom";
+import { listDatasets } from "../api";
 import { RecordList } from "../components/RecordList";
 import { DatasetTable } from "../components/RecordTable";
 import { useLoad } from "../hooks/useLoad";
+import { DatasetDetailContent } from "./DatasetDetailContent";
 
 // Dataset list page.
 export function DatasetsPage(): ReactElement {
@@ -37,50 +34,11 @@ export function DatasetDetail(): ReactElement {
   // Reads the project and dataset scopes for immutable detail requests.
   const { projectId = "", recordId = "" } = useParams();
 
-  // Keeps the selected dataset section addressable without changing its inputs.
-  const [searchParams] = useSearchParams();
-  const rulesSelected = searchParams.get("tab") === "rules";
-
-  // Loads immutable dataset metadata and scenarios for inspection together.
-  const state = useLoad(async () => ({
-    dataset: await getDataset(projectId, recordId),
-    scenarios: await listScenarios(projectId, recordId),
-  }));
   return (
-    <LoadBoundary state={state}>
-      {({ dataset, scenarios }) => (
-        <RecordDetails
-          title={dataset.name}
-          detail={dataset.description ?? "Scenario dataset"}
-          backTo={`/projects/${projectId}/datasets`}
-          backLabel="Back to datasets"
-          createdAt={dataset.created_at}
-        >
-          <nav className="dataset-rules__tabs" aria-label="Dataset sections">
-            <Link
-              to="?tab=scenarios"
-              aria-current={!rulesSelected ? "page" : undefined}
-            >
-              Scenarios
-            </Link>
-            <Link
-              to="?tab=rules&view=inspect"
-              aria-current={rulesSelected ? "page" : undefined}
-            >
-              Evaluation rules
-            </Link>
-          </nav>
-          {rulesSelected ? (
-            <DatasetRules
-              projectId={projectId}
-              dataset={dataset}
-              scenarios={scenarios}
-            />
-          ) : (
-            <DatasetScenarioList scenarios={scenarios} />
-          )}
-        </RecordDetails>
-      )}
-    </LoadBoundary>
+    <DatasetDetailContent
+      key={`${projectId}-${recordId}`}
+      projectId={projectId}
+      datasetId={recordId}
+    />
   );
 }

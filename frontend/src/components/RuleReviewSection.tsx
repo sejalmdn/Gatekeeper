@@ -40,7 +40,10 @@ export function RuleReviewSection({
             value={ruleKey}
             onChange={(event) => onRuleKeyChange(event.target.value)}
           />
-          <small>Names are unique within the selected scenario.</small>
+          <small>
+            Generated from the scenario and check names, with a version suffix
+            when needed. You can edit it.
+          </small>
         </label>
         {showSummary && (
           <div className="rule-form__review-summary" aria-live="polite">

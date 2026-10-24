@@ -350,10 +350,9 @@ it("hides the rule summary until the complete draft is valid", async () => {
 it("presents expectation controls without changing their draft behavior", async () => {
   await renderEditor("single");
   await enter("rule-type", "response.regex");
-  expect(
-    container.querySelector(".rule-form__expectation-workspace > h3")
-      ?.textContent,
-  ).toBe("Regular expression");
+  expect(container.querySelector(".rule-form__check-type")?.textContent).toBe(
+    "Check type: Regular expression",
+  );
   expect(
     container.querySelectorAll(
       ".rule-form__parameters > .rule-form__parameter:not(.rule-form__parameter--wide)",
@@ -365,6 +364,72 @@ it("presents expectation controls without changing their draft behavior", async 
       ".rule-form__parameters > .rule-form__parameter--wide .json-input",
     ),
   ).not.toBeNull();
+});
+
+// Save a generated name with the next available version in the selected scenario.
+it("generates a versioned rule name and saves it without manual naming", async () => {
+  const create = vi
+    .spyOn(api, "createRuleBinding")
+    .mockResolvedValue({} as RuleBinding);
+  const binding: RuleBinding = {
+    id: "existing",
+    dataset_id: "d",
+    scenario_id: "single",
+    rule_key: "hello_latency_limit",
+    rule_type: "metric.latency",
+    parameters: { max_ms: 1000 },
+    role: "required",
+    severity: "medium",
+    applies_to: null,
+    created_at: dataset.created_at,
+  };
+  await renderEditor("single", [
+    binding,
+    { ...binding, id: "version-two", rule_key: "hello_latency_limit_v2" },
+    {
+      ...binding,
+      id: "other-scenario",
+      scenario_id: "tool",
+      rule_key: "hello_latency_limit_v3",
+    },
+  ]);
+  await enter("rule-type", "metric.latency");
+  expect(container.querySelector<HTMLInputElement>("#rule-key")?.value).toBe(
+    "hello_latency_limit_v3",
+  );
+  await enter("rule-param-max_ms", "2500");
+  await submit();
+  expect(create).toHaveBeenCalledWith(
+    "p",
+    "d",
+    expect.objectContaining({
+      rule_key: "hello_latency_limit_v3",
+      scenario_id: "single",
+    }),
+  );
+});
+
+// Follow scenario and check changes until the user supplies their own name.
+it("updates default names and preserves a manually edited name", async () => {
+  await renderEditor("single");
+  await enter("rule-type", "response.required_text");
+  expect(container.querySelector<HTMLInputElement>("#rule-key")?.value).toBe(
+    "hello_required_text",
+  );
+  await enter("rule-type", "metric.latency");
+  expect(container.querySelector<HTMLInputElement>("#rule-key")?.value).toBe(
+    "hello_latency_limit",
+  );
+  await enter("rule-scenario", "tool");
+  expect(container.querySelector<HTMLInputElement>("#rule-key")?.value).toBe(
+    "lookup_latency_limit",
+  );
+  await enter("rule-key", "my_custom_name");
+  await enter("rule-scenario", "single");
+  await enter("rule-type", "response.forbidden_text");
+  expect(container.querySelector<HTMLInputElement>("#rule-key")?.value).toBe(
+    "my_custom_name",
+  );
 });
 
 // Enforce rule-name uniqueness within a scenario without showing dataset inheritance.
@@ -396,3 +461,53 @@ it("blocks duplicate scenario names and omits dataset replacement wording", asyn
   await enter("rule-param-max_ms", "2500");
   expect(container.textContent).toContain("Rule summary");
 });
+
+// Preserves literal phrases through keyboard entry, editing, removal, and saving.
+it.each(["response.required_text", "response.forbidden_text"])(
+  "edits and saves phrase entries for %s",
+  async (ruleType) => {
+    const create = vi
+      .spyOn(api, "createRuleBinding")
+      .mockResolvedValue({} as RuleBinding);
+    await renderEditor("single");
+    await enter("rule-type", ruleType);
+    await enter("rule-param-values-new", "Keep CASE, and spaces");
+    await act(async () => {
+      container.querySelector("#rule-param-values-new")!.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Enter",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    expect(create).not.toHaveBeenCalled();
+    expect(
+      container.querySelector<HTMLInputElement>("#rule-param-values-new")
+        ?.value,
+    ).toBe("");
+    await enter("rule-param-values-new", "remove me");
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(".rule-form__list-entry button")!
+        .click();
+    });
+    expect(container.querySelector(".rule-form__list-total")?.textContent).toBe(
+      "2 defined",
+    );
+    await act(async () => {
+      container
+        .querySelectorAll<HTMLButtonElement>(".rule-form__list-remove")[1]
+        .click();
+    });
+    await enter("rule-param-values-0", "Exact CASE, and spaces");
+    expect(container.querySelector("#rule-param-case_sensitive")).toBeNull();
+    await enter("rule-key", "phrase-check");
+    await submit();
+    expect(create).toHaveBeenCalledOnce();
+    expect(create.mock.calls[0][2]).toMatchObject({
+      rule_type: ruleType,
+      parameters: { values: ["Exact CASE, and spaces"], case_sensitive: false },
+    });
+  },
+);

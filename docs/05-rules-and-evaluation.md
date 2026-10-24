@@ -19,10 +19,15 @@ rather than pass.
 
 ## Rule authoring and effective rules
 
-The dataset detail page has Scenarios and Rules tabs. Developers define a check and its binding
-in one form, either as a dataset default with explicit applicable scenario types or for one
-scenario. Type-specific forms cover deterministic rules; semantic judge authoring is not enabled.
-Saved rules can be inspected but cannot yet be edited, deleted, or executed through this UI.
+The dataset detail page combines a scenario list with a detail pane containing the selected
+scenario's immutable input and private rules. Scenario selection is addressable through the
+`scenario` query parameter. Dataset-level rule authoring and inspection are deferred in the UI;
+existing backend contracts and stored dataset defaults remain unchanged.
+
+Add rule opens a full-width form scoped to the selected scenario. Save and Cancel return to that
+scenario; successful saves refresh its rules and counts. Type-specific forms cover deterministic
+rules; semantic judge authoring is not enabled. Saved rules can be inspected but cannot yet be
+edited, deleted, or executed through this UI.
 
 An applicable scenario binding with the same `rule_key` completely replaces the dataset default,
 including its parameters, role, and severity. Other applicable defaults remain inherited. A default

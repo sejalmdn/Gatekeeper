@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { Navigate, useParams, useSearchParams } from "react-router-dom";
 
-// Redirects legacy rule-authoring links into the dataset's canonical rule tab.
+// Redirects legacy rule-authoring links into the dataset's scenario workspace.
 export function RuleForm(): ReactElement {
   // Reads the legacy route scopes used to build the canonical dataset URL.
   const { projectId = "", recordId = "" } = useParams();
@@ -9,8 +9,11 @@ export function RuleForm(): ReactElement {
   // Preserves an old scenario shortcut while redirecting saved links.
   const [searchParams] = useSearchParams();
   const scenario = searchParams.get("scenario");
-  const query = new URLSearchParams({ tab: "rules", view: "add" });
-  if (scenario) query.set("scenario", scenario);
+  const query = new URLSearchParams();
+  if (scenario) {
+    query.set("scenario", scenario);
+    query.set("view", "add");
+  }
   return (
     <Navigate
       replace

@@ -56,11 +56,6 @@ export const RULE_DEFINITIONS: RuleDefinition[] = [
         kind: "select",
         options: ["all", "any"],
       },
-      {
-        key: "case_sensitive",
-        label: "Case sensitive",
-        kind: "checkbox",
-      },
     ],
   },
   {
@@ -72,11 +67,6 @@ export const RULE_DEFINITIONS: RuleDefinition[] = [
         key: "values",
         label: "Forbidden text",
         kind: "list",
-      },
-      {
-        key: "case_sensitive",
-        label: "Case sensitive",
-        kind: "checkbox",
       },
     ],
   },

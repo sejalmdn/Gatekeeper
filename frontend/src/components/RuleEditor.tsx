@@ -7,6 +7,7 @@ import type {
   Scenario,
 } from "../types";
 import { messageFor } from "../utils/format";
+import { defaultRuleName } from "../utils/ruleNames";
 import {
   initialRuleDraft,
   RULE_DEFINITIONS,
@@ -30,6 +31,7 @@ interface RuleEditorProps {
   scenarios: Scenario[];
   bindings: RuleBinding[];
   initialScenarioId: string;
+  scenarioLocked?: boolean;
   onCancel: () => void;
   onSaved: () => void;
 }
@@ -48,6 +50,7 @@ export function RuleEditor({
   scenarios,
   bindings,
   initialScenarioId,
+  scenarioLocked = false,
   onCancel,
   onSaved,
 }: RuleEditorProps): ReactElement {
@@ -64,8 +67,8 @@ export function RuleEditor({
   // Preserves the selected check's parameters while sections collapse.
   const [draft, setDraft] = useState<RuleDraft>();
 
-  // Identifies the rule within the selected scenario.
-  const [ruleKey, setRuleKey] = useState("");
+  // Preserves an explicit name while untouched names follow the scenario and check.
+  const [customRuleKey, setCustomRuleKey] = useState<string>();
 
   // Determines whether failure controls passing, scoring, or reporting.
   const [role, setRole] = useState<RuleBindingCreate["role"]>("required");
@@ -89,6 +92,11 @@ export function RuleEditor({
   );
 
   const scenario = scenarios.find((item) => item.id === scenarioId);
+  const ruleKey =
+    customRuleKey ??
+    (scenario && definition
+      ? defaultRuleName(scenario.id, scenario.name, definition.label, bindings)
+      : "");
   const compatibleDefinitions = RULE_DEFINITIONS.filter((item) =>
     scenario ? item.types.includes(scenario.scenario_type) : false,
   );
@@ -243,6 +251,7 @@ export function RuleEditor({
       noValidate
     >
       <RuleScopeSection
+        locked={scenarioLocked}
         scenarioId={scenarioId}
         scenarios={scenarios}
         saving={saving}
@@ -293,7 +302,7 @@ export function RuleEditor({
         sectionRef={(node) => {
           if (node) sectionRefs.current.review = node;
         }}
-        onRuleKeyChange={setRuleKey}
+        onRuleKeyChange={setCustomRuleKey}
         onCancel={onCancel}
       />
     </form>

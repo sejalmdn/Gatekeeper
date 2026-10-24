@@ -1,28 +1,9 @@
 /* Scenario headers anchor compact checks to their evaluation inputs. */
 .rule-binding-list {
+  container-type: inline-size;
   display: grid;
   gap: 24px;
   min-width: 0;
-}
-
-.rule-binding-list__toolbar {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px 24px;
-  padding-bottom: 8px;
-}
-
-.rule-binding-list__toolbar .form-field {
-  flex: 0 1 360px;
-  margin: 0;
-}
-
-.rule-binding-list__total {
-  margin: 0 0 10px;
-  color: var(--muted);
-  font-size: 11px;
 }
 
 .rule-binding-list__group {
@@ -81,41 +62,25 @@
   white-space: nowrap;
 }
 
-.rule-binding-list__columns,
 .rule-binding-list__rule {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(150px, 0.8fr);
-  gap: 10px 24px;
-  padding-inline: 24px;
-}
-
-.rule-binding-list__columns {
-  padding-block: 10px;
-  border-top: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.rule-binding-list__rule {
-  align-items: start;
-  padding-block: 20px 16px;
-  border-top: 1px solid var(--border);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding: 20px 24px 16px;
   overflow-wrap: anywhere;
 }
 
+.rule-binding-list__rule + .rule-binding-list__rule,
+.rule-binding-list__scenario + .rule-binding-list__rule {
+  border-top: 1px solid var(--border);
+}
+
 .rule-binding-list__identity h4 {
-  margin: 0 0 6px;
+  margin: 0;
   color: var(--text);
   font-family: var(--font-code);
   font-size: 13px;
   font-weight: 600;
-  line-height: 1.6;
-}
-
-.rule-binding-list__identity p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 11px;
   line-height: 1.6;
 }
 
@@ -126,12 +91,20 @@
   line-height: 1.8;
 }
 
-.rule-binding-list__role {
-  min-width: 0;
+.rule-binding-list__metadata {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
 }
 
-.rule-binding-list__role-label {
-  display: none;
+.rule-binding-list__type {
+  padding: 4px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  color: var(--cyan);
+  font-size: 10px;
+  line-height: 1.6;
 }
 
 .rule-binding-list__badge {
@@ -197,47 +170,10 @@
   font-family: var(--font-code);
 }
 
-@media (max-width: 820px) {
-  .rule-binding-list__columns {
-    display: none;
-  }
-
-  .rule-binding-list__rule {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .rule-binding-list__role {
-    grid-column: 2;
-    grid-row: 1;
-    max-width: 180px;
-  }
-
-  .rule-binding-list__expectation {
-    grid-column: 1 / -1;
-  }
-
-  .rule-binding-list__role-label {
-    display: block;
-    margin-bottom: 6px;
-    color: var(--muted);
-    font-size: 10px;
-  }
-}
-
-@media (max-width: 480px) {
+@container (max-width: 480px) {
   .rule-binding-list__scenario,
   .rule-binding-list__rule {
     padding-inline: 16px;
-  }
-
-  .rule-binding-list__rule {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .rule-binding-list__role {
-    grid-column: 1;
-    grid-row: auto;
-    max-width: none;
   }
 
   .rule-binding-list__definition {
