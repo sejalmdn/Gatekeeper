@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import sqlite3
 from uuid import UUID, uuid4
 
@@ -11,6 +12,10 @@ from gatekeeper.api.dependencies import get_database
 from gatekeeper.contracts.projects import Project, ProjectCreate
 from gatekeeper.persistence.database import Database
 from gatekeeper.persistence.records import project_from_row, timestamp
+from gatekeeper.utils.logging import log_event
+
+# Resource activity is emitted after successful database commits.
+logger = logging.getLogger(__name__)
 
 # Project router group.
 router = APIRouter(prefix="/v1/projects")
@@ -21,6 +26,7 @@ router = APIRouter(prefix="/v1/projects")
 async def create_project(
     payload: ProjectCreate, database: Database = Depends(get_database)
 ) -> Project:
+    """Persist the project from payload using database and return its saved contract."""
     project = Project(
         id=uuid4(),
         name=payload.name,
@@ -42,6 +48,7 @@ async def create_project(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="project already exists"
         ) from error
+    log_event(logger, "project.created", project_id=project.id)
     return project
 
 

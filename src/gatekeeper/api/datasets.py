@@ -1,5 +1,6 @@
 """Dataset API routes."""
 
+import logging
 import sqlite3
 from uuid import UUID, uuid4
 
@@ -11,6 +12,10 @@ from gatekeeper.contracts.scenarios import Scenario
 from gatekeeper.persistence.database import Database
 from gatekeeper.persistence.records import dataset_from_row, project_or_404, timestamp
 from gatekeeper.utils.json import canonical_json
+from gatekeeper.utils.logging import log_event
+
+# Resource activity is emitted after successful database commits.
+logger = logging.getLogger(__name__)
 
 # Project-scoped dataset router group.
 router = APIRouter(prefix="/v1/projects/{project_id}/datasets")
@@ -21,6 +26,7 @@ router = APIRouter(prefix="/v1/projects/{project_id}/datasets")
 async def create_dataset(
     project_id: UUID, payload: DatasetCreate, database: Database = Depends(get_database)
 ) -> Dataset:
+    """Atomically save payload and scenarios under project_id in database; return the dataset."""
     dataset = Dataset(
         id=uuid4(),
         project_id=project_id,
@@ -70,6 +76,16 @@ async def create_dataset(
             )
     except sqlite3.IntegrityError as error:
         raise HTTPException(status_code=409, detail="dataset already exists") from error
+    log_event(
+        logger,
+        "dataset.created",
+        project_id=project_id,
+        dataset_id=dataset.id,
+        total_scenarios=len(scenarios),
+        single_turn=sum(s.scenario_type == "single_turn" for s in scenarios),
+        multi_turn=sum(s.scenario_type == "multi_turn" for s in scenarios),
+        tool_use=sum(s.scenario_type == "tool_use" for s in scenarios),
+    )
     return dataset
 
 

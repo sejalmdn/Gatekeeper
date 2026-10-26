@@ -1,5 +1,6 @@
 """Evaluation run-setting API routes."""
 
+import logging
 import sqlite3
 from uuid import UUID, uuid4
 
@@ -9,6 +10,10 @@ from gatekeeper.api.dependencies import get_database
 from gatekeeper.contracts.run_settings import RunSettings, RunSettingsCreate
 from gatekeeper.persistence.database import Database
 from gatekeeper.persistence.records import project_or_404, run_settings_from_row, timestamp
+from gatekeeper.utils.logging import log_event
+
+# Resource activity is emitted after successful database commits.
+logger = logging.getLogger(__name__)
 
 # Project-scoped run-setting router group.
 router = APIRouter(prefix="/v1/projects/{project_id}/run-settings")
@@ -19,6 +24,7 @@ router = APIRouter(prefix="/v1/projects/{project_id}/run-settings")
 async def create_run_settings(
     project_id: UUID, payload: RunSettingsCreate, database: Database = Depends(get_database)
 ) -> RunSettings:
+    """Save payload under project_id in database and return immutable run settings."""
     settings = RunSettings(
         id=uuid4(), project_id=project_id, created_at=timestamp(), **payload.model_dump()
     )
@@ -42,6 +48,7 @@ async def create_run_settings(
             )
     except sqlite3.IntegrityError as error:
         raise HTTPException(status_code=409, detail="run settings already exist") from error
+    log_event(logger, "run_settings.created", project_id=project_id, run_settings_id=settings.id)
     return settings
 
 

@@ -1,5 +1,6 @@
 """Evaluation-run API routes."""
 
+import logging
 import sqlite3
 from typing import Literal
 from uuid import UUID, uuid4
@@ -18,6 +19,10 @@ from gatekeeper.persistence.executions import (
     read_run,
 )
 from gatekeeper.persistence.records import project_or_404, timestamp
+from gatekeeper.utils.logging import log_event
+
+# Resource activity is emitted after successful database commits.
+logger = logging.getLogger(__name__)
 
 # Project-scoped evaluation-run router group.
 router = APIRouter(prefix="/v1/projects/{project_id}/evaluation-runs")
@@ -44,6 +49,7 @@ def source_or_404(
 async def create_evaluation_run(
     project_id: UUID, payload: EvaluationRunCreate, database: Database = Depends(get_database)
 ) -> EvaluationRun:
+    """Save payload under project_id in database and return the pending run."""
     run = EvaluationRun(
         id=uuid4(),
         project_id=project_id,
@@ -78,6 +84,15 @@ async def create_evaluation_run(
                 run.created_at.isoformat(),
             ),
         )
+    log_event(
+        logger,
+        "run.created",
+        project_id=project_id,
+        run_id=run.id,
+        candidate_id=run.candidate_id,
+        dataset_id=run.dataset_id,
+        run_settings_id=run.run_settings_id,
+    )
     return run
 
 

@@ -1,6 +1,7 @@
 """Transactional queue, frozen run configuration, and execution evidence storage."""
 
 import json
+import logging
 import sqlite3
 from datetime import datetime
 from uuid import UUID, uuid4
@@ -26,7 +27,11 @@ from gatekeeper.persistence.records import (
     timestamp,
 )
 from gatekeeper.utils.json import canonical_json, digest
+from gatekeeper.utils.logging import log_event
 from gatekeeper.utils.rules import resolve_effective_rules
+
+# Log durable transitions once their owning transactions have committed.
+logger = logging.getLogger(__name__)
 
 
 # Load a scoped run with progress derived from its actual allocated attempts.
@@ -63,22 +68,14 @@ def read_run(connection: sqlite3.Connection, project_id: UUID, run_id: UUID) -> 
 
 # Freeze all private run inputs and allocate attempt identities atomically once.
 def queue_run(database: Database, project_id: UUID, run_id: UUID) -> EvaluationRun:
-    """Validate, snapshot, and allocate a pending run atomically and idempotently.
-
-    Args:
-        database: Database containing the run and its source configuration.
-        project_id: Project scope required to start the run.
-        run_id: Pending run to queue.
-
-    Returns:
-        The queued or previously started run; invalid configuration raises HTTP 422.
-    """
+    """Freeze and queue run_id in project_id/database; return its current execution state."""
 
     with database.connection() as connection:
         connection.execute("BEGIN IMMEDIATE")
         run = read_run(connection, project_id, run_id)
 
         if run.status != "pending" or run.queued_at is not None:
+            log_event(logger, "run.start_unchanged", level=logging.DEBUG, run_id=run_id)
             return run
 
         candidate = candidate_from_row(
@@ -169,27 +166,31 @@ def queue_run(database: Database, project_id: UUID, run_id: UUID) -> EvaluationR
             "UPDATE evaluation_runs SET queued_at = ?, snapshot_digest = ? WHERE id = ?",
             (timestamp().isoformat(), snapshot_digest, str(run_id)),
         )
-        return read_run(connection, project_id, run_id)
+        result = read_run(connection, project_id, run_id)
+
+    log_event(
+        logger,
+        "run.queued",
+        project_id=project_id,
+        run_id=run_id,
+        candidate_id=run.candidate_id,
+        dataset_id=run.dataset_id,
+        total_scenarios=len(scenarios),
+        total_attempts=position,
+    )
+    return result
 
 
 # Persist cancellation without interrupting an in-flight provider request.
 def cancel_run(database: Database, project_id: UUID, run_id: UUID) -> EvaluationRun:
-    """Request cancellation while allowing an active provider request to finish.
-
-    Args:
-        database: Database containing run and attempt state.
-        project_id: Project scope required to cancel the run.
-        run_id: Run whose cancellation should be recorded.
-
-    Returns:
-        The current run; pending runs are cancelled immediately and repeated calls are safe.
-    """
+    """Request cancellation for run_id in project_id/database and return its current state."""
 
     with database.connection() as connection:
         connection.execute("BEGIN IMMEDIATE")
         run = read_run(connection, project_id, run_id)
 
         if run.status not in {"pending", "running"} or run.cancel_requested_at is not None:
+            log_event(logger, "run.cancel_unchanged", level=logging.DEBUG, run_id=run_id)
             return run
 
         now = timestamp().isoformat()
@@ -198,10 +199,21 @@ def cancel_run(database: Database, project_id: UUID, run_id: UUID) -> Evaluation
             "UPDATE evaluation_runs SET cancel_requested_at = ? WHERE id = ?", (now, str(run_id))
         )
 
-        if run.status == "pending":
-            finish_run(connection, str(run_id), "cancelled", skipped_error("run_cancelled"))
+        skipped = 0
 
-        return read_run(connection, project_id, run_id)
+        if run.status == "pending":
+            skipped = finish_run(
+                connection, str(run_id), "cancelled", skipped_error("run_cancelled")
+            )
+
+        result = read_run(connection, project_id, run_id)
+
+    log_event(logger, "run.cancel_requested", project_id=project_id, run_id=run_id)
+
+    if result.status == "cancelled":
+        log_event(logger, "run.cancelled", run_id=run_id, skipped_attempts=skipped)
+
+    return result
 
 
 # Explain unexecuted attempts without representing them as observed candidate failures.
@@ -225,42 +237,29 @@ def finish_run(
     run_id: str,
     status: str,
     error: ExecutionError | None = None,
-) -> None:
-    """Finalize a run and mark its remaining pending attempts as skipped.
-
-    Args:
-        connection: Open connection whose caller owns the transaction.
-        run_id: Run to finalize.
-        status: Terminal run status to persist.
-        error: Optional reason for failure or skipped attempts.
-
-    Returns:
-        None; updates run and pending-attempt records within the caller transaction.
-    """
+) -> int:
+    """Finalize run_id with status/error in connection; return the number of skipped attempts."""
     now = timestamp().isoformat()
     encoded = canonical_json(error.model_dump()) if error else None
 
-    connection.execute(
+    skipped = connection.execute(
         "UPDATE execution_attempts SET status = 'skipped', completed_at = ?, error = ? "
         "WHERE run_id = ? AND status = 'pending'",
         (now, encoded, run_id),
-    )
+    ).rowcount
     connection.execute(
         "UPDATE evaluation_runs SET status = ?, completed_at = ?, error = ? WHERE id = ?",
         (status, now, encoded if status == "failed" else None, run_id),
     )
 
+    return skipped
+
 
 # Recover uncertain in-flight work without resending requests that may already have been billed.
 def recover_interrupted(database: Database) -> None:
-    """Fail uncertain in-flight runs without retrying potentially billed requests.
+    """Fail interrupted runs in database without replaying requests; return None."""
 
-    Args:
-        database: Database whose running attempts require interruption recovery.
-
-    Returns:
-        None; marks running attempts failed, skips pending siblings, and leaves queued runs intact.
-    """
+    recovered = []
 
     with database.connection() as connection:
         connection.execute("BEGIN IMMEDIATE")
@@ -274,29 +273,42 @@ def recover_interrupted(database: Database) -> None:
         )
 
         for run in runs:
-            connection.execute(
+            affected = connection.execute(
                 "UPDATE execution_attempts SET status = 'failed', completed_at = ?, error = ? "
                 "WHERE run_id = ? AND status = 'running'",
                 (timestamp().isoformat(), canonical_json(error.model_dump()), run["id"]),
-            )
-            finish_run(connection, run["id"], "failed", error)
+            ).rowcount
+            skipped = finish_run(connection, run["id"], "failed", error)
+            recovered.append((run["id"], affected, skipped))
+
+    for run_id, affected, skipped in recovered:
+        log_event(
+            logger,
+            "run.interrupted",
+            level=logging.WARNING,
+            run_id=run_id,
+            affected_attempts=affected,
+            skipped_attempts=skipped,
+            error_code=error.code,
+        )
+        log_event(
+            logger,
+            "run.failed",
+            level=logging.WARNING,
+            run_id=run_id,
+            skipped_attempts=skipped,
+            error_code=error.code,
+        )
 
 
 # Claim the oldest queued run before beginning network work outside the transaction.
 def claim_run(database: Database) -> tuple[str, ExecutionSnapshot] | None:
-    """Atomically claim the oldest queued run before any network activity.
-
-    Args:
-        database: Database containing the durable run queue and frozen snapshots.
-
-    Returns:
-        The run ID and validated snapshot, or None when no queued run is available.
-    """
+    """Start the oldest queued run in database; return its ID and snapshot, or None."""
 
     with database.connection() as connection:
         connection.execute("BEGIN IMMEDIATE")
         row = connection.execute(
-            """SELECT r.id, s.configuration FROM evaluation_runs r
+            """SELECT r.id, r.dataset_id, s.configuration FROM evaluation_runs r
             JOIN execution_snapshots s ON s.run_id = r.id
             WHERE r.status = 'pending' AND r.queued_at IS NOT NULL
             ORDER BY r.queued_at, r.id LIMIT 1"""
@@ -309,20 +321,25 @@ def claim_run(database: Database) -> tuple[str, ExecutionSnapshot] | None:
             "UPDATE evaluation_runs SET status = 'running', started_at = ? WHERE id = ?",
             (timestamp().isoformat(), row["id"]),
         )
-        return row["id"], ExecutionSnapshot.model_validate_json(row["configuration"])
+        snapshot = ExecutionSnapshot.model_validate_json(row["configuration"])
+
+    log_event(
+        logger,
+        "run.started",
+        run_id=row["id"],
+        project_id=snapshot.candidate.project_id,
+        candidate_id=snapshot.candidate.id,
+        dataset_id=row["dataset_id"],
+    )
+    return row["id"], snapshot
 
 
 # Claim the next attempt or finish the run after cancellation or exhaustion.
 def claim_attempt(database: Database, run_id: str) -> ExecutionAttempt | None:
-    """Claim the next pending attempt or finalize a cancelled or exhausted run.
-
-    Args:
-        database: Database containing the active run and its allocated attempts.
-        run_id: Claimed run whose next attempt is needed.
-
-    Returns:
-        The newly running attempt, or None after cancellation or run completion.
-    """
+    """Start the next attempt for run_id in database, returning it or None when the run ends."""
+    result = None
+    terminal_status = None
+    skipped = 0
 
     with database.connection() as connection:
         connection.execute("BEGIN IMMEDIATE")
@@ -331,30 +348,44 @@ def claim_attempt(database: Database, run_id: str) -> ExecutionAttempt | None:
         ).fetchone()
 
         if run["cancel_requested_at"]:
-            finish_run(connection, run_id, "cancelled", skipped_error("run_cancelled"))
-            return None
+            terminal_status = "cancelled"
+            skipped = finish_run(connection, run_id, "cancelled", skipped_error("run_cancelled"))
+        else:
+            row = connection.execute(
+                "SELECT * FROM execution_attempts WHERE run_id = ? AND status = 'pending' "
+                "ORDER BY position LIMIT 1",
+                (run_id,),
+            ).fetchone()
 
-        row = connection.execute(
-            "SELECT * FROM execution_attempts WHERE run_id = ? AND status = 'pending' "
-            "ORDER BY position LIMIT 1",
-            (run_id,),
-        ).fetchone()
+            if row is None:
+                terminal_status = "completed"
+                skipped = finish_run(connection, run_id, "completed")
+            else:
+                now = timestamp().isoformat()
+                connection.execute(
+                    "UPDATE execution_attempts SET status = 'running', started_at = ? WHERE id = ?",
+                    (now, row["id"]),
+                )
+                result = attempt_from_row(row)
+                result.status = "running"
+                result.started_at = datetime.fromisoformat(now)
+                result = ExecutionAttempt.model_validate(result.model_dump())
 
-        if row is None:
-            finish_run(connection, run_id, "completed")
-            return None
-
-        now = timestamp().isoformat()
-
-        connection.execute(
-            "UPDATE execution_attempts SET status = 'running', started_at = ? WHERE id = ?",
-            (now, row["id"]),
+    if terminal_status:
+        log_event(logger, f"run.{terminal_status}", run_id=run_id, skipped_attempts=skipped)
+    elif result is not None:
+        log_event(
+            logger,
+            "attempt.started",
+            run_id=run_id,
+            execution_id=result.id,
+            scenario_id=result.scenario_id,
+            scenario_key=result.scenario_key,
+            scenario_type=result.scenario_type,
+            attempt_number=result.attempt_number,
         )
-        result = attempt_from_row(row)
-        result.status = "running"
-        result.started_at = datetime.fromisoformat(now)
 
-        return ExecutionAttempt.model_validate(result.model_dump())
+    return result
 
 
 # Map an attempt summary without loading its potentially large artifacts.

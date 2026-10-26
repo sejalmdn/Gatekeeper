@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import uvicorn
@@ -9,6 +10,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
+from gatekeeper.api.activity import ActivityLoggingMiddleware
 from gatekeeper.api.candidates import router as candidates_router
 from gatekeeper.api.datasets import router as datasets_router
 from gatekeeper.api.evaluation_runs import router as evaluation_runs_router
@@ -19,6 +21,10 @@ from gatekeeper.api.run_settings import router as run_settings_router
 from gatekeeper.api.scenarios import router as scenarios_router
 from gatekeeper.execution.worker import execution_lifespan
 from gatekeeper.persistence.database import Database
+from gatekeeper.utils.logging import configure_logging, error_context, log_event
+
+# Application initialization failures are logged without database paths or exception messages.
+logger = logging.getLogger(__name__)
 
 
 # Frontend asset registration.
@@ -40,17 +46,16 @@ def register_frontend(app: FastAPI, frontend_directory: Path) -> None:
 def create_app(
     database_path: str | Path = "gatekeeper.db", frontend_directory: Path | None = None
 ) -> FastAPI:
-    """Construct the API application and register its worker and frontend.
-
-    Args:
-        database_path: SQLite database path used by the application.
-        frontend_directory: Optional built frontend directory to serve.
-
-    Returns:
-        The configured FastAPI application.
-    """
+    """Build and return a FastAPI app using database_path and optional frontend_directory."""
+    configure_logging()
     application = FastAPI(title="Gatekeeper", lifespan=execution_lifespan)
-    application.state.database = Database(database_path)
+    application.add_middleware(ActivityLoggingMiddleware)
+
+    try:
+        application.state.database = Database(database_path)
+    except Exception as error:
+        log_event(logger, "application.startup_failed", level=logging.ERROR, **error_context(error))
+        raise
 
     application.include_router(projects_router)
     application.include_router(providers_router)

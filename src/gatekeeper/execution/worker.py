@@ -1,6 +1,7 @@
 """Sequential offline execution with durable progress and conservative interruption recovery."""
 
 import asyncio
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass
@@ -37,6 +38,10 @@ from gatekeeper.persistence.executions import (
 from gatekeeper.persistence.records import timestamp
 from gatekeeper.resolver import CredentialUnavailableError, resolve_environment_credential
 from gatekeeper.utils.json import canonical_json
+from gatekeeper.utils.logging import error_context, log_event
+
+# Worker activity includes identities and operational observations without invocation content.
+logger = logging.getLogger(__name__)
 
 
 # Attempt outcome carries normalized evidence and artifacts independently of rule evaluation.
@@ -57,19 +62,8 @@ async def invoke_attempt(
     attempt: ExecutionAttempt,
     timeout_ms: int,
 ) -> AttemptOutcome:
-    """Collect evidence for one attempt without retrying or grading its response.
-
-    Args:
-        client: Shared asynchronous HTTP client used for the provider request.
-        candidate: Frozen model, prompt, tool, and generation configuration.
-        provider: Frozen provider destination and environment credential reference.
-        scenario: Scenario input and history; private evaluation rules are excluded.
-        attempt: Claimed attempt identity, sequence number, and start time.
-        timeout_ms: Maximum duration of the awaited provider request in milliseconds.
-
-    Returns:
-        Normalized evidence, sanitized request and response objects when available,
-        and a flag indicating whether remaining attempts should be skipped.
+    """Invoke candidate/provider for scenario/attempt using client and timeout_ms;
+    return sanitized evidence, artifacts, and a fatal-error flag.
     """
     started_at = attempt.started_at or timestamp()
     body = None
@@ -90,12 +84,32 @@ async def invoke_attempt(
                 "credential_in_input", "Provider credentials cannot be included in model input."
             )
 
+        log_event(
+            logger,
+            "provider.request_started",
+            run_id=attempt.run_id,
+            execution_id=attempt.id,
+            scenario_id=scenario.id,
+            provider_id=provider.id,
+            provider_type=provider.provider_type,
+        )
         request_started = perf_counter()
 
         async with asyncio.timeout(timeout_ms / 1000):
             response = await send_request(client, provider, body, credential)
 
         duration_ms = (perf_counter() - request_started) * 1000
+        log_event(
+            logger,
+            "provider.response_received",
+            level=logging.INFO if response.is_success else logging.WARNING,
+            run_id=attempt.run_id,
+            execution_id=attempt.id,
+            provider_id=provider.id,
+            provider_type=provider.provider_type,
+            http_status=response.status_code,
+            duration_ms=round(duration_ms, 2),
+        )
 
         try:
             parsed = parse_json(response.text)
@@ -146,7 +160,15 @@ async def invoke_attempt(
         error = ExecutionError(
             code="transport_error", source="transport", message="The provider request failed."
         )
-    except Exception:
+    except Exception as failure:
+        log_event(
+            logger,
+            "attempt.internal_error",
+            level=logging.ERROR,
+            run_id=attempt.run_id,
+            execution_id=attempt.id,
+            **error_context(failure),
+        )
         error = ExecutionError(
             code="execution_internal_error",
             source="infrastructure",
@@ -183,16 +205,9 @@ async def invoke_attempt(
 
 # Commit terminal attempt state together with its evidence so polling cannot observe partial writes.
 def save_outcome(database: Database, outcome: AttemptOutcome) -> None:
-    """Persist an attempt result and its artifacts in one database transaction.
-
-    Args:
-        database: Database owning the attempt and run records.
-        outcome: Evidence, sanitized artifacts, and fatal-error flag to persist.
-
-    Returns:
-        None; updates durable evidence, attempt state, and optionally run state.
-    """
+    """Persist outcome evidence and attempt/run state atomically in database; return None."""
     evidence = outcome.evidence
+    skipped = 0
 
     with database.connection() as connection:
         connection.execute(
@@ -216,7 +231,51 @@ def save_outcome(database: Database, outcome: AttemptOutcome) -> None:
         )
 
         if outcome.fatal:
-            finish_run(connection, str(evidence.run_id), "failed", evidence.error)
+            skipped = finish_run(connection, str(evidence.run_id), "failed", evidence.error)
+
+    level = logging.INFO
+
+    if outcome.fatal:
+        level = logging.ERROR
+    elif evidence.status != "completed" or evidence.completeness_issues:
+        level = logging.WARNING
+
+    log_event(
+        logger,
+        "evidence.saved",
+        level=level,
+        run_id=evidence.run_id,
+        execution_id=evidence.execution_id,
+        scenario_id=evidence.scenario_id,
+        tool_request_count=len(evidence.tool_requests or []),
+        completeness_issues=evidence.completeness_issues,
+        tool_issues=sorted(
+            {issue for call in evidence.tool_requests or [] for issue in call.issues}
+        ),
+    )
+    log_event(
+        logger,
+        f"attempt.{evidence.status}",
+        level=level,
+        run_id=evidence.run_id,
+        execution_id=evidence.execution_id,
+        scenario_id=evidence.scenario_id,
+        attempt_number=evidence.attempt_number,
+        duration_ms=evidence.duration_ms,
+        error_code=evidence.error.code if evidence.error else None,
+        error_source=evidence.error.source if evidence.error else None,
+        http_status=evidence.error.http_status if evidence.error else None,
+    )
+
+    if outcome.fatal:
+        log_event(
+            logger,
+            "run.failed",
+            level=logging.ERROR,
+            run_id=evidence.run_id,
+            skipped_attempts=skipped,
+            error_code=evidence.error.code if evidence.error else None,
+        )
 
 
 # Run a frozen configuration sequentially; each attempt gets its own one-request boundary.
@@ -256,67 +315,97 @@ async def execute_run(
 
 # Poll SQLite as the durable queue and contain unexpected run-level failures.
 async def run_worker(database: Database, client: httpx.AsyncClient) -> None:
-    """Poll the durable queue and execute one claimed run at a time.
+    """Poll database and execute queued runs with client until cancelled; return None."""
+    log_event(logger, "worker.started")
 
-    Args:
-        database: Database containing queued runs, snapshots, and attempt records.
-        client: Shared asynchronous HTTP client owned by the application lifespan.
+    try:
+        while True:
+            claimed = claim_run(database)
 
-    Returns:
-        None; normally runs until its task is cancelled.
-    """
+            if claimed is None:
+                await asyncio.sleep(0.5)
+                continue
 
-    while True:
-        claimed = claim_run(database)
+            run_id, configuration = claimed
+            log_event(logger, "worker.run_picked_up", run_id=run_id)
 
-        if claimed is None:
-            await asyncio.sleep(0.5)
-            continue
-
-        run_id, configuration = claimed
-
-        try:
-            await execute_run(database, client, run_id, configuration)
-        except Exception:
-            error = ExecutionError(
-                code="worker_internal_error",
-                source="infrastructure",
-                message="Execution stopped because of an internal worker failure.",
-            )
-
-            with database.connection() as connection:
-                connection.execute(
-                    "UPDATE execution_attempts SET status = 'failed', completed_at = ?, error = ? "
-                    "WHERE run_id = ? AND status = 'running'",
-                    (timestamp().isoformat(), canonical_json(error.model_dump()), run_id),
+            try:
+                await execute_run(database, client, run_id, configuration)
+            except Exception as failure:
+                log_event(
+                    logger,
+                    "worker.run_failed",
+                    level=logging.ERROR,
+                    run_id=run_id,
+                    **error_context(failure),
                 )
-                finish_run(connection, run_id, "failed", error)
+                error = ExecutionError(
+                    code="worker_internal_error",
+                    source="infrastructure",
+                    message="Execution stopped because of an internal worker failure.",
+                )
+
+                with database.connection() as connection:
+                    affected = connection.execute(
+                        "UPDATE execution_attempts SET status = 'failed', completed_at = ?, "
+                        "error = ? WHERE run_id = ? AND status = 'running'",
+                        (timestamp().isoformat(), canonical_json(error.model_dump()), run_id),
+                    ).rowcount
+                    skipped = finish_run(connection, run_id, "failed", error)
+
+                log_event(
+                    logger,
+                    "run.failed",
+                    level=logging.ERROR,
+                    run_id=run_id,
+                    error_code=error.code,
+                    affected_attempts=affected,
+                    skipped_attempts=skipped,
+                )
+    except Exception as failure:
+        log_event(logger, "worker.failed", level=logging.ERROR, **error_context(failure))
+        raise
+    finally:
+        log_event(logger, "worker.stopped")
 
 
 # Manage the background worker and recover interrupted execution at startup and shutdown.
 @asynccontextmanager
 async def execution_lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Manage the execution worker for the application lifetime.
-
-    Args:
-        app: FastAPI application whose state.database supplies execution storage.
-
-    Yields:
-        None while the application and its execution worker are active.
-    """
+    """Start the worker for app, yield while serving, then stop and recover interrupted work."""
     database = app.state.database
+    log_event(logger, "application.starting")
 
-    recover_interrupted(database)
+    try:
+        recover_interrupted(database)
+    except Exception as failure:
+        log_event(
+            logger, "application.startup_failed", level=logging.ERROR, **error_context(failure)
+        )
+        raise
 
     async with httpx.AsyncClient(timeout=None, follow_redirects=False) as client:
         worker = asyncio.create_task(run_worker(database, client))
+        log_event(logger, "application.ready")
 
         try:
             yield
         finally:
+            log_event(logger, "application.shutdown_started")
             worker.cancel()
 
-            with suppress(asyncio.CancelledError):
-                await worker
+            try:
+                with suppress(asyncio.CancelledError):
+                    await worker
 
-            recover_interrupted(database)
+                recover_interrupted(database)
+            except Exception as failure:
+                log_event(
+                    logger,
+                    "application.shutdown_failed",
+                    level=logging.ERROR,
+                    **error_context(failure),
+                )
+                raise
+
+    log_event(logger, "application.shutdown_completed")

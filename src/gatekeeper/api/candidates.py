@@ -1,5 +1,6 @@
 """Candidate API routes."""
 
+import logging
 import sqlite3
 from uuid import UUID, uuid4
 
@@ -10,7 +11,11 @@ from gatekeeper.contracts.candidates import Candidate, CandidateCreate
 from gatekeeper.persistence.database import Database
 from gatekeeper.persistence.records import candidate_from_row, project_or_404, timestamp
 from gatekeeper.utils.json import canonical_json
+from gatekeeper.utils.logging import log_event
 from gatekeeper.utils.providers import PROVIDER_ADAPTERS
+
+# Resource activity is emitted after successful database commits.
+logger = logging.getLogger(__name__)
 
 # Project-scoped candidate router group.
 router = APIRouter(prefix="/v1/projects/{project_id}/candidates")
@@ -21,6 +26,7 @@ router = APIRouter(prefix="/v1/projects/{project_id}/candidates")
 async def create_candidate(
     project_id: UUID, payload: CandidateCreate, database: Database = Depends(get_database)
 ) -> Candidate:
+    """Persist payload under project_id in database and return the immutable candidate."""
     try:
         with database.connection() as connection:
             project_or_404(connection, project_id)
@@ -67,6 +73,13 @@ async def create_candidate(
             )
     except sqlite3.IntegrityError as error:
         raise HTTPException(status_code=409, detail="candidate already exists") from error
+    log_event(
+        logger,
+        "candidate.created",
+        project_id=project_id,
+        candidate_id=candidate.id,
+        provider_id=candidate.provider_id,
+    )
     return candidate
 
 
