@@ -141,6 +141,14 @@ def run_settings_from_row(row: sqlite3.Row) -> RunSettings:
 
 # Evaluation-run row mapper.
 def evaluation_run_from_row(row: sqlite3.Row) -> EvaluationRun:
+    """Map stored execution state into an evaluation-run contract.
+
+    Args:
+        row: SQLite row containing run identifiers, timestamps, and serialized errors.
+
+    Returns:
+        The evaluation run represented by the database row.
+    """
     return EvaluationRun(
         id=row["id"],
         project_id=row["project_id"],
@@ -151,4 +159,8 @@ def evaluation_run_from_row(row: sqlite3.Row) -> EvaluationRun:
         created_at=row["created_at"],
         started_at=row["started_at"],
         completed_at=row["completed_at"],
+        queued_at=row["queued_at"],
+        cancel_requested_at=row["cancel_requested_at"],
+        snapshot_digest=row["snapshot_digest"],
+        error=json.loads(row["error"]) if row["error"] else None,
     )

@@ -49,6 +49,12 @@ const run: EvaluationRun = {
   created_at: candidate.created_at,
   started_at: null,
   completed_at: null,
+  queued_at: null,
+  cancel_requested_at: null,
+  snapshot_digest: null,
+  error: null,
+  total_attempts: 0,
+  finished_attempts: 0,
 };
 
 // Provides isolated project resources and real routed form interactions.
@@ -62,6 +68,9 @@ beforeEach(() => {
   vi.spyOn(api, "listRunSettings").mockResolvedValue([]);
   vi.spyOn(api, "createRunSettings").mockResolvedValue(settings);
   vi.spyOn(api, "createEvaluationRun").mockResolvedValue(run);
+  vi.spyOn(api, "startEvaluationRun").mockResolvedValue(run);
+  vi.spyOn(api, "cancelEvaluationRun").mockResolvedValue(run);
+  vi.spyOn(api, "listExecutionAttempts").mockResolvedValue([]);
   vi.spyOn(api, "getEvaluationRun").mockResolvedValue(run);
   vi.spyOn(api, "getCandidate").mockResolvedValue(candidate);
   vi.spyOn(api, "getDataset").mockResolvedValue(dataset);
@@ -132,8 +141,8 @@ async function submit(): Promise<void> {
   );
 }
 
-// Persist only selected references and converted settings, without invoking a candidate.
-it("preselects the candidate and saves a pending run with editable settings", async () => {
+// Persist only selected references and converted settings, then explicitly start that same saved run.
+it("preselects the candidate and starts a saved run with editable settings", async () => {
   await renderPage();
   expect(
     container.querySelector<HTMLSelectElement>("#evaluation-candidate")?.value,
@@ -141,7 +150,7 @@ it("preselects the candidate and saves a pending run with editable settings", as
   expect(
     container.querySelector<HTMLSelectElement>("#evaluation-dataset")?.value,
   ).toBe("");
-  expect(container.textContent).toContain("without calling the model");
+  expect(container.textContent).toContain("Rules are not graded yet.");
   await enter("evaluation-dataset", "d");
   await enter("evaluation-attempts", "5");
   await enter("evaluation-timeout", "12.5");
@@ -158,7 +167,8 @@ it("preselects the candidate and saves a pending run with editable settings", as
     dataset_id: "d",
     run_settings_id: "s",
   });
-  expect(container.textContent).toContain("Pending · execution unavailable");
+  expect(container.textContent).toContain("0 / 0 attempts finished");
+  expect(api.startEvaluationRun).toHaveBeenCalledExactlyOnceWith("p", "r");
   expect(api.getEvaluationRun).toHaveBeenCalledWith("p", "r");
 });
 
@@ -216,7 +226,7 @@ it("retains the draft and saved settings across a failed run request", async () 
   await submit();
   expect(api.createRunSettings).toHaveBeenCalledOnce();
   expect(api.createEvaluationRun).toHaveBeenCalledTimes(2);
-  expect(container.textContent).toContain("Pending · execution unavailable");
+  expect(container.textContent).toContain("0 / 0 attempts finished");
 });
 
 // A settings failure cannot create a run referencing a nonexistent settings record.
@@ -254,7 +264,7 @@ it("prevents duplicate submissions while a pending run is being saved", async ()
     container.querySelector<HTMLFieldSetElement>("fieldset")?.disabled,
   ).toBe(true);
   await act(async () => resolveRun(run));
-  expect(container.textContent).toContain("Pending · execution unavailable");
+  expect(container.textContent).toContain("0 / 0 attempts finished");
 });
 
 // Cancellation returns to the candidate without persisting any setup.
@@ -300,4 +310,18 @@ it("loads a saved run and displays its actual configuration", async () => {
   expect(container.textContent).toContain("30 seconds");
   expect(container.textContent).toContain("80%");
   expect(api.createEvaluationRun).not.toHaveBeenCalled();
+});
+
+// A failed start retains the saved identity and offers retry without creating another run.
+it("opens the saved run with a start failure and retry action", async () => {
+  vi.mocked(api.startEvaluationRun).mockRejectedValueOnce(
+    new Error("Unsupported candidate adapter"),
+  );
+  await renderPage();
+  await enter("evaluation-dataset", "d");
+  await submit();
+  expect(container.textContent).toContain("Unsupported candidate adapter");
+  expect(container.textContent).toContain("Start run");
+  expect(api.createEvaluationRun).toHaveBeenCalledOnce();
+  expect(container.querySelector("form")).toBeNull();
 });

@@ -14,6 +14,7 @@ import { OverviewPage } from "./pages/OverviewPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { ProviderDetail, ProviderForm, ProvidersPage } from "./pages/Providers";
 import { EvaluationSetup } from "./pages/EvaluationSetup";
+import { EvaluationRuns } from "./pages/EvaluationRuns";
 import { EvaluationRunDetail } from "./pages/EvaluationRunDetail";
 
 // Application wiring stays separate from page behavior and reusable components.
@@ -30,6 +31,7 @@ export default function App(): ReactElement {
           <Route path="candidates" element={<CandidatesPage />} />
           <Route path="candidates/new" element={<CandidateForm />} />
           <Route path="candidates/:recordId" element={<CandidateDetail />} />
+          <Route path="evaluation-runs" element={<EvaluationRuns />} />
           <Route path="evaluation-runs/new" element={<EvaluationSetup />} />
           <Route
             path="evaluation-runs/:recordId"

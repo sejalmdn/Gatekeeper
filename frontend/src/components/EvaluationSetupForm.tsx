@@ -1,6 +1,10 @@
 import { useRef, useState, type FormEvent, type ReactElement } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { createEvaluationRun, createRunSettings } from "../api";
+import {
+  createEvaluationRun,
+  createRunSettings,
+  startEvaluationRun,
+} from "../api";
 import type { Candidate, Dataset, RunSettings } from "../types";
 import { messageFor } from "../utils/format";
 import { Notice } from "./Feedback";
@@ -17,7 +21,7 @@ interface EvaluationSetupFormProps {
   initialDatasetId: string;
 }
 
-// Prepares a pending evaluation while keeping candidate invocation unavailable.
+// Starts a saved evaluation with explicit repeated attempts and timeout settings.
 export function EvaluationSetupForm({
   projectId,
   candidates,
@@ -72,7 +76,7 @@ export function EvaluationSetupForm({
   else if (originDataset)
     backPath = `/projects/${projectId}/datasets/${originDataset.id}`;
 
-  // Saves compatible settings first, then creates a run that remains pending.
+  // Creates one saved run before starting it; the detail page can retry a failed start.
   async function submit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (submitting.current) return;
@@ -129,7 +133,14 @@ export function EvaluationSetupForm({
         dataset_id: datasetId,
         run_settings_id: configuration.id,
       });
-      navigate(`/projects/${projectId}/evaluation-runs/${run.id}`);
+      try {
+        await startEvaluationRun(projectId, run.id);
+        navigate(`/projects/${projectId}/evaluation-runs/${run.id}`);
+      } catch (failure) {
+        navigate(`/projects/${projectId}/evaluation-runs/${run.id}`, {
+          state: { startError: messageFor(failure) },
+        });
+      }
     } catch (failure) {
       setError(messageFor(failure));
     } finally {
@@ -164,8 +175,8 @@ export function EvaluationSetupForm({
       title="Set up evaluation"
       detail="Choose what to evaluate and configure the run."
       caption="Offline evaluation"
-      submitLabel="Save pending run"
-      pendingLabel="Saving…"
+      submitLabel="Start run"
+      pendingLabel="Starting…"
       saving={saving}
       error={error}
       onSubmit={submit}
@@ -173,8 +184,9 @@ export function EvaluationSetupForm({
       className="evaluation-setup-form"
     >
       <Notice>
-        Execution is not available yet. Saving creates a pending run without
-        calling the model.
+        Execution supports OpenRouter and Groq. Start runs the selected
+        candidate against every scenario. Each attempt makes one provider
+        request. Rules are not graded yet.
       </Notice>
       <fieldset disabled={saving} className="evaluation-setup-form__fields">
         <legend>Evaluation sources</legend>
@@ -231,7 +243,7 @@ export function EvaluationSetupForm({
             />
           </label>
           <label className="form-field" htmlFor="evaluation-threshold">
-            <span>Pass threshold (%)</span>
+            <span>Pass threshold (%) · inactive</span>
             <input
               id="evaluation-threshold"
               type="number"
@@ -245,7 +257,7 @@ export function EvaluationSetupForm({
           </label>
         </div>
         <p className="evaluation-setup-form__help">
-          These settings are saved for evaluation once execution is available.
+          Pass threshold is inactive until grading is implemented.
         </p>
       </fieldset>
     </RecordForm>

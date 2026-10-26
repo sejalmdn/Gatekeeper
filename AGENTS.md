@@ -83,6 +83,10 @@ Place one concise `#` comment immediately before every module section, class, fu
 group, stating its purpose. Do not comment internal conditionals, loops, context managers,
 exception handlers, or validators; rely on the enclosing unit's comment and clear names.
 
+Add a docstring to every function explaining the parameters, return value and what the function
+is doing in 1-2 lines.
+After declaring few variables and each block add a newline to improve readability
+
 Test serialization, invalid input, cross-field invariants, evidence chains, and measurement
 boundaries. Use focused, imperative commits such as `Add paired comparison contracts`.
 

@@ -5,6 +5,7 @@ from enum import StrEnum
 from uuid import UUID
 
 from gatekeeper.contracts.common import Contract
+from gatekeeper.contracts.executions import ExecutionError
 
 
 # Evaluation-run lifecycle states.
@@ -13,6 +14,7 @@ class EvaluationRunStatus(StrEnum):
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
+    CANCELLED = "cancelled"
 
 
 # Evaluation-run creation contract.
@@ -30,3 +32,9 @@ class EvaluationRun(EvaluationRunCreate):
     created_at: datetime
     started_at: datetime | None = None
     completed_at: datetime | None = None
+    queued_at: datetime | None = None
+    cancel_requested_at: datetime | None = None
+    snapshot_digest: str | None = None
+    error: ExecutionError | None = None
+    total_attempts: int = 0
+    finished_attempts: int = 0

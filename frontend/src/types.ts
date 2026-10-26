@@ -147,8 +147,84 @@ export interface EvaluationRunCreate {
 export interface EvaluationRun extends EvaluationRunCreate {
   id: string;
   project_id: string;
-  status: "pending" | "running" | "completed" | "failed";
+  status: "pending" | "running" | "completed" | "failed" | "cancelled";
   created_at: string;
   started_at: string | null;
   completed_at: string | null;
+  queued_at: string | null;
+  cancel_requested_at: string | null;
+  snapshot_digest: string | null;
+  error: ExecutionError | null;
+  total_attempts: number;
+  finished_attempts: number;
+}
+
+// Structured execution failures do not imply a failed evaluation rule.
+export interface ExecutionError {
+  code: string;
+  source: "configuration" | "provider" | "transport" | "infrastructure";
+  message: string;
+  http_status: number | null;
+}
+
+// Observed attempt states remain separate from future grading outcomes.
+export type AttemptStatus =
+  "pending" | "running" | "completed" | "failed" | "timed_out" | "skipped";
+
+// Lightweight attempt metadata returned by progress polling.
+export interface ExecutionAttempt {
+  id: string;
+  run_id: string;
+  scenario_id: string;
+  scenario_key: string;
+  scenario_name: string;
+  scenario_type: ScenarioType;
+  attempt_number: number;
+  status: AttemptStatus;
+  started_at: string | null;
+  completed_at: string | null;
+  error: ExecutionError | null;
+}
+
+// Requested calls are evidence of intent, without claims of actual tool execution.
+export interface ToolRequest {
+  call_id: string | null;
+  name: string | null;
+  arguments_text: string | null;
+  arguments: JsonObject | null;
+  issues: string[];
+}
+
+// Transport-independent observations preserve unknown usage and incomplete output.
+export interface ExecutionEvidence {
+  version: number;
+  execution_id: string;
+  run_id: string;
+  scenario_id: string;
+  attempt_number: number;
+  status: AttemptStatus;
+  started_at: string;
+  completed_at: string;
+  duration_ms: number | null;
+  response_text: string | null;
+  refusal: string | null;
+  finish_reason: string | null;
+  requested_model: string;
+  returned_model: string | null;
+  provider_request_id: string | null;
+  provider_type: string;
+  adapter: string;
+  source: "direct_provider_response" | "backend_observation";
+  tool_requests: ToolRequest[] | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  completeness_issues: string[];
+  error: ExecutionError | null;
+}
+
+// Large evidence artifacts are loaded only when an attempt is opened.
+export interface ExecutionAttemptDetail extends ExecutionAttempt {
+  evidence: ExecutionEvidence | null;
+  request: JsonObject | null;
+  response: JsonObject | null;
 }

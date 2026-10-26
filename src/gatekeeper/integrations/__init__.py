@@ -1,0 +1,1 @@
+"""Offline integrations components."""

@@ -13,6 +13,8 @@ import type {
   RunSettingsCreate,
   EvaluationRun,
   EvaluationRunCreate,
+  ExecutionAttempt,
+  ExecutionAttemptDetail,
 } from "./types";
 
 // API error that retains the server's useful message.
@@ -177,7 +179,7 @@ export const listEffectiveRules = (
     `/v1/projects/${projectId}/datasets/${datasetId}/scenarios/${scenarioId}/effective-rules`,
   );
 
-// Evaluation setup uses existing backend records without starting execution.
+// Immutable settings and project-scoped execution operations.
 export const listRunSettings = (projectId: string): Promise<RunSettings[]> =>
   request<RunSettings[]>(`/v1/projects/${projectId}/run-settings`);
 
@@ -210,3 +212,48 @@ export const getEvaluationRun = (
   runId: string,
 ): Promise<EvaluationRun> =>
   request<EvaluationRun>(`/v1/projects/${projectId}/evaluation-runs/${runId}`);
+
+// Starting and cancelling a saved run never allocate duplicate attempts.
+export const startEvaluationRun = (
+  projectId: string,
+  runId: string,
+): Promise<EvaluationRun> =>
+  request<EvaluationRun>(
+    `/v1/projects/${projectId}/evaluation-runs/${runId}/start`,
+    {
+      method: "POST",
+    },
+  );
+
+export const cancelEvaluationRun = (
+  projectId: string,
+  runId: string,
+): Promise<EvaluationRun> =>
+  request<EvaluationRun>(
+    `/v1/projects/${projectId}/evaluation-runs/${runId}/cancel`,
+    {
+      method: "POST",
+    },
+  );
+
+export const listEvaluationRuns = (
+  projectId: string,
+): Promise<EvaluationRun[]> =>
+  request<EvaluationRun[]>(`/v1/projects/${projectId}/evaluation-runs`);
+
+export const listExecutionAttempts = (
+  projectId: string,
+  runId: string,
+): Promise<ExecutionAttempt[]> =>
+  request<ExecutionAttempt[]>(
+    `/v1/projects/${projectId}/evaluation-runs/${runId}/attempts`,
+  );
+
+export const getExecutionAttempt = (
+  projectId: string,
+  runId: string,
+  executionId: string,
+): Promise<ExecutionAttemptDetail> =>
+  request<ExecutionAttemptDetail>(
+    `/v1/projects/${projectId}/evaluation-runs/${runId}/attempts/${executionId}`,
+  );

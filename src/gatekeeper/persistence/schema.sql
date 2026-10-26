@@ -147,10 +147,14 @@ CREATE TABLE IF NOT EXISTS evaluation_runs (
     dataset_id TEXT NOT NULL,
     run_settings_id TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending'
-        CHECK (status IN ('pending', 'running', 'completed', 'failed')),
+        CHECK (status IN ('pending', 'running', 'completed', 'failed', 'cancelled')),
     created_at TEXT NOT NULL,
     started_at TEXT,
     completed_at TEXT,
+    queued_at TEXT,
+    cancel_requested_at TEXT,
+    snapshot_digest TEXT,
+    error TEXT CHECK (error IS NULL OR json_valid(error)),
     FOREIGN KEY (project_id) REFERENCES projects (id),
     FOREIGN KEY (project_id, candidate_id) REFERENCES candidates (project_id, id),
     FOREIGN KEY (project_id, dataset_id) REFERENCES datasets (project_id, id),
@@ -159,3 +163,41 @@ CREATE TABLE IF NOT EXISTS evaluation_runs (
 
 CREATE INDEX IF NOT EXISTS ix_evaluation_runs_project_id
 ON evaluation_runs (project_id);
+
+-- Frozen private evaluation configuration is never used as an invocation payload.
+CREATE TABLE IF NOT EXISTS execution_snapshots (
+    run_id TEXT PRIMARY KEY REFERENCES evaluation_runs (id),
+    version INTEGER NOT NULL CHECK (version = 1),
+    configuration TEXT NOT NULL CHECK (json_valid(configuration)),
+    digest TEXT NOT NULL
+);
+
+-- Each allocated attempt has a stable identity and ordered position within its run.
+CREATE TABLE IF NOT EXISTS execution_attempts (
+    id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL REFERENCES evaluation_runs (id),
+    scenario_id TEXT NOT NULL REFERENCES scenarios (id),
+    scenario_key TEXT NOT NULL,
+    scenario_name TEXT NOT NULL,
+    scenario_type TEXT NOT NULL,
+    attempt_number INTEGER NOT NULL CHECK (attempt_number > 0),
+    position INTEGER NOT NULL,
+    status TEXT NOT NULL CHECK (
+        status IN ('pending', 'running', 'completed', 'failed', 'timed_out', 'skipped')
+    ),
+    started_at TEXT,
+    completed_at TEXT,
+    error TEXT CHECK (error IS NULL OR json_valid(error)),
+    UNIQUE (run_id, scenario_id, attempt_number)
+);
+
+CREATE INDEX IF NOT EXISTS ix_execution_attempts_run
+ON execution_attempts (run_id, position);
+
+-- Normalized observations and transport artifacts stay separate from future grading results.
+CREATE TABLE IF NOT EXISTS execution_evidence (
+    execution_id TEXT PRIMARY KEY REFERENCES execution_attempts (id),
+    normalized TEXT NOT NULL CHECK (json_valid(normalized)),
+    request TEXT CHECK (request IS NULL OR json_valid(request)),
+    response TEXT CHECK (response IS NULL OR json_valid(response))
+);

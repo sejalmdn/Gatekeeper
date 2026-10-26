@@ -69,8 +69,8 @@ export function OverviewPage(): ReactElement {
         />
       </div>
       <Notice>
-        <strong>Resource setup only.</strong> Candidate execution and evaluation
-        workflows will appear here when their backend contracts are ready.
+        Start an execution from a candidate to collect scenario evidence.
+        Inspect saved runs in Executions. Rule grading is not available yet.
       </Notice>
     </section>
   );

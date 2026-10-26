@@ -7,7 +7,7 @@ name = "gatekeeper"
 version = "0.1.0"
 description = "Credible evaluation of complete agent workflows"
 requires-python = ">=3.12"
-dependencies = ["fastapi>=0.115,<0.116", "uvicorn>=0.30,<1"]
+dependencies = ["fastapi>=0.115,<0.116", "uvicorn>=0.30,<1", "httpx>=0.28,<1", "jsonschema>=4.23,<5"]
 
 [project.scripts]
 gatekeeper = "gatekeeper.app:main"

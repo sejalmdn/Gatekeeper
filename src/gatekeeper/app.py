@@ -17,6 +17,7 @@ from gatekeeper.api.providers import router as providers_router
 from gatekeeper.api.rules import router as rules_router
 from gatekeeper.api.run_settings import router as run_settings_router
 from gatekeeper.api.scenarios import router as scenarios_router
+from gatekeeper.execution.worker import execution_lifespan
 from gatekeeper.persistence.database import Database
 
 
@@ -39,8 +40,18 @@ def register_frontend(app: FastAPI, frontend_directory: Path) -> None:
 def create_app(
     database_path: str | Path = "gatekeeper.db", frontend_directory: Path | None = None
 ) -> FastAPI:
-    application = FastAPI(title="Gatekeeper")
+    """Construct the API application and register its worker and frontend.
+
+    Args:
+        database_path: SQLite database path used by the application.
+        frontend_directory: Optional built frontend directory to serve.
+
+    Returns:
+        The configured FastAPI application.
+    """
+    application = FastAPI(title="Gatekeeper", lifespan=execution_lifespan)
     application.state.database = Database(database_path)
+
     application.include_router(projects_router)
     application.include_router(providers_router)
     application.include_router(candidates_router)
@@ -50,6 +61,7 @@ def create_app(
     application.include_router(run_settings_router)
     application.include_router(evaluation_runs_router)
     assets = frontend_directory or Path(__file__).parent / "frontend_dist"
+
     register_frontend(application, assets)
     return application
 

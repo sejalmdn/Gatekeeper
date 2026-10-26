@@ -19,6 +19,7 @@ const NAVIGATION: { path: string; label: string; icon: IconName }[] = [
   { path: "providers", label: "Providers", icon: "config" },
   { path: "candidates", label: "Candidates", icon: "candidate" },
   { path: "datasets", label: "Datasets", icon: "dataset" },
+  { path: "evaluation-runs", label: "Executions", icon: "evaluation" },
 ];
 
 // Reference navigation documents concepts shared across project records.
@@ -47,7 +48,7 @@ function Workspace({ projectId }: { projectId: string }): ReactElement {
   const section = pathname.split("/")[3] ?? "";
   const label =
     section === "evaluation-runs"
-      ? "Evaluations"
+      ? "Executions"
       : ([...NAVIGATION, ...REFERENCE_NAVIGATION].find(
           (item) => item.path === section,
         )?.label ?? "Overview");

@@ -94,6 +94,12 @@ export function EvaluationChecks(): ReactElement {
         title="Evaluation checks"
         detail="What each rule checks and which scenario types it supports."
       />
+      <Notice>
+        Expectations stay private and never enter candidate requests. Missing
+        required evidence yields cannot_evaluate when grading is implemented.
+        This release collects execution evidence; rule grading is not available
+        yet.
+      </Notice>
       <div className="evaluation-checks__categories">
         {RULE_CATEGORIES.map((category) => (
           <section
