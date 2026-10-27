@@ -38,7 +38,7 @@ from gatekeeper.persistence.executions import (
 from gatekeeper.persistence.records import timestamp
 from gatekeeper.resolver import CredentialUnavailableError, resolve_environment_credential
 from gatekeeper.utils.json import canonical_json
-from gatekeeper.utils.logging import error_context, log_event
+from gatekeeper.utils.logging import safe_label
 
 # Worker activity includes identities and operational observations without invocation content.
 logger = logging.getLogger(__name__)
@@ -84,14 +84,16 @@ async def invoke_attempt(
                 "credential_in_input", "Provider credentials cannot be included in model input."
             )
 
-        log_event(
-            logger,
-            "provider.request_started",
-            run_id=attempt.run_id,
-            execution_id=attempt.id,
-            scenario_id=scenario.id,
-            provider_id=provider.id,
-            provider_type=provider.provider_type,
+        logger.info(
+            "provider_request_started run_id=%s execution_id=%s scenario_id=%s provider_id=%s "
+            "provider_type=%s model_id=%s timeout_ms=%d",
+            attempt.run_id,
+            attempt.id,
+            scenario.id,
+            provider.id,
+            provider.provider_type,
+            safe_label(candidate.model_name.replace(credential, "REDACTED")),
+            timeout_ms,
         )
         request_started = perf_counter()
 
@@ -99,16 +101,16 @@ async def invoke_attempt(
             response = await send_request(client, provider, body, credential)
 
         duration_ms = (perf_counter() - request_started) * 1000
-        log_event(
-            logger,
-            "provider.response_received",
-            level=logging.INFO if response.is_success else logging.WARNING,
-            run_id=attempt.run_id,
-            execution_id=attempt.id,
-            provider_id=provider.id,
-            provider_type=provider.provider_type,
-            http_status=response.status_code,
-            duration_ms=round(duration_ms, 2),
+        logger.log(
+            logging.INFO if response.is_success else logging.WARNING,
+            "provider_response_received run_id=%s execution_id=%s provider_id=%s "
+            "provider_type=%s http_status=%s duration_ms=%s",
+            attempt.run_id,
+            attempt.id,
+            provider.id,
+            provider.provider_type,
+            response.status_code,
+            round(duration_ms, 2),
         )
 
         try:
@@ -160,14 +162,11 @@ async def invoke_attempt(
         error = ExecutionError(
             code="transport_error", source="transport", message="The provider request failed."
         )
-    except Exception as failure:
-        log_event(
-            logger,
-            "attempt.internal_error",
-            level=logging.ERROR,
-            run_id=attempt.run_id,
-            execution_id=attempt.id,
-            **error_context(failure),
+    except Exception:
+        logger.exception(
+            "attempt_internal_error run_id=%s execution_id=%s error_code=execution_internal_error",
+            attempt.run_id,
+            attempt.id,
         )
         error = ExecutionError(
             code="execution_internal_error",
@@ -240,41 +239,39 @@ def save_outcome(database: Database, outcome: AttemptOutcome) -> None:
     elif evidence.status != "completed" or evidence.completeness_issues:
         level = logging.WARNING
 
-    log_event(
-        logger,
-        "evidence.saved",
-        level=level,
-        run_id=evidence.run_id,
-        execution_id=evidence.execution_id,
-        scenario_id=evidence.scenario_id,
-        tool_request_count=len(evidence.tool_requests or []),
-        completeness_issues=evidence.completeness_issues,
-        tool_issues=sorted(
-            {issue for call in evidence.tool_requests or [] for issue in call.issues}
-        ),
+    logger.log(
+        level,
+        "evidence_saved run_id=%s execution_id=%s scenario_id=%s tool_request_count=%s "
+        "completeness_issues=%s tool_issues=%s",
+        evidence.run_id,
+        evidence.execution_id,
+        evidence.scenario_id,
+        len(evidence.tool_requests or []),
+        "|".join(evidence.completeness_issues) or "none",
+        "|".join(sorted({issue for call in evidence.tool_requests or [] for issue in call.issues}))
+        or "none",
     )
-    log_event(
-        logger,
-        f"attempt.{evidence.status}",
-        level=level,
-        run_id=evidence.run_id,
-        execution_id=evidence.execution_id,
-        scenario_id=evidence.scenario_id,
-        attempt_number=evidence.attempt_number,
-        duration_ms=evidence.duration_ms,
-        error_code=evidence.error.code if evidence.error else None,
-        error_source=evidence.error.source if evidence.error else None,
-        http_status=evidence.error.http_status if evidence.error else None,
+    logger.log(
+        level,
+        "attempt_%s run_id=%s execution_id=%s scenario_id=%s attempt_number=%s duration_ms=%s "
+        "error_code=%s error_source=%s http_status=%s",
+        evidence.status,
+        evidence.run_id,
+        evidence.execution_id,
+        evidence.scenario_id,
+        evidence.attempt_number,
+        evidence.duration_ms,
+        evidence.error.code if evidence.error else None,
+        evidence.error.source if evidence.error else None,
+        evidence.error.http_status if evidence.error else None,
     )
 
     if outcome.fatal:
-        log_event(
-            logger,
-            "run.failed",
-            level=logging.ERROR,
-            run_id=evidence.run_id,
-            skipped_attempts=skipped,
-            error_code=evidence.error.code if evidence.error else None,
+        logger.error(
+            "run_failed run_id=%s skipped_attempts=%s error_code=%s",
+            evidence.run_id,
+            skipped,
+            evidence.error.code if evidence.error else None,
         )
 
 
@@ -316,7 +313,7 @@ async def execute_run(
 # Poll SQLite as the durable queue and contain unexpected run-level failures.
 async def run_worker(database: Database, client: httpx.AsyncClient) -> None:
     """Poll database and execute queued runs with client until cancelled; return None."""
-    log_event(logger, "worker.started")
+    logger.info("worker_started")
 
     try:
         while True:
@@ -327,17 +324,21 @@ async def run_worker(database: Database, client: httpx.AsyncClient) -> None:
                 continue
 
             run_id, configuration = claimed
-            log_event(logger, "worker.run_picked_up", run_id=run_id)
+            started = perf_counter()
+            logger.info("worker_run_picked_up run_id=%s", run_id)
 
             try:
                 await execute_run(database, client, run_id, configuration)
-            except Exception as failure:
-                log_event(
-                    logger,
-                    "worker.run_failed",
-                    level=logging.ERROR,
-                    run_id=run_id,
-                    **error_context(failure),
+                logger.info(
+                    "worker_run_finished run_id=%s duration_ms=%d",
+                    run_id,
+                    (perf_counter() - started) * 1000,
+                )
+            except Exception:
+                logger.exception(
+                    "worker_run_failed run_id=%s error_code=worker_internal_error duration_ms=%d",
+                    run_id,
+                    (perf_counter() - started) * 1000,
                 )
                 error = ExecutionError(
                     code="worker_internal_error",
@@ -353,20 +354,18 @@ async def run_worker(database: Database, client: httpx.AsyncClient) -> None:
                     ).rowcount
                     skipped = finish_run(connection, run_id, "failed", error)
 
-                log_event(
-                    logger,
-                    "run.failed",
-                    level=logging.ERROR,
-                    run_id=run_id,
-                    error_code=error.code,
-                    affected_attempts=affected,
-                    skipped_attempts=skipped,
+                logger.error(
+                    "run_failed run_id=%s error_code=%s affected_attempts=%s skipped_attempts=%s",
+                    run_id,
+                    error.code,
+                    affected,
+                    skipped,
                 )
-    except Exception as failure:
-        log_event(logger, "worker.failed", level=logging.ERROR, **error_context(failure))
+    except Exception:
+        logger.exception("worker_failed stage=queue error_code=worker_internal_error")
         raise
     finally:
-        log_event(logger, "worker.stopped")
+        logger.info("worker_stopped")
 
 
 # Manage the background worker and recover interrupted execution at startup and shutdown.
@@ -374,24 +373,22 @@ async def run_worker(database: Database, client: httpx.AsyncClient) -> None:
 async def execution_lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Start the worker for app, yield while serving, then stop and recover interrupted work."""
     database = app.state.database
-    log_event(logger, "application.starting")
+    logger.info("application_starting")
 
     try:
         recover_interrupted(database)
-    except Exception as failure:
-        log_event(
-            logger, "application.startup_failed", level=logging.ERROR, **error_context(failure)
-        )
+    except Exception:
+        logger.exception("application_startup_failed stage=recovery error_code=recovery_failed")
         raise
 
     async with httpx.AsyncClient(timeout=None, follow_redirects=False) as client:
         worker = asyncio.create_task(run_worker(database, client))
-        log_event(logger, "application.ready")
+        logger.info("application_ready")
 
         try:
             yield
         finally:
-            log_event(logger, "application.shutdown_started")
+            logger.info("application_shutdown_started")
             worker.cancel()
 
             try:
@@ -399,13 +396,8 @@ async def execution_lifespan(app: FastAPI) -> AsyncIterator[None]:
                     await worker
 
                 recover_interrupted(database)
-            except Exception as failure:
-                log_event(
-                    logger,
-                    "application.shutdown_failed",
-                    level=logging.ERROR,
-                    **error_context(failure),
-                )
+            except Exception:
+                logger.error("application_shutdown_failed error_code=worker_cleanup_failed")
                 raise
 
-    log_event(logger, "application.shutdown_completed")
+    logger.info("application_shutdown_completed")

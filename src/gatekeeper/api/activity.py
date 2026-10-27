@@ -1,33 +1,33 @@
-"""Safe failure logging for API writes and unexpected HTTP failures."""
+"""Safe summaries for API writes and unexpected HTTP failures."""
 
 import logging
+from time import perf_counter
 from uuid import UUID
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from gatekeeper.utils.logging import error_context, log_event
-
-# API failures contain route templates and validated identifiers, never submitted values.
+# API summaries contain route templates and validated identifiers, never submitted values.
 logger = logging.getLogger(__name__)
 
 
-# Observe failures without reading bodies, buffering responses, or changing HTTP behavior.
+# Observe writes and failures without reading bodies or buffering responses.
 class ActivityLoggingMiddleware:
     # Retain the next application in the ASGI chain.
     def __init__(self, app: ASGIApp) -> None:
         """Store the wrapped ASGI app; return None."""
         self.app = app
 
-    # Report unsuccessful writes and unexpected errors using safe request metadata.
+    # Summarize operation outcomes while allowing the framework to handle original exceptions.
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        """Forward scope, receive, and send while logging HTTP failures; return None."""
+        """Forward scope/receive/send and log write outcomes or failures; return None."""
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
 
+        started = perf_counter()
         status = 500
 
-        # Observe only the response status so request and response content stays private.
+        # Observe only status so request and response content stays private.
         async def observe(message: Message) -> None:
             """Forward message to send and retain its HTTP status when present; return None."""
             nonlocal status
@@ -39,41 +39,62 @@ class ActivityLoggingMiddleware:
 
         try:
             await self.app(scope, receive, observe)
-        except Exception as error:
-            log_event(
-                logger,
-                "api.failed",
-                level=logging.ERROR,
-                **request_context(scope),
-                status=500,
-                **error_context(error),
+        except Exception:
+            context = request_context(scope)
+            logger.exception(
+                "api_operation_failed method=%s route=%s project_id=%s run_id=%s "
+                "status=500 duration_ms=%d error_code=unhandled_exception",
+                scope["method"],
+                context["route"],
+                context.get("project_id"),
+                context.get("run_id"),
+                (perf_counter() - started) * 1000,
             )
             raise
 
-        if status >= 500 or (
-            status >= 400 and scope["method"] in {"POST", "PUT", "PATCH", "DELETE"}
-        ):
-            log_event(
-                logger,
-                "api.failed",
-                level=logging.ERROR if status >= 500 else logging.WARNING,
-                **request_context(scope),
-                status=status,
-            )
+        if scope["method"] not in {"POST", "PUT", "PATCH", "DELETE"} and status < 500:
+            return
+
+        context = request_context(scope)
+        error_code = {
+            404: "resource_not_found",
+            409: "resource_conflict",
+            422: "validation_failed",
+        }.get(status, "http_error" if status >= 400 else "none")
+        event = "api_operation_completed"
+        level = logging.INFO
+
+        if status >= 500:
+            event, level = "api_operation_failed", logging.ERROR
+        elif status >= 400:
+            event, level = "api_operation_rejected", logging.WARNING
+
+        logger.log(
+            level,
+            "%s method=%s route=%s project_id=%s dataset_id=%s run_id=%s "
+            "execution_id=%s status=%d duration_ms=%d error_code=%s",
+            event,
+            scope["method"],
+            context["route"],
+            context.get("project_id"),
+            context.get("dataset_id"),
+            context.get("run_id"),
+            context.get("execution_id"),
+            status,
+            (perf_counter() - started) * 1000,
+            error_code,
+        )
 
 
 # Resolve known route metadata without including raw URLs or invalid parameter values.
 def request_context(scope: Scope) -> dict[str, str]:
-    """Return the route template, method, and validated resource IDs from an HTTP scope."""
-    context = {
-        "method": scope["method"],
-        "route": getattr(scope.get("route"), "path", "unmatched"),
-    }
+    """Return the route template and validated resource IDs from an HTTP scope."""
+    context = {"route": getattr(scope.get("route"), "path", "unmatched")}
 
     for key, value in scope.get("path_params", {}).items():
         if key.endswith("_id"):
             try:
-                context[key] = str(UUID(str(value)))
+                context["run_id" if key == "evaluation_run_id" else key] = str(UUID(str(value)))
             except ValueError:
                 continue
 

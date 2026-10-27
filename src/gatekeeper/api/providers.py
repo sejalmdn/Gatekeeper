@@ -10,7 +10,6 @@ from gatekeeper.api.dependencies import get_database
 from gatekeeper.contracts.providers import Provider, ProviderCreate
 from gatekeeper.persistence.database import Database
 from gatekeeper.persistence.records import project_or_404, provider_from_row, timestamp
-from gatekeeper.utils.logging import log_event
 
 # Resource activity is emitted after successful database commits.
 logger = logging.getLogger(__name__)
@@ -25,6 +24,8 @@ async def create_provider(
     project_id: UUID, payload: ProviderCreate, database: Database = Depends(get_database)
 ) -> Provider:
     """Persist payload under project_id in database and return the saved provider."""
+    logger.info("provider_creation_requested project_id=%s", project_id)
+
     provider = Provider(
         id=uuid4(), project_id=project_id, created_at=timestamp(), **payload.model_dump()
     )
@@ -47,12 +48,11 @@ async def create_provider(
             )
     except sqlite3.IntegrityError as error:
         raise HTTPException(status_code=409, detail="provider already exists") from error
-    log_event(
-        logger,
-        "provider.created",
-        project_id=project_id,
-        provider_id=provider.id,
-        provider_type=provider.provider_type,
+    logger.info(
+        "provider_created project_id=%s provider_id=%s provider_type=%s",
+        project_id,
+        provider.id,
+        provider.provider_type,
     )
     return provider
 

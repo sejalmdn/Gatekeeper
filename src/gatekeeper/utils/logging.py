@@ -1,53 +1,70 @@
-"""Readable application activity logs containing explicit operational metadata only."""
+"""Scoped console logging with safe diagnostic tracebacks and bounded metadata."""
 
-import json
 import logging
+import logging.config
 import os
-import time
+import re
+import sys
+from datetime import UTC, datetime
 from pathlib import Path
+from types import TracebackType
+
+# Application records use one UTC console format and a dedicated logger hierarchy.
+LOG_FORMAT = "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
 
 
-# Configure the application namespace without replacing server or host logging handlers.
+# Render timezone-aware timestamps and tracebacks without exception messages or source content.
+class SafeFormatter(logging.Formatter):
+    # Keep the timestamp independent of the host's local timezone.
+    def formatTime(self, record: logging.LogRecord, datefmt: str | None = None) -> str:
+        """Return an ISO UTC timestamp for record; datefmt is intentionally unused."""
+        return datetime.fromtimestamp(record.created, UTC).isoformat(timespec="milliseconds")
+
+    # Retain debugging locations without exposing payloads embedded in exceptions or source lines.
+    def formatException(
+        self,
+        ei: tuple[type[BaseException], BaseException, TracebackType | None]
+        | tuple[None, None, None],
+    ) -> str:
+        """Return safe locations for ei, omitting messages, chains, source lines, and locals."""
+        exception_type, _, traceback = ei
+        locations = []
+
+        while traceback is not None:
+            code = traceback.tb_frame.f_code
+            locations.append(f"{Path(code.co_filename).name}:{code.co_name}:{traceback.tb_lineno}")
+            traceback = traceback.tb_next
+
+        name = exception_type.__name__ if exception_type is not None else "UnknownError"
+        return f"exception_type={name} stack={' > '.join(locations)}"
+
+
+# Configure only Gatekeeper, leaving framework and host handlers open and untouched.
 def configure_logging() -> None:
-    """Configure one UTC console handler and the level from GATEKEEPER_LOG_LEVEL; return None."""
+    """Configure stdout with BACKEND_LOG_LEVEL or its legacy fallback; return None."""
     logger = logging.getLogger("gatekeeper")
-    level = os.environ.get("GATEKEEPER_LOG_LEVEL", "INFO").upper()
-    logger.setLevel(level if level in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"} else "INFO")
+    level = (
+        os.getenv("BACKEND_LOG_LEVEL", os.getenv("GATEKEEPER_LOG_LEVEL", "INFO")).strip().upper()
+    )
+    level = level if level in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"} else "INFO"
+    handler = next((h for h in logger.handlers if h.name == "gatekeeper_console"), None)
 
-    if not logger.handlers:
-        formatter = logging.Formatter(
-            "%(asctime)sZ %(levelname)s %(name)s %(message)s", datefmt="%Y-%m-%dT%H:%M:%S"
-        )
-        formatter.converter = time.gmtime
-        handler = logging.StreamHandler()
-        handler.setFormatter(formatter)
+    if handler is None:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.set_name("gatekeeper_console")
+        handler.setFormatter(SafeFormatter(LOG_FORMAT))
         logger.addHandler(handler)
 
-
-# Serialize explicitly selected metadata on one line without accepting payloads implicitly.
-def log_event(
-    logger: logging.Logger, event: str, *, level: int = logging.INFO, **fields: object
-) -> None:
-    """Write event and selected fields at level through logger; return None."""
-    if not logger.isEnabledFor(level):
-        return
-
-    context = " ".join(
-        f"{key}={json.dumps(value, default=str, ensure_ascii=True)}"
-        for key, value in fields.items()
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "incremental": True,
+            "loggers": {"gatekeeper": {"level": level, "propagate": False}},
+        }
     )
-    logger.log(level, "%s%s", event, f" {context}" if context else "")
 
 
-# Preserve useful stack locations without exception text, source lines, or frame locals.
-def error_context(error: Exception) -> dict[str, str]:
-    """Return the exception type and stack locations for error, excluding its message and data."""
-    locations = []
-    traceback = error.__traceback__
-
-    while traceback is not None:
-        code = traceback.tb_frame.f_code
-        locations.append(f"{Path(code.co_filename).name}:{code.co_name}:{traceback.tb_lineno}")
-        traceback = traceback.tb_next
-
-    return {"exception_type": type(error).__name__, "stack": " > ".join(locations)}
+# Limit user-configured labels to a single bounded token before including them in logs.
+def safe_label(value: str) -> str:
+    """Return at most 100 safe identifier characters from value, replacing other characters."""
+    return re.sub(r"[^A-Za-z0-9_./:-]", "_", value[:100])

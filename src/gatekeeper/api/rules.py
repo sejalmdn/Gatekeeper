@@ -12,7 +12,6 @@ from gatekeeper.contracts.scenarios import ScenarioType
 from gatekeeper.persistence.database import Database
 from gatekeeper.persistence.records import dataset_or_404, rule_binding_from_row, timestamp
 from gatekeeper.utils.json import canonical_json
-from gatekeeper.utils.logging import log_event
 
 # Resource activity is emitted after successful database commits.
 logger = logging.getLogger(__name__)
@@ -30,6 +29,10 @@ async def create_rule_binding(
     database: Database = Depends(get_database),
 ) -> RuleBinding:
     """Save payload for project_id/dataset_id in database and return the rule binding."""
+    logger.info(
+        "rule_binding_creation_requested project_id=%s dataset_id=%s", project_id, dataset_id
+    )
+
     binding = RuleBinding(
         id=uuid4(), dataset_id=dataset_id, created_at=timestamp(), **payload.model_dump()
     )
@@ -69,14 +72,14 @@ async def create_rule_binding(
             )
     except sqlite3.IntegrityError as error:
         raise HTTPException(status_code=409, detail="rule binding already exists") from error
-    log_event(
-        logger,
-        "rule_binding.created",
-        project_id=project_id,
-        dataset_id=dataset_id,
-        scenario_id=binding.scenario_id,
-        rule_binding_id=binding.id,
-        rule_type=binding.rule_type,
+    logger.info(
+        "rule_binding_created project_id=%s dataset_id=%s scenario_id=%s rule_binding_id=%s "
+        "rule_type=%s",
+        project_id,
+        dataset_id,
+        binding.scenario_id,
+        binding.id,
+        binding.rule_type,
     )
     return binding
 

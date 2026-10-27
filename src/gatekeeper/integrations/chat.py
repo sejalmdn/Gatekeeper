@@ -1,5 +1,6 @@
 """Credential-free Chat Completions payload construction and one-request transport."""
 
+import logging
 from urllib.parse import urlsplit
 
 import httpx
@@ -12,6 +13,9 @@ from gatekeeper.contracts.common import JsonObject
 from gatekeeper.contracts.executions import ExecutionError
 from gatekeeper.contracts.providers import Provider
 from gatekeeper.contracts.scenarios import Scenario
+
+# Integration diagnostics include counts and validated identifiers only.
+logger = logging.getLogger(__name__)
 
 # Provider defaults retain each candidate's frozen Chat Completions adapter.
 BASE_URLS = {
@@ -142,16 +146,7 @@ def endpoint(provider: Provider) -> str:
 
 # Build provider input from an explicit allowlist, independently of private run configuration.
 def build_request(candidate: Candidate, provider: Provider, scenario: Scenario) -> JsonObject:
-    """Build an allow listed provider payload without private evaluation configuration.
-
-    Args:
-        candidate: Saved model, prompt, generation parameters, tools, and response format.
-        provider: Provider whose endpoint and parameter support must be validated.
-        scenario: Public user message and optional conversation history.
-
-    Returns:
-        A Chat Completions JSON payload; raises InvocationFailure on invalid settings.
-    """
+    """Return a validated provider payload from candidate, provider, and scenario."""
     endpoint(provider)
 
     if candidate.adapter != "openai_chat_completions":
@@ -222,6 +217,13 @@ def build_request(candidate: Candidate, provider: Provider, scenario: Scenario) 
     if provider.provider_type == "openrouter":
         body["provider"] = {"require_parameters": True, "allow_fallbacks": False}
 
+    logger.debug(
+        "provider_payload_prepared candidate_id=%s provider_id=%s message_count=%d tool_count=%d",
+        candidate.id,
+        provider.id,
+        len(messages),
+        len(candidate.tool_definitions),
+    )
     return body
 
 

@@ -19,7 +19,6 @@ from gatekeeper.persistence.executions import (
     read_run,
 )
 from gatekeeper.persistence.records import project_or_404, timestamp
-from gatekeeper.utils.logging import log_event
 
 # Resource activity is emitted after successful database commits.
 logger = logging.getLogger(__name__)
@@ -50,6 +49,8 @@ async def create_evaluation_run(
     project_id: UUID, payload: EvaluationRunCreate, database: Database = Depends(get_database)
 ) -> EvaluationRun:
     """Save payload under project_id in database and return the pending run."""
+    logger.info("run_creation_requested project_id=%s", project_id)
+
     run = EvaluationRun(
         id=uuid4(),
         project_id=project_id,
@@ -84,14 +85,13 @@ async def create_evaluation_run(
                 run.created_at.isoformat(),
             ),
         )
-    log_event(
-        logger,
-        "run.created",
-        project_id=project_id,
-        run_id=run.id,
-        candidate_id=run.candidate_id,
-        dataset_id=run.dataset_id,
-        run_settings_id=run.run_settings_id,
+    logger.info(
+        "run_created project_id=%s run_id=%s candidate_id=%s dataset_id=%s run_settings_id=%s",
+        project_id,
+        run.id,
+        run.candidate_id,
+        run.dataset_id,
+        run.run_settings_id,
     )
     return run
 
@@ -146,16 +146,8 @@ async def get_evaluation_run(
 async def start_evaluation_run(
     project_id: UUID, evaluation_run_id: UUID, database: Database = Depends(get_database)
 ) -> EvaluationRun:
-    """Freeze configuration and queue a run for execution.
-
-    Args:
-        project_id: Project required to access the run.
-        evaluation_run_id: Run identifier to queue.
-        database: Database containing source configuration and execution state.
-
-    Returns:
-        The queued run, or its existing state if already started.
-    """
+    """Queue evaluation_run_id in project_id/database and return the saved execution state."""
+    logger.info("run_start_requested project_id=%s run_id=%s", project_id, evaluation_run_id)
     return queue_run(database, project_id, evaluation_run_id)
 
 
@@ -164,16 +156,7 @@ async def start_evaluation_run(
 async def cancel_evaluation_run(
     project_id: UUID, evaluation_run_id: UUID, database: Database = Depends(get_database)
 ) -> EvaluationRun:
-    """Request cancellation without discarding collected evidence.
-
-    Args:
-        project_id: Project required to access the run.
-        evaluation_run_id: Run identifier to cancel.
-        database: Database containing run and attempt state.
-
-    Returns:
-        The run with its cancellation request recorded.
-    """
+    """Cancel evaluation_run_id in project_id/database and return the saved execution state."""
     return cancel_run(database, project_id, evaluation_run_id)
 
 

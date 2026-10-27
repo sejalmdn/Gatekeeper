@@ -4,6 +4,7 @@ import json
 import logging
 import sqlite3
 from datetime import datetime
+from time import perf_counter
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
@@ -27,7 +28,7 @@ from gatekeeper.persistence.records import (
     timestamp,
 )
 from gatekeeper.utils.json import canonical_json, digest
-from gatekeeper.utils.logging import log_event
+from gatekeeper.utils.logging import safe_label
 from gatekeeper.utils.rules import resolve_effective_rules
 
 # Log durable transitions once their owning transactions have committed.
@@ -70,12 +71,14 @@ def read_run(connection: sqlite3.Connection, project_id: UUID, run_id: UUID) -> 
 def queue_run(database: Database, project_id: UUID, run_id: UUID) -> EvaluationRun:
     """Freeze and queue run_id in project_id/database; return its current execution state."""
 
+    started = perf_counter()
+
     with database.connection() as connection:
         connection.execute("BEGIN IMMEDIATE")
         run = read_run(connection, project_id, run_id)
 
         if run.status != "pending" or run.queued_at is not None:
-            log_event(logger, "run.start_unchanged", level=logging.DEBUG, run_id=run_id)
+            logger.info("run_start_reused run_id=%s reason=already_started_or_terminal", run_id)
             return run
 
         candidate = candidate_from_row(
@@ -108,6 +111,12 @@ def queue_run(database: Database, project_id: UUID, run_id: UUID) -> EvaluationR
             try:
                 build_request(candidate, provider, scenario)
             except InvocationFailure as error:
+                logger.warning(
+                    "run_start_rejected run_id=%s scenario_id=%s error_code=%s",
+                    run_id,
+                    scenario.id,
+                    error.error.code,
+                )
                 raise HTTPException(status_code=422, detail=error.error.message) from error
 
         bindings = [
@@ -168,15 +177,16 @@ def queue_run(database: Database, project_id: UUID, run_id: UUID) -> EvaluationR
         )
         result = read_run(connection, project_id, run_id)
 
-    log_event(
-        logger,
-        "run.queued",
-        project_id=project_id,
-        run_id=run_id,
-        candidate_id=run.candidate_id,
-        dataset_id=run.dataset_id,
-        total_scenarios=len(scenarios),
-        total_attempts=position,
+    logger.info(
+        "run_queued project_id=%s run_id=%s candidate_id=%s dataset_id=%s total_scenarios=%d "
+        "total_attempts=%d duration_ms=%d",
+        project_id,
+        run_id,
+        run.candidate_id,
+        run.dataset_id,
+        len(scenarios),
+        position,
+        (perf_counter() - started) * 1000,
     )
     return result
 
@@ -190,7 +200,7 @@ def cancel_run(database: Database, project_id: UUID, run_id: UUID) -> Evaluation
         run = read_run(connection, project_id, run_id)
 
         if run.status not in {"pending", "running"} or run.cancel_requested_at is not None:
-            log_event(logger, "run.cancel_unchanged", level=logging.DEBUG, run_id=run_id)
+            logger.info("run_cancel_skipped run_id=%s reason=already_requested_or_terminal", run_id)
             return run
 
         now = timestamp().isoformat()
@@ -208,10 +218,10 @@ def cancel_run(database: Database, project_id: UUID, run_id: UUID) -> Evaluation
 
         result = read_run(connection, project_id, run_id)
 
-    log_event(logger, "run.cancel_requested", project_id=project_id, run_id=run_id)
+    logger.info("run_cancel_requested project_id=%s run_id=%s", project_id, run_id)
 
     if result.status == "cancelled":
-        log_event(logger, "run.cancelled", run_id=run_id, skipped_attempts=skipped)
+        logger.info("run_cancelled run_id=%s skipped_attempts=%s", run_id, skipped)
 
     return result
 
@@ -282,22 +292,15 @@ def recover_interrupted(database: Database) -> None:
             recovered.append((run["id"], affected, skipped))
 
     for run_id, affected, skipped in recovered:
-        log_event(
-            logger,
-            "run.interrupted",
-            level=logging.WARNING,
-            run_id=run_id,
-            affected_attempts=affected,
-            skipped_attempts=skipped,
-            error_code=error.code,
+        logger.warning(
+            "run_interrupted run_id=%s affected_attempts=%s skipped_attempts=%s error_code=%s",
+            run_id,
+            affected,
+            skipped,
+            error.code,
         )
-        log_event(
-            logger,
-            "run.failed",
-            level=logging.WARNING,
-            run_id=run_id,
-            skipped_attempts=skipped,
-            error_code=error.code,
+        logger.warning(
+            "run_failed run_id=%s skipped_attempts=%s error_code=%s", run_id, skipped, error.code
         )
 
 
@@ -323,13 +326,12 @@ def claim_run(database: Database) -> tuple[str, ExecutionSnapshot] | None:
         )
         snapshot = ExecutionSnapshot.model_validate_json(row["configuration"])
 
-    log_event(
-        logger,
-        "run.started",
-        run_id=row["id"],
-        project_id=snapshot.candidate.project_id,
-        candidate_id=snapshot.candidate.id,
-        dataset_id=row["dataset_id"],
+    logger.info(
+        "run_started run_id=%s project_id=%s candidate_id=%s dataset_id=%s",
+        row["id"],
+        snapshot.candidate.project_id,
+        snapshot.candidate.id,
+        row["dataset_id"],
     )
     return row["id"], snapshot
 
@@ -372,17 +374,17 @@ def claim_attempt(database: Database, run_id: str) -> ExecutionAttempt | None:
                 result = ExecutionAttempt.model_validate(result.model_dump())
 
     if terminal_status:
-        log_event(logger, f"run.{terminal_status}", run_id=run_id, skipped_attempts=skipped)
+        logger.info("run_%s run_id=%s skipped_attempts=%s", terminal_status, run_id, skipped)
     elif result is not None:
-        log_event(
-            logger,
-            "attempt.started",
-            run_id=run_id,
-            execution_id=result.id,
-            scenario_id=result.scenario_id,
-            scenario_key=result.scenario_key,
-            scenario_type=result.scenario_type,
-            attempt_number=result.attempt_number,
+        logger.info(
+            "attempt_started run_id=%s execution_id=%s scenario_id=%s scenario_key=%s "
+            "scenario_type=%s attempt_number=%d",
+            run_id,
+            result.id,
+            result.scenario_id,
+            safe_label(result.scenario_key),
+            result.scenario_type,
+            result.attempt_number,
         )
 
     return result

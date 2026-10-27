@@ -11,7 +11,6 @@ from gatekeeper.contracts.candidates import Candidate, CandidateCreate
 from gatekeeper.persistence.database import Database
 from gatekeeper.persistence.records import candidate_from_row, project_or_404, timestamp
 from gatekeeper.utils.json import canonical_json
-from gatekeeper.utils.logging import log_event
 from gatekeeper.utils.providers import PROVIDER_ADAPTERS
 
 # Resource activity is emitted after successful database commits.
@@ -27,6 +26,8 @@ async def create_candidate(
     project_id: UUID, payload: CandidateCreate, database: Database = Depends(get_database)
 ) -> Candidate:
     """Persist payload under project_id in database and return the immutable candidate."""
+    logger.info("candidate_creation_requested project_id=%s", project_id)
+
     try:
         with database.connection() as connection:
             project_or_404(connection, project_id)
@@ -73,12 +74,11 @@ async def create_candidate(
             )
     except sqlite3.IntegrityError as error:
         raise HTTPException(status_code=409, detail="candidate already exists") from error
-    log_event(
-        logger,
-        "candidate.created",
-        project_id=project_id,
-        candidate_id=candidate.id,
-        provider_id=candidate.provider_id,
+    logger.info(
+        "candidate_created project_id=%s candidate_id=%s provider_id=%s",
+        project_id,
+        candidate.id,
+        candidate.provider_id,
     )
     return candidate
 

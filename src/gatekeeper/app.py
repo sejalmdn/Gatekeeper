@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -21,7 +22,7 @@ from gatekeeper.api.run_settings import router as run_settings_router
 from gatekeeper.api.scenarios import router as scenarios_router
 from gatekeeper.execution.worker import execution_lifespan
 from gatekeeper.persistence.database import Database
-from gatekeeper.utils.logging import configure_logging, error_context, log_event
+from gatekeeper.utils.logging import configure_logging
 
 # Application initialization failures are logged without database paths or exception messages.
 logger = logging.getLogger(__name__)
@@ -47,14 +48,17 @@ def create_app(
     database_path: str | Path = "gatekeeper.db", frontend_directory: Path | None = None
 ) -> FastAPI:
     """Build and return a FastAPI app using database_path and optional frontend_directory."""
+    load_dotenv(dotenv_path=Path.cwd() / ".env", override=False)
     configure_logging()
     application = FastAPI(title="Gatekeeper", lifespan=execution_lifespan)
     application.add_middleware(ActivityLoggingMiddleware)
 
     try:
         application.state.database = Database(database_path)
-    except Exception as error:
-        log_event(logger, "application.startup_failed", level=logging.ERROR, **error_context(error))
+    except Exception:
+        logger.exception(
+            "application_startup_failed stage=storage error_code=storage_initialization_failed"
+        )
         raise
 
     application.include_router(projects_router)
