@@ -201,3 +201,29 @@ CREATE TABLE IF NOT EXISTS execution_evidence (
     request TEXT CHECK (request IS NULL OR json_valid(request)),
     response TEXT CHECK (response IS NULL OR json_valid(response))
 );
+
+-- Evaluation headers and automatic baseline checks are independent of invocation status.
+CREATE TABLE IF NOT EXISTS attempt_evaluations (
+    execution_id TEXT PRIMARY KEY REFERENCES execution_evidence (execution_id),
+    verdict TEXT NOT NULL CHECK (
+        verdict IN ('pass', 'fail', 'cannot_evaluate', 'error', 'not_evaluated')
+    ),
+    evaluator_version TEXT NOT NULL,
+    evaluated_at TEXT NOT NULL,
+    automatic_tool_validation TEXT NOT NULL CHECK (json_valid(automatic_tool_validation))
+);
+
+-- Each frozen rule binding produces exactly one outcome for an evaluated attempt.
+CREATE TABLE IF NOT EXISTS rule_evaluation_results (
+    execution_id TEXT NOT NULL REFERENCES attempt_evaluations (execution_id),
+    rule_binding_id TEXT NOT NULL,
+    rule_key TEXT NOT NULL,
+    rule_type TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('required', 'scored', 'informational')),
+    severity TEXT NOT NULL CHECK (severity IN ('critical', 'high', 'medium', 'low')),
+    outcome TEXT NOT NULL CHECK (outcome IN ('pass', 'fail', 'cannot_evaluate', 'error')),
+    reason TEXT NOT NULL,
+    explanation TEXT NOT NULL,
+    evidence_references TEXT NOT NULL CHECK (json_valid(evidence_references)),
+    PRIMARY KEY (execution_id, rule_binding_id)
+);

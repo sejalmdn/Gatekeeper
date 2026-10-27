@@ -20,6 +20,7 @@ from gatekeeper.contracts.executions import (
 )
 from gatekeeper.contracts.providers import Provider
 from gatekeeper.contracts.scenarios import Scenario
+from gatekeeper.evaluation.engine import evaluate_attempt
 from gatekeeper.evidence.normalization import malformed_response, normalize, parse_json, sanitize
 from gatekeeper.integrations.chat import (
     InvocationFailure,
@@ -29,6 +30,7 @@ from gatekeeper.integrations.chat import (
     send_request,
 )
 from gatekeeper.persistence.database import Database
+from gatekeeper.persistence.evaluations import save_evaluation
 from gatekeeper.persistence.executions import (
     claim_attempt,
     claim_run,
@@ -305,6 +307,12 @@ async def execute_run(
         )
 
         save_outcome(database, outcome)
+        evaluation = evaluate_attempt(
+            outcome.evidence,
+            configuration.effective_rules[str(attempt.scenario_id)],
+            candidate.tool_definitions,
+        )
+        save_evaluation(database, outcome.evidence.run_id, evaluation)
 
         if outcome.fatal:
             return

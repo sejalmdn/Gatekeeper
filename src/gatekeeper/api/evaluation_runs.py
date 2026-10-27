@@ -9,8 +9,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from gatekeeper.api.dependencies import get_database
 from gatekeeper.contracts.evaluation_runs import EvaluationRun, EvaluationRunCreate
+from gatekeeper.contracts.evaluations import AttemptEvaluationDetail, AttemptEvaluationSummary
 from gatekeeper.contracts.executions import ExecutionAttempt, ExecutionAttemptDetail
 from gatekeeper.persistence.database import Database
+from gatekeeper.persistence.evaluations import evaluation_detail, evaluation_summaries
 from gatekeeper.persistence.executions import (
     attempt_detail,
     attempt_from_row,
@@ -207,3 +209,31 @@ async def get_execution_attempt(
     with database.connection() as connection:
         read_run(connection, project_id, evaluation_run_id)
         return attempt_detail(connection, evaluation_run_id, execution_id)
+
+
+# List evaluation verdicts independently from attempt execution status.
+@router.get("/{evaluation_run_id}/evaluations", response_model=list[AttemptEvaluationSummary])
+async def list_attempt_evaluations(
+    project_id: UUID, evaluation_run_id: UUID, database: Database = Depends(get_database)
+) -> list[AttemptEvaluationSummary]:
+    """Read evaluation summaries for evaluation_run_id within project_id using database."""
+    with database.connection() as connection:
+        read_run(connection, project_id, evaluation_run_id)
+        return evaluation_summaries(connection, evaluation_run_id)
+
+
+# Inspect required baseline validation and every frozen bound-rule outcome.
+@router.get(
+    "/{evaluation_run_id}/attempts/{execution_id}/evaluation",
+    response_model=AttemptEvaluationDetail,
+)
+async def get_attempt_evaluation(
+    project_id: UUID,
+    evaluation_run_id: UUID,
+    execution_id: UUID,
+    database: Database = Depends(get_database),
+) -> AttemptEvaluationDetail:
+    """Read execution_id's evaluation within project_id/evaluation_run_id from database."""
+    with database.connection() as connection:
+        read_run(connection, project_id, evaluation_run_id)
+        return evaluation_detail(connection, evaluation_run_id, execution_id)
