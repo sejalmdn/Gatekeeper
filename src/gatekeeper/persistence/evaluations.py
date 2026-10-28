@@ -17,6 +17,7 @@ from gatekeeper.contracts.evaluations import (
 )
 from gatekeeper.persistence.database import Database
 from gatekeeper.persistence.executions import attempt_from_row
+from gatekeeper.persistence.reporting import refresh_summary
 from gatekeeper.utils.json import canonical_json
 
 # Storage activity excludes expectations and response content.
@@ -60,6 +61,8 @@ def save_evaluation(database: Database, run_id: UUID, evaluation: AttemptEvaluat
                     for result in evaluation.rule_results
                 ],
             )
+
+            refresh_summary(connection, str(run_id))
     except Exception:
         logger.error(
             "evaluation_storage_failed run_id=%s execution_id=%s "

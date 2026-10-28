@@ -27,6 +27,7 @@ from gatekeeper.persistence.records import (
     scenario_from_row,
     timestamp,
 )
+from gatekeeper.persistence.reporting import TERMINAL_STATUSES, persist_summary
 from gatekeeper.utils.json import canonical_json, digest
 from gatekeeper.utils.logging import safe_label
 from gatekeeper.utils.rules import resolve_effective_rules
@@ -249,6 +250,13 @@ def finish_run(
     error: ExecutionError | None = None,
 ) -> int:
     """Finalize run_id with status/error in connection; return the number of skipped attempts."""
+    run = connection.execute(
+        "SELECT status FROM evaluation_runs WHERE id = ?", (run_id,)
+    ).fetchone()
+
+    if run["status"] in TERMINAL_STATUSES:
+        return 0
+
     now = timestamp().isoformat()
     encoded = canonical_json(error.model_dump()) if error else None
 
@@ -261,6 +269,8 @@ def finish_run(
         "UPDATE evaluation_runs SET status = ?, completed_at = ?, error = ? WHERE id = ?",
         (status, now, encoded if status == "failed" else None, run_id),
     )
+
+    persist_summary(connection, run_id)
 
     return skipped
 

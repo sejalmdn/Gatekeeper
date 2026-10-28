@@ -38,6 +38,7 @@ from gatekeeper.persistence.executions import (
     recover_interrupted,
 )
 from gatekeeper.persistence.records import timestamp
+from gatekeeper.persistence.reporting import refresh_summary
 from gatekeeper.resolver import CredentialUnavailableError, resolve_environment_credential
 from gatekeeper.utils.json import canonical_json
 from gatekeeper.utils.logging import safe_label
@@ -206,9 +207,8 @@ async def invoke_attempt(
 
 # Commit terminal attempt state together with its evidence so polling cannot observe partial writes.
 def save_outcome(database: Database, outcome: AttemptOutcome) -> None:
-    """Persist outcome evidence and attempt/run state atomically in database; return None."""
+    """Persist outcome evidence and attempt state atomically in database; return None."""
     evidence = outcome.evidence
-    skipped = 0
 
     with database.connection() as connection:
         connection.execute(
@@ -231,8 +231,7 @@ def save_outcome(database: Database, outcome: AttemptOutcome) -> None:
             ),
         )
 
-        if outcome.fatal:
-            skipped = finish_run(connection, str(evidence.run_id), "failed", evidence.error)
+        refresh_summary(connection, str(evidence.run_id))
 
     level = logging.INFO
 
@@ -267,14 +266,6 @@ def save_outcome(database: Database, outcome: AttemptOutcome) -> None:
         evidence.error.source if evidence.error else None,
         evidence.error.http_status if evidence.error else None,
     )
-
-    if outcome.fatal:
-        logger.error(
-            "run_failed run_id=%s skipped_attempts=%s error_code=%s",
-            evidence.run_id,
-            skipped,
-            evidence.error.code if evidence.error else None,
-        )
 
 
 # Run a frozen configuration sequentially; each attempt gets its own one-request boundary.
@@ -315,6 +306,15 @@ async def execute_run(
         save_evaluation(database, outcome.evidence.run_id, evaluation)
 
         if outcome.fatal:
+            with database.connection() as connection:
+                skipped = finish_run(connection, run_id, "failed", outcome.evidence.error)
+
+            logger.error(
+                "run_failed run_id=%s skipped_attempts=%s error_code=%s",
+                run_id,
+                skipped,
+                outcome.evidence.error.code if outcome.evidence.error else None,
+            )
             return
 
 

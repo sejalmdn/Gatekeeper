@@ -227,3 +227,11 @@ CREATE TABLE IF NOT EXISTS rule_evaluation_results (
     evidence_references TEXT NOT NULL CHECK (json_valid(evidence_references)),
     PRIMARY KEY (execution_id, rule_binding_id)
 );
+
+-- Terminal reports retain complete aggregation output without duplicating evidence.
+CREATE TABLE IF NOT EXISTS evaluation_run_summaries (
+    run_id TEXT NOT NULL REFERENCES evaluation_runs (id),
+    summary TEXT NOT NULL CHECK (json_valid(summary)),
+    generated_at TEXT NOT NULL,
+    PRIMARY KEY (run_id)
+);

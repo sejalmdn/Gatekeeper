@@ -11,6 +11,7 @@ from gatekeeper.api.dependencies import get_database
 from gatekeeper.contracts.evaluation_runs import EvaluationRun, EvaluationRunCreate
 from gatekeeper.contracts.evaluations import AttemptEvaluationDetail, AttemptEvaluationSummary
 from gatekeeper.contracts.executions import ExecutionAttempt, ExecutionAttemptDetail
+from gatekeeper.contracts.reporting import RunSummary
 from gatekeeper.persistence.database import Database
 from gatekeeper.persistence.evaluations import evaluation_detail, evaluation_summaries
 from gatekeeper.persistence.executions import (
@@ -21,12 +22,22 @@ from gatekeeper.persistence.executions import (
     read_run,
 )
 from gatekeeper.persistence.records import project_or_404, timestamp
+from gatekeeper.persistence.reporting import read_summary
 
 # Resource activity is emitted after successful database commits.
 logger = logging.getLogger(__name__)
 
 # Project-scoped evaluation-run router group.
 router = APIRouter(prefix="/v1/projects/{project_id}/evaluation-runs")
+
+
+# Summarize frozen configuration and saved observations without invoking or evaluating targets.
+@router.get("/{evaluation_run_id}/summary", response_model=RunSummary)
+async def get_run_summary(
+    project_id: UUID, evaluation_run_id: UUID, database: Database = Depends(get_database)
+) -> RunSummary:
+    """Summarize project_id/evaluation_run_id using database; return 404 when absent."""
+    return read_summary(database, project_id, evaluation_run_id)
 
 
 # Assert that an evaluation source belongs to the project.
