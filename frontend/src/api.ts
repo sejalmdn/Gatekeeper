@@ -1,4 +1,7 @@
 import type {
+  RunSummary,
+  AttemptEvaluationSummary,
+  AttemptEvaluationDetail,
   EffectiveRuleBinding,
   RuleBinding,
   RuleBindingCreate,
@@ -256,4 +259,30 @@ export const getExecutionAttempt = (
 ): Promise<ExecutionAttemptDetail> =>
   request<ExecutionAttemptDetail>(
     `/v1/projects/${projectId}/evaluation-runs/${runId}/attempts/${executionId}`,
+  );
+
+// Read-only reporting never regenerates reports or changes saved evidence.
+export const getRunSummary = (
+  projectId: string,
+  runId: string,
+): Promise<RunSummary> =>
+  request<RunSummary>(
+    `/v1/projects/${projectId}/evaluation-runs/${runId}/summary`,
+  );
+
+export const listAttemptEvaluations = (
+  projectId: string,
+  runId: string,
+): Promise<AttemptEvaluationSummary[]> =>
+  request<AttemptEvaluationSummary[]>(
+    `/v1/projects/${projectId}/evaluation-runs/${runId}/evaluations`,
+  );
+
+export const getAttemptEvaluation = (
+  projectId: string,
+  runId: string,
+  executionId: string,
+): Promise<AttemptEvaluationDetail> =>
+  request<AttemptEvaluationDetail>(
+    `/v1/projects/${projectId}/evaluation-runs/${runId}/attempts/${executionId}/evaluation`,
   );

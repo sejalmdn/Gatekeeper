@@ -1,0 +1,52 @@
+.result-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+
+.result-counts__item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface-raised);
+}
+
+.result-counts__item dt,
+.result-counts__item dd {
+  font: 11px/1.6 var(--font-code);
+}
+
+.result-counts__item dt {
+  color: inherit;
+}
+
+.result-counts__item dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.result-counts__item--met,
+.result-counts__item--pass {
+  color: var(--run-pass);
+}
+
+.result-counts__item--not_met,
+.result-counts__item--fail {
+  color: var(--run-fail);
+}
+
+.result-counts__item--inconclusive,
+.result-counts__item--error,
+.result-counts__item--cannot_evaluate,
+.result-counts__item--pending {
+  color: var(--accent);
+}
+
+.result-counts__item[data-empty="true"] {
+  color: var(--muted);
+  background: transparent;
+}

@@ -82,6 +82,17 @@ beforeEach(() => {
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
+  vi.spyOn(api, "getRunSummary").mockResolvedValue({
+    project_id: "p",
+    evaluation_run_id: "r",
+    execution_status: "running",
+    availability: "unavailable",
+    reason: "frozen_snapshot_unavailable",
+    aggregates: null,
+    scenarios: [],
+    evaluator_versions: [],
+  });
+  vi.spyOn(api, "listAttemptEvaluations").mockResolvedValue([]);
   vi.spyOn(api, "getEvaluationRun").mockResolvedValue(run);
   vi.spyOn(api, "listEvaluationRuns").mockResolvedValue([run]);
   vi.spyOn(api, "listExecutionAttempts").mockResolvedValue([attempt]);
@@ -133,9 +144,9 @@ function button(label: string): HTMLButtonElement {
 
 // Large artifacts load only when an attempt is opened and unavailable usage stays explicit.
 it("opens response and tool request evidence on click", async () => {
-  await renderPage();
+  await renderPage("/projects/p/evaluation-runs/r?tab=evidence");
   expect(container.textContent).toContain("1 / 18 attempts finished");
-  expect(container.textContent).toContain("Pass threshold · inactive");
+  expect(container.textContent).toContain("Pass threshold");
   expect(api.getExecutionAttempt).not.toHaveBeenCalled();
   const open = container.querySelector<HTMLButtonElement>(
     '[aria-controls="attempt-execution-1"]',
@@ -151,7 +162,7 @@ it("opens response and tool request evidence on click", async () => {
     "Requested only · tool was not executed",
   );
   expect(container.textContent).toContain("Unavailable");
-  expect(container.textContent).toContain("actual/model");
+  expect(container.textContent).not.toContain("Provenance and completeness");
   expect(
     container.querySelector('[aria-label="Provider request JSON"]'),
   ).not.toBeNull();
@@ -184,7 +195,7 @@ it("retains progress after a polling failure and offers refresh", async () => {
   );
   await act(async () => vi.advanceTimersByTimeAsync(2000));
   expect(container.textContent).toContain("Connection unavailable");
-  expect(container.textContent).toContain("Refund policy");
+  expect(container.textContent).toContain("1 / 18 attempts finished");
   await act(async () => button("Refresh").click());
   expect(container.textContent).not.toContain("Connection unavailable");
   expect(api.getEvaluationRun).toHaveBeenCalledTimes(3);
@@ -235,4 +246,6 @@ it("lists saved executions with shareable evidence links", async () => {
   ).not.toBeNull();
   expect(container.textContent).toContain("1 / 18 attempts");
   expect(container.textContent).toContain("running");
+  expect(api.getRunSummary).not.toHaveBeenCalled();
+  expect(api.listAttemptEvaluations).not.toHaveBeenCalled();
 });

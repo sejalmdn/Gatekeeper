@@ -1,0 +1,115 @@
+.run-results-summary {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.run-results-summary[aria-label="Report unavailable"] {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px dashed var(--accent-border);
+  border-radius: 4px;
+}
+
+.run-results-summary[aria-label="Report unavailable"] h2 {
+  margin: 0;
+  color: var(--accent);
+}
+
+.run-results-summary[aria-label="Report unavailable"] p {
+  margin: 0;
+}
+
+.run-results-summary[aria-label="Report unavailable"] code {
+  color: var(--cyan);
+  font-size: 11px;
+}
+
+.run-results-summary__cards {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1fr 1.2fr;
+  gap: 12px;
+}
+
+.run-results-summary__card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.run-results-summary__card h2,
+.run-results-summary__card .result-score__value > span {
+  margin: 0;
+  font: 11px/1.5 var(--font-code);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.run-results-summary__value {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+  font: 700 30px/1.3 var(--font-display);
+}
+
+.run-results-summary__value > span {
+  color: var(--muted);
+  font: 12px var(--font-code);
+}
+
+.run-results-summary__caption {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.run-results-summary__card meter {
+  display: block;
+  width: 100%;
+  height: 5px;
+  background: var(--surface-hover);
+  border: 0;
+  border-radius: 2px;
+}
+
+.run-results-summary__card meter::-webkit-meter-bar {
+  background: var(--surface-hover);
+  border: 0;
+  height: 5px;
+}
+
+.run-results-summary__card meter::-webkit-meter-optimum-value {
+  background: var(--cyan);
+}
+
+.run-results-summary__card meter::-moz-meter-bar {
+  background: var(--cyan);
+}
+
+.run-results-summary__card .result-score__value {
+  display: grid;
+  gap: 12px;
+}
+
+.run-results-summary__card .result-score__value strong {
+  font-size: 25px;
+  line-height: 1.5;
+}
+
+@media (max-width: 1250px) {
+  .run-results-summary__cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .run-results-summary__cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

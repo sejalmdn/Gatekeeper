@@ -1,20 +1,23 @@
-import { useState, type ReactElement } from "react";
+import { type ReactElement } from "react";
 import type { ExecutionAttempt } from "../types";
 import { AttemptEvidence } from "./AttemptEvidence";
+
+interface ExecutionAttemptsProps {
+  attempts: ExecutionAttempt[];
+  projectId: string;
+  runId: string;
+  opened?: string;
+  onOpen: (id?: string) => void;
+}
 
 // Groups immutable attempt identities by scenario and opens evidence on click.
 export function ExecutionAttempts({
   attempts,
   projectId,
   runId,
-}: {
-  attempts: ExecutionAttempt[];
-  projectId: string;
-  runId: string;
-}): ReactElement {
-  // Keeps the evidence view focused on the attempt the user is inspecting.
-  const [opened, setOpened] = useState<string>();
-
+  opened,
+  onOpen,
+}: ExecutionAttemptsProps): ReactElement {
   if (attempts.length === 0) {
     return (
       <p className="empty-state">
@@ -52,7 +55,7 @@ export function ExecutionAttempts({
                   aria-expanded={opened === attempt.id}
                   aria-controls={`attempt-${attempt.id}`}
                   onClick={() =>
-                    setOpened(opened === attempt.id ? undefined : attempt.id)
+                    onOpen(opened === attempt.id ? undefined : attempt.id)
                   }
                 >
                   <span>Attempt {attempt.attempt_number}</span>

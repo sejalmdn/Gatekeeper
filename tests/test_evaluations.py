@@ -431,6 +431,15 @@ def test_frozen_results_and_scoped_reads(
         assert detail["evaluator_version"] == "deterministic-v1"
         assert detail["evaluated_at"]
         assert all(result["evidence_references"] for result in detail["rule_results"])
+        required_text = next(
+            result
+            for result in detail["rule_results"]
+            if result["rule_type"] == "response.required_text"
+        )
+
+        assert required_text["reason"] == "required_text_found"
+        assert 'All required phrases were found: ["Hello"]' in required_text["explanation"]
+        assert "EDITED_PRIVATE_EXPECTATION" not in str(detail)
 
     with database.connection() as connection:
         assert (

@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { getExecutionAttempt } from "../api";
 import { useLoad } from "../hooks/useLoad";
+import { formatNumber } from "../utils/format";
 import { LoadBoundary } from "./Feedback";
 import { JsonViewer } from "./JsonViewer";
 
@@ -42,7 +43,7 @@ export function AttemptEvidence({
                   <dd>
                     {evidence.duration_ms === null
                       ? "Unavailable"
-                      : `${Math.round(evidence.duration_ms)} ms`}
+                      : `${formatNumber(evidence.duration_ms)} ms`}
                   </dd>
                 </div>
                 <div>
@@ -90,37 +91,6 @@ export function AttemptEvidence({
                   {tool.issues.length > 0 && <p>{tool.issues.join(" · ")}</p>}
                 </article>
               ))}
-              <details>
-                <summary>Provenance and completeness</summary>
-                <dl className="attempt-evidence__provenance">
-                  <dt>Source</dt>
-                  <dd>
-                    {evidence.source === "direct_provider_response"
-                      ? "Direct provider response"
-                      : "Backend observation"}
-                  </dd>
-                  <dt>Provider / adapter</dt>
-                  <dd>
-                    {evidence.provider_type} / {evidence.adapter}
-                  </dd>
-                  <dt>Requested model</dt>
-                  <dd>{evidence.requested_model}</dd>
-                  <dt>Returned model</dt>
-                  <dd>{evidence.returned_model ?? "Unavailable"}</dd>
-                  <dt>Provider request ID</dt>
-                  <dd>{evidence.provider_request_id ?? "Unavailable"}</dd>
-                  <dt>Execution ID</dt>
-                  <dd>{evidence.execution_id}</dd>
-                  <dt>Started</dt>
-                  <dd>{evidence.started_at}</dd>
-                  <dt>Completed</dt>
-                  <dd>{evidence.completed_at}</dd>
-                </dl>
-                <p>
-                  {evidence.completeness_issues.join(" · ") ||
-                    "No completeness issues recorded."}
-                </p>
-              </details>
             </>
           )}
           {request !== null && (

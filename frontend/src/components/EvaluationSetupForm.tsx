@@ -243,7 +243,7 @@ export function EvaluationSetupForm({
             />
           </label>
           <label className="form-field" htmlFor="evaluation-threshold">
-            <span>Pass threshold (%) · inactive</span>
+            <span>Pass threshold (%)</span>
             <input
               id="evaluation-threshold"
               type="number"
@@ -257,7 +257,9 @@ export function EvaluationSetupForm({
           </label>
         </div>
         <p className="evaluation-setup-form__help">
-          Pass threshold is inactive until grading is implemented.
+          A scenario meets this threshold when its passing share of planned
+          attempts is high enough and the required evaluation evidence is
+          complete.
         </p>
       </fieldset>
     </RecordForm>
