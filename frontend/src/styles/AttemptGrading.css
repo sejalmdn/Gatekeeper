@@ -1,0 +1,51 @@
+.attempt-grading {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+
+.attempt-grading__header,
+.attempt-grading__header > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.attempt-grading__header {
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.attempt-grading h3 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.attempt-grading__header a {
+  color: var(--cyan);
+  font: 11px/1.6 var(--font-code);
+}
+
+.attempt-grading__automatic {
+  border: 1px dashed var(--border-strong);
+  border-radius: 4px;
+  padding: 12px;
+  background: var(--canvas);
+}
+
+.attempt-grading__automatic h3 {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.attempt-grading__automatic > p {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 8px 0 0;
+}

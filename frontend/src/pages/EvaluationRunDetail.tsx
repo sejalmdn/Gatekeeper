@@ -1,14 +1,15 @@
 import { useRef, useState, type ReactElement } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { cancelEvaluationRun, startEvaluationRun } from "../api";
-import { ExecutionAttempts } from "../components/ExecutionAttempts";
-import { Notice } from "../components/Feedback";
-import { RecordDetails } from "../components/RecordDetails";
+import { RunEvidence } from "../components/RunEvidence";
+import { RunResults } from "../components/RunResults";
+import { useRunResults } from "../hooks/useRunResults";
+import { EvaluationRunHeader } from "../components/EvaluationRunHeader";
 import { useExecutionRun } from "../hooks/useExecutionRun";
 import { messageFor } from "../utils/format";
 import "../styles/ExecutionView.css";
 
-// Shows execution progress and attempt evidence without implying evaluation success.
+// Shows execution progress, backend results, and evidence as independent inspection surfaces.
 export function EvaluationRunDetail(): ReactElement {
   // Reads the scoped run identity from its stable inspection URL.
   const { projectId = "", recordId = "" } = useParams();
@@ -18,6 +19,29 @@ export function EvaluationRunDetail(): ReactElement {
 
   // Retains prior evidence if an active run cannot be refreshed.
   const { data, error, refresh } = useExecutionRun(projectId, recordId);
+
+  // Makes tab and disclosure selection shareable and browser-navigation aware.
+  const [search, setSearch] = useSearchParams();
+
+  const tab = search.get("tab") === "evidence" ? "evidence" : "results";
+
+  // Keeps successful reporting data when switching between Results and Evidence.
+  const results = useRunResults(
+    projectId,
+    recordId,
+    data?.run,
+    tab === "results",
+  );
+
+  function select(scenario?: string, attempt?: string, nextTab = tab): void {
+    const next = new URLSearchParams(search);
+    next.set("tab", nextTab);
+    if (scenario) next.set("scenario", scenario);
+    else next.delete("scenario");
+    if (attempt) next.set("attempt", attempt);
+    else next.delete("attempt");
+    setSearch(next);
+  }
 
   // Explains action failures without discarding the saved run.
   const [actionError, setActionError] = useState<string | undefined>(
@@ -67,43 +91,16 @@ export function EvaluationRunDetail(): ReactElement {
   }
   const { run, candidate, dataset, settings, attempts } = data;
   const active = run.status === "pending" || run.status === "running";
-  const statusLabel =
-    run.status === "pending" && run.queued_at ? "queued" : run.status;
   return (
-    <RecordDetails
-      title="Execution and evidence"
-      detail={`${candidate.name} / ${dataset.name}`}
-      backTo={`/projects/${projectId}/evaluation-runs`}
-      backLabel="Back to executions"
-      createdAt={run.created_at}
-    >
-      <div className="evaluation-run-detail">
-        {(error || actionError) && (
-          <div role="alert" className="evaluation-run-detail__error">
-            <p>{error || actionError}</p>
-            {error && (
-              <button type="button" onClick={refresh}>
-                Refresh
-              </button>
-            )}
-          </div>
-        )}
-        <section className="evaluation-run-detail__progress">
-          <div>
-            <span className="badge badge-amber">{statusLabel}</span>
-            <h2>
-              {run.finished_attempts} / {run.total_attempts} attempts finished
-            </h2>
-            <progress
-              aria-label="Attempt progress"
-              value={run.finished_attempts}
-              max={Math.max(run.total_attempts, 1)}
-            />
-            {run.cancel_requested_at && active && (
-              <p>Stopping after the current attempt…</p>
-            )}
-          </div>
-          <div className="evaluation-run-detail__actions">
+    <section className="evaluation-run-detail page-content">
+      <EvaluationRunHeader
+        projectId={projectId}
+        run={run}
+        candidate={candidate}
+        dataset={dataset}
+        settings={settings}
+        actions={
+          <>
             {run.status === "pending" && !run.queued_at && (
               <button
                 className="button"
@@ -122,70 +119,118 @@ export function EvaluationRunDetail(): ReactElement {
                 Cancel run
               </button>
             )}
-          </div>
-        </section>
-        {run.error && (
-          <p role="alert">
-            {run.error.message} <code>{run.error.code}</code>
-          </p>
-        )}
-        <dl className="evaluation-run-detail__metrics">
-          <div>
-            <dt>Candidate</dt>
-            <dd>
-              <Link to={`/projects/${projectId}/candidates/${candidate.id}`}>
-                {candidate.name}
-              </Link>
-            </dd>
-          </div>
-          <div>
-            <dt>Dataset</dt>
-            <dd>
-              <Link to={`/projects/${projectId}/datasets/${dataset.id}`}>
-                {dataset.name}
-              </Link>
-            </dd>
-          </div>
-          <div>
-            <dt>Attempts per scenario</dt>
-            <dd>{settings.attempts_per_scenario}</dd>
-          </div>
-          <div>
-            <dt>Timeout per attempt</dt>
-            <dd>{settings.timeout_ms / 1000} seconds</dd>
-          </div>
-          <div>
-            <dt>Pass threshold · inactive</dt>
-            <dd>{Number((settings.pass_threshold * 100).toFixed(6))}%</dd>
-          </div>
-        </dl>
-        <Notice>
-          Execution collects evidence. Rules and pass threshold are inactive
-          until grading is implemented. Completed means the run finished
-          collecting attempts.
-        </Notice>
-        {run.status === "cancelled" && attempts.length === 0 ? (
-          <p>This run was cancelled before attempts were allocated.</p>
+          </>
+        }
+      />
+      {(error || actionError) && (
+        <div role="alert" className="evaluation-run-detail__error">
+          <p>{error || actionError}</p>
+          {error && (
+            <button type="button" onClick={refresh}>
+              Refresh
+            </button>
+          )}
+        </div>
+      )}
+      {run.error && (
+        <p role="alert">
+          {run.error.message} <code>{run.error.code}</code>
+        </p>
+      )}
+      <div
+        role="tablist"
+        aria-label="Run inspection"
+        className="run-results__tabs"
+      >
+        {(["results", "evidence"] as const).map((value) => (
+          <button
+            key={value}
+            id={`run-tab-${value}`}
+            role="tab"
+            aria-selected={tab === value}
+            aria-controls={`run-panel-${value}`}
+            tabIndex={tab === value ? 0 : -1}
+            onClick={() =>
+              select(
+                search.get("scenario") ?? undefined,
+                search.get("attempt") ?? undefined,
+                value,
+              )
+            }
+            onKeyDown={(event) => {
+              if (
+                !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)
+              )
+                return;
+              event.preventDefault();
+              let nextTab: "results" | "evidence" =
+                tab === "results" ? "evidence" : "results";
+              if (event.key === "Home") nextTab = "results";
+              if (event.key === "End") nextTab = "evidence";
+              select(
+                search.get("scenario") ?? undefined,
+                search.get("attempt") ?? undefined,
+                nextTab,
+              );
+              document.getElementById(`run-tab-${nextTab}`)?.focus();
+            }}
+          >
+            {value === "results" ? "Results" : "Evidence"}
+          </button>
+        ))}
+      </div>
+      <div
+        id={`run-panel-${tab}`}
+        role="tabpanel"
+        aria-labelledby={`run-tab-${tab}`}
+        tabIndex={0}
+      >
+        {tab === "results" ? (
+          <RunResults
+            projectId={projectId}
+            run={run}
+            summary={results.summary}
+            attempts={
+              results.evaluations ??
+              (results.evaluationsError ? attempts : []).map((attempt) => ({
+                ...attempt,
+                verdict: "not_evaluated" as const,
+                evaluator_version: null,
+                evaluated_at: null,
+                outcome_counts: {},
+              }))
+            }
+            gradesAvailable={results.evaluations !== undefined}
+            loading={results.loading}
+            summaryError={results.summaryError}
+            evaluationsError={results.evaluationsError}
+            retry={results.retry}
+            scenarioId={search.get("scenario") ?? undefined}
+            attemptId={search.get("attempt") ?? undefined}
+            select={select}
+          />
         ) : (
-          <ExecutionAttempts
+          <RunEvidence
+            cancelled={run.status === "cancelled"}
             attempts={attempts}
             projectId={projectId}
             runId={recordId}
+            opened={search.get("attempt") ?? undefined}
+            onOpen={(id) =>
+              select(
+                attempts.find((attempt) => attempt.id === id)?.scenario_id,
+                id,
+              )
+            }
           />
         )}
-        {run.snapshot_digest && (
-          <details className="evaluation-run-detail__snapshot">
-            <summary>Frozen configuration</summary>
-            <p>
-              Snapshot v1 · <code>{run.snapshot_digest}</code>
-            </p>
-            <p>
-              Candidate settings, scenario inputs, and private rules were frozen
-              when queued.
-            </p>
-          </details>
-        )}
       </div>
-    </RecordDetails>
+      <div
+        id={`run-panel-${tab === "results" ? "evidence" : "results"}`}
+        role="tabpanel"
+        aria-labelledby={`run-tab-${tab === "results" ? "evidence" : "results"}`}
+        hidden
+      />
+    </section>
   );
 }

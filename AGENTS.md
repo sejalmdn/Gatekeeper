@@ -89,6 +89,7 @@ After declaring few variables and each block add a newline to improve readabilit
 
 Test serialization, invalid input, cross-field invariants, evidence chains, and measurement
 boundaries. Use focused, imperative commits such as `Add paired comparison contracts`.
+Do not update the docs/ until asked to.
 
 ## Frontend Conventions
 

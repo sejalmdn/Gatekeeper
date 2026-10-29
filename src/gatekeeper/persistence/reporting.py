@@ -194,7 +194,7 @@ def persist_summary(connection: sqlite3.Connection, run_id: str) -> None:
             "INSERT INTO evaluation_run_summaries (run_id, summary, generated_at) VALUES (?, ?, ?)",
             (run_id, encoded, timestamp().isoformat()),
         )
-    except Exception:
+    except Exception as e:
         connection.execute("ROLLBACK TO terminal_summary")
         logger.error("report_storage_failed run_id=%s error_code=summary_persistence_error", run_id)
     finally:

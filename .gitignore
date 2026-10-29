@@ -11,3 +11,5 @@ gatekeeper.db
 .env
 *frontend_dist/
 others/
+
+.vscode/

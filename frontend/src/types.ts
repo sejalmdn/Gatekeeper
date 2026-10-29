@@ -167,7 +167,7 @@ export interface ExecutionError {
   http_status: number | null;
 }
 
-// Observed attempt states remain separate from future grading outcomes.
+// Observed attempt states remain separate from grading outcomes.
 export type AttemptStatus =
   "pending" | "running" | "completed" | "failed" | "timed_out" | "skipped";
 
@@ -227,4 +227,136 @@ export interface ExecutionAttemptDetail extends ExecutionAttempt {
   evidence: ExecutionEvidence | null;
   request: JsonObject | null;
   response: JsonObject | null;
+}
+
+// Grading outcomes remain independent of invocation lifecycle.
+export type RuleOutcome = "pass" | "fail" | "cannot_evaluate" | "error";
+export type AttemptVerdict = RuleOutcome | "not_evaluated";
+
+// Safe evaluator explanation with pointers into normalized evidence.
+export interface CheckResult {
+  outcome: RuleOutcome;
+  reason: string;
+  explanation: string;
+  evidence_references: string[];
+}
+
+// Frozen authored rule identity attached to one result.
+export interface RuleEvaluationResult extends CheckResult {
+  rule_binding_id: string;
+  rule_key: string;
+  rule_type: RuleType;
+  role: RuleBindingCreate["role"];
+  severity: RuleBindingCreate["severity"];
+}
+
+// Lightweight grades used for repeated-attempt inspection.
+export interface AttemptEvaluationSummary extends ExecutionAttempt {
+  verdict: AttemptVerdict;
+  evaluator_version: string | null;
+  evaluated_at: string | null;
+  outcome_counts: Record<string, number>;
+}
+
+// Full grades are fetched only for an opened attempt.
+export interface AttemptEvaluationDetail extends AttemptEvaluationSummary {
+  automatic_tool_validation: CheckResult[];
+  rule_results: RuleEvaluationResult[];
+}
+
+// Backend denominators are displayed without recomputing assessment.
+export interface AttemptTotals {
+  planned_attempts: number;
+  passing_attempts: number;
+  decisive_attempts: number;
+  pass_rate: number | null;
+  execution_status_counts: Record<string, number>;
+  evaluation_verdict_counts: Record<string, number>;
+}
+
+// Outcome counts for an individual frozen rule binding.
+export interface BindingSummary {
+  rule_binding_id: string;
+  rule_key: string;
+  rule_type: RuleType;
+  role: RuleBindingCreate["role"];
+  severity: RuleBindingCreate["severity"];
+  planned_results: number;
+  outcome_counts: Record<string, number>;
+}
+
+// Weighted score is unavailable until scored evidence is complete.
+export interface WeightedScore {
+  planned_weight: number;
+  known_weight: number;
+  passing_weight: number;
+  coverage: number | null;
+  weighted_score: number | null;
+  reason: "no_scored_rules" | "incomplete_scored_results" | null;
+}
+
+// Supplied statistics preserve missing observations and observed zero.
+export interface MetricStatistics {
+  observed_count: number;
+  missing_count: number;
+  minimum: number | null;
+  maximum: number | null;
+  mean: number | null;
+  sum: number | null;
+}
+
+// Candidate operational observations exclude unsuccessful and unexecuted attempts.
+export interface OperationalMetrics {
+  completed_invocations: number;
+  excluded_unsuccessful_attempts: number;
+  excluded_unexecuted_attempts: number;
+  excluded_in_progress_attempts: number;
+  latency_ms: MetricStatistics;
+  input_tokens: MetricStatistics;
+  output_tokens: MetricStatistics;
+  total_tokens: MetricStatistics;
+}
+
+// Shared totals never imply a run-wide pass/fail verdict.
+export interface RunAggregates {
+  attempts: AttemptTotals;
+  scenario_assessment_counts: Record<string, number>;
+  bindings: BindingSummary[];
+  automatic_tool_validation_counts: Record<string, number>;
+  score: WeightedScore;
+  metrics: OperationalMetrics;
+}
+
+// Scenarios retain frozen backend order, assessment, and repeated-attempt stability.
+export interface ScenarioSummary {
+  scenario_id: string;
+  scenario_key: string;
+  scenario_name: string;
+  pass_threshold: number;
+  assessment: "met" | "not_met" | "inconclusive" | "pending";
+  stability:
+    | "consistent_pass"
+    | "consistent_fail"
+    | "flaky"
+    | "inconclusive"
+    | "pending"
+    | "insufficient_repeats";
+  reasons: string[];
+  attempts: AttemptTotals;
+  bindings: BindingSummary[];
+  automatic_tool_validation_counts: Record<string, number>;
+  score: WeightedScore;
+  metrics: OperationalMetrics;
+}
+
+// Reporting availability is separate from execution and stored attempt grades.
+export interface RunSummary {
+  project_id: string;
+  evaluation_run_id: string;
+  execution_status: EvaluationRun["status"];
+  evaluator_versions: string[];
+  availability: "available" | "unavailable";
+  reason: string | null;
+  aggregates: RunAggregates | null;
+  scenarios: ScenarioSummary[];
 }

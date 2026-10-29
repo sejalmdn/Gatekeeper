@@ -328,7 +328,7 @@ async def run_worker(database: Database, client: httpx.AsyncClient) -> None:
             claimed = claim_run(database)
 
             if claimed is None:
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(3)
                 continue
 
             run_id, configuration = claimed

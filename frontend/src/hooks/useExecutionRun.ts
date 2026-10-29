@@ -29,7 +29,11 @@ export function useExecutionRun(projectId: string, runId: string) {
   const [data, setData] = useState<RunData>();
 
   // Distinguishes a refresh failure from the initial loading state.
-  const [error, setError] = useState<string>();
+  const [failure, setFailure] = useState<{
+    projectId: string;
+    runId: string;
+    message: string;
+  }>();
 
   // Restarts reads after an explicit refresh or lifecycle action.
   const [revision, setRevision] = useState(0);
@@ -61,15 +65,16 @@ export function useExecutionRun(projectId: string, runId: string) {
           run,
           attempts,
         });
-        setError(undefined);
+        setFailure(undefined);
         if (
           run.status === "running" ||
           (run.status === "pending" && run.queued_at)
         ) {
           timer = setTimeout(() => void load(), 2000);
         }
-      } catch (failure) {
-        if (active) setError(messageFor(failure));
+      } catch (error) {
+        if (active)
+          setFailure({ projectId, runId, message: messageFor(error) });
       }
     }
     void load();
@@ -80,8 +85,14 @@ export function useExecutionRun(projectId: string, runId: string) {
   }, [projectId, runId, revision]);
 
   return {
-    data,
-    error,
+    data:
+      data?.run.id === runId && data.run.project_id === projectId
+        ? data
+        : undefined,
+    error:
+      failure?.projectId === projectId && failure.runId === runId
+        ? failure.message
+        : undefined,
     refresh: () => setRevision((value) => value + 1),
   };
 }

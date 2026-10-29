@@ -1,5 +1,15 @@
 import type { JsonObject } from "../types";
 
+// Round displayed measurements to two decimal places while preserving missing values and zero.
+export function formatNumber(value: number | null): string {
+  return value === null
+    ? "Unavailable"
+    : new Intl.NumberFormat("en", {
+        maximumFractionDigits: 2,
+        useGrouping: false,
+      }).format(value);
+}
+
 // Convert request failures into readable form feedback.
 export function messageFor(error: unknown): string {
   return error instanceof Error

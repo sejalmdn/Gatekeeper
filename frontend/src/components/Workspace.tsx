@@ -131,24 +131,6 @@ function Workspace({ projectId }: { projectId: string }): ReactElement {
               ))}
             </nav>
             <div className="workspace-note">
-              <div className="workspace-note-title">
-                <Icon name="lock" />
-                <strong>Controlled inputs</strong>
-              </div>
-              <dl>
-                <div>
-                  <dt>Scope</dt>
-                  <dd>Project</dd>
-                </div>
-                <div>
-                  <dt>Scenarios</dt>
-                  <dd>Typed</dd>
-                </div>
-                <div>
-                  <dt>Mode</dt>
-                  <dd>Offline</dd>
-                </div>
-              </dl>
               <p>Workflow evaluation control plane</p>
             </div>
           </aside>

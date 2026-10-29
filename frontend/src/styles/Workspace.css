@@ -115,39 +115,6 @@
   color: var(--muted);
   font-size: var(--font-size-body);
 }
-.workspace-note-title {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.workspace-note-title .icon {
-  color: var(--accent);
-  width: 14px;
-}
-.workspace-note strong {
-  color: var(--text);
-  font-weight: 500;
-}
-.workspace-note dl {
-  margin: 12px 0;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--canvas);
-}
-.workspace-note dl > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-}
-.workspace-note dl > div + div {
-  margin-top: 6px;
-}
-.workspace-note dd {
-  margin: 0;
-  color: var(--cyan);
-  font-size: var(--font-size-body);
-}
 .workspace-note p {
   margin: 0;
   text-align: center;

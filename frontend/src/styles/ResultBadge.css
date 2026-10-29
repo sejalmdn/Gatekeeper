@@ -1,0 +1,34 @@
+.result-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 4px;
+  color: var(--muted);
+  background: var(--surface-raised);
+  font: 11px/1.6 var(--font-code);
+}
+
+.result-badge--met,
+.result-badge--pass {
+  color: var(--run-pass);
+  border: 1px solid var(--run-pass-border);
+  background: var(--run-pass-soft);
+}
+
+.result-badge--not_met,
+.result-badge--fail {
+  color: var(--run-fail);
+  border: 1px solid var(--run-fail-border);
+  background: var(--run-fail-soft);
+}
+
+.result-badge--inconclusive,
+.result-badge--cannot_evaluate,
+.result-badge--error,
+.result-badge--pending {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
