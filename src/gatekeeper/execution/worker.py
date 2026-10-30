@@ -21,7 +21,7 @@ from gatekeeper.contracts.executions import (
 from gatekeeper.contracts.pricing import ExecutionCost
 from gatekeeper.contracts.providers import Provider
 from gatekeeper.contracts.scenarios import Scenario
-from gatekeeper.evaluation.engine import evaluate_attempt
+from gatekeeper.evaluation.coordinator import coordinate_evaluation
 from gatekeeper.evidence.normalization import malformed_response, normalize, parse_json, sanitize
 from gatekeeper.integrations.chat import (
     InvocationFailure,
@@ -31,6 +31,7 @@ from gatekeeper.integrations.chat import (
     response_error,
     send_request,
 )
+from gatekeeper.integrations.judge import JudgeRateLimiter
 from gatekeeper.persistence.database import Database
 from gatekeeper.persistence.evaluations import save_evaluation
 from gatekeeper.persistence.executions import (
@@ -275,19 +276,16 @@ def save_outcome(database: Database, outcome: AttemptOutcome) -> None:
 
 # Run a frozen configuration sequentially; each attempt gets its own one-request boundary.
 async def execute_run(
-    database: Database, client: httpx.AsyncClient, run_id: str, configuration: ExecutionSnapshot
+    database: Database,
+    client: httpx.AsyncClient,
+    run_id: str,
+    configuration: ExecutionSnapshot,
+    judge_limiter: JudgeRateLimiter | None = None,
 ) -> None:
-    """Execute a claimed run sequentially using its frozen configuration.
-
-    Args:
-        database: Database used to claim attempts and save their outcomes.
-        client: Shared asynchronous HTTP client for provider requests.
-        run_id: Identifier of the run already claimed by the worker.
-        configuration: Immutable snapshot of candidate, provider, settings, and scenarios.
-
-    Returns:
-        None; returns when no more attempts can be claimed or an outcome is fatal.
+    """Execute run_id with database/client and frozen configuration; return after attempts finish.
+    Reuse judge_limiter across worker runs when supplied to preserve request spacing.
     """
+    judge_limiter = judge_limiter or JudgeRateLimiter()
     candidate = configuration.candidate
     provider = configuration.provider
     scenarios = {scenario.id: scenario for scenario in configuration.scenarios}
@@ -306,11 +304,13 @@ async def execute_run(
             outcome.evidence, configuration.pricing_catalog, endpoint(provider)
         )
         save_outcome(database, outcome)
-        evaluation = evaluate_attempt(
+        evaluation = await coordinate_evaluation(
+            client,
+            configuration,
+            scenarios[attempt.scenario_id],
             outcome.evidence,
-            configuration.effective_rules[str(attempt.scenario_id)],
-            candidate.tool_definitions,
             outcome.cost,
+            judge_limiter,
         )
         save_evaluation(database, outcome.evidence.run_id, evaluation)
 
@@ -331,6 +331,7 @@ async def execute_run(
 async def run_worker(database: Database, client: httpx.AsyncClient) -> None:
     """Poll database and execute queued runs with client until cancelled; return None."""
     logger.info("worker_started")
+    judge_limiter = JudgeRateLimiter()
 
     try:
         while True:
@@ -345,7 +346,7 @@ async def run_worker(database: Database, client: httpx.AsyncClient) -> None:
             logger.info("worker_run_picked_up run_id=%s", run_id)
 
             try:
-                await execute_run(database, client, run_id, configuration)
+                await execute_run(database, client, run_id, configuration, judge_limiter)
                 logger.info(
                     "worker_run_finished run_id=%s duration_ms=%d",
                     run_id,

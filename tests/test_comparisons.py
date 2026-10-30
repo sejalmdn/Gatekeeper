@@ -247,7 +247,7 @@ def test_comparison_api(client: ApiClient, monkeypatch: pytest.MonkeyPatch) -> N
         pytest.fail("Comparison invoked or evaluated a candidate")
 
     monkeypatch.setattr("gatekeeper.evaluation.engine.evaluate_attempt", reject)
-    monkeypatch.setattr("gatekeeper.execution.worker.evaluate_attempt", reject)
+    monkeypatch.setattr("gatekeeper.evaluation.coordinator.evaluate_attempt", reject)
     monkeypatch.setattr(httpx.AsyncClient, "post", reject)
     import sqlite3
     from collections.abc import Generator

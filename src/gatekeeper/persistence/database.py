@@ -24,6 +24,7 @@ class Database:
         with self.connection() as connection:
             connection.executescript(schema)
             migrate_execution_costs(connection)
+            migrate_judge_records(connection)
 
         logger.info("storage_initialized duration_ms=%d", (perf_counter() - started) * 1000)
 
@@ -98,3 +99,16 @@ def migrate_execution_costs(connection: sqlite3.Connection) -> None:
         "UPDATE execution_evidence SET cost = json_remove(cost, '$.calculation_version') "
         "WHERE json_type(cost, '$.calculation_version') IS NOT NULL"
     )
+
+
+# Extend historical evaluation tables without changing saved results or snapshots.
+def migrate_judge_records(connection: sqlite3.Connection) -> None:
+    """Add nullable judge metadata and rule scores to connection's tables idempotently."""
+    for table, column, declaration in (
+        ("attempt_evaluations", "judge", "TEXT CHECK (judge IS NULL OR json_valid(judge))"),
+        ("rule_evaluation_results", "score", "INTEGER CHECK (score BETWEEN 1 AND 5)"),
+    ):
+        columns = {row["name"] for row in connection.execute(f"PRAGMA table_info({table})")}
+
+        if column not in columns:
+            connection.execute(f"ALTER TABLE {table} ADD COLUMN {column} {declaration}")
