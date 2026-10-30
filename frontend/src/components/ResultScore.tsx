@@ -32,7 +32,7 @@ export function ResultScore({
           )}
         </span>
       </p>
-      {score.reason && (
+      {score.reason && score.reason !== "no_scored_rules" && (
         <p className="result-score__reason">
           {compact && <span aria-hidden="true">⚠ </span>}
           {resultLabel(score.reason)} {!compact && <code>{score.reason}</code>}

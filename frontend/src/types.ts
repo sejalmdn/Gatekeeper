@@ -262,6 +262,7 @@ export interface AttemptEvaluationSummary extends ExecutionAttempt {
 export interface AttemptEvaluationDetail extends AttemptEvaluationSummary {
   automatic_tool_validation: CheckResult[];
   rule_results: RuleEvaluationResult[];
+  rule_configurations?: EffectiveRuleBinding[];
 }
 
 // Backend denominators are displayed without recomputing assessment.

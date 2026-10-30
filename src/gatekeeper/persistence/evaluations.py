@@ -15,6 +15,7 @@ from gatekeeper.contracts.evaluations import (
     AttemptEvaluationSummary,
     RuleEvaluationResult,
 )
+from gatekeeper.contracts.executions import ExecutionSnapshot
 from gatekeeper.persistence.database import Database
 from gatekeeper.persistence.executions import attempt_from_row
 from gatekeeper.persistence.reporting import refresh_summary
@@ -154,6 +155,17 @@ def evaluation_detail(
         )
         for row in rows
     ]
+    snapshot_row = connection.execute(
+        "SELECT configuration FROM execution_snapshots WHERE run_id = ?", (str(run_id),)
+    ).fetchone()
+    configurations = (
+        ExecutionSnapshot.model_validate_json(snapshot_row["configuration"]).effective_rules.get(
+            str(attempt.scenario_id), []
+        )
+        if snapshot_row
+        else []
+    )
+
     return AttemptEvaluationDetail(
         **attempt.model_dump(),
         verdict=header["verdict"],
@@ -161,5 +173,6 @@ def evaluation_detail(
         evaluated_at=header["evaluated_at"],
         automatic_tool_validation=json.loads(header["automatic_tool_validation"]),
         rule_results=results,
+        rule_configurations=configurations,
         outcome_counts=dict(Counter(result.outcome for result in results)),
     )

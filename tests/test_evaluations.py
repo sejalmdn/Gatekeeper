@@ -440,6 +440,17 @@ def test_frozen_results_and_scoped_reads(
         assert required_text["reason"] == "required_text_found"
         assert 'All required phrases were found: ["Hello"]' in required_text["explanation"]
         assert "EDITED_PRIVATE_EXPECTATION" not in str(detail)
+        frozen_rule = next(
+            rule
+            for rule in detail["rule_configurations"]
+            if rule["id"] == required_text["rule_binding_id"]
+        )
+
+        assert frozen_rule["parameters"]["values"] == ["Hello"]
+        assert all(
+            rule["scenario_id"] in {None, scenario_id} for rule in detail["rule_configurations"]
+        )
+        assert "rule_configurations" not in item
 
     with database.connection() as connection:
         assert (

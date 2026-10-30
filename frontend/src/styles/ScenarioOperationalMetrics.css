@@ -1,0 +1,93 @@
+.scenario-operational-metrics {
+  min-width: 0;
+  align-self: stretch;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.scenario-operational-metrics header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.scenario-operational-metrics h4 {
+  margin: 0;
+  font: 11px/1.6 var(--font-code);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.scenario-operational-metrics header p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font: 10px/1.6 var(--font-code);
+}
+
+.scenario-operational-metrics header > span {
+  padding: 3px 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  color: var(--cyan);
+  font: 10px/1.5 var(--font-code);
+}
+
+.scenario-operational-metrics__table {
+  overflow: auto;
+}
+
+.scenario-operational-metrics table {
+  border-collapse: collapse;
+  width: 100%;
+  font: 10px/1.6 var(--font-code);
+  white-space: nowrap;
+}
+
+.scenario-operational-metrics caption {
+  text-align: left;
+  color: var(--muted);
+  padding-bottom: 8px;
+}
+
+.scenario-operational-metrics th,
+.scenario-operational-metrics td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+
+.scenario-operational-metrics th:first-child {
+  text-align: left;
+}
+
+.scenario-operational-metrics thead {
+  background: var(--surface-raised);
+  color: var(--muted);
+}
+
+.scenario-operational-metrics__mean {
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+.scenario-operational-metrics__dot {
+  color: var(--cyan);
+}
+
+.scenario-operational-metrics__dot--input_tokens {
+  color: #60a5fa;
+}
+
+.scenario-operational-metrics__dot--output_tokens {
+  color: var(--accent);
+}
+
+.scenario-operational-metrics__dot--total_tokens {
+  color: #c084fc;
+}
+

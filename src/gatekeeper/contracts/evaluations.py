@@ -8,7 +8,7 @@ from pydantic import Field
 
 from gatekeeper.contracts.common import Contract
 from gatekeeper.contracts.executions import ExecutionAttempt
-from gatekeeper.contracts.rules import RuleRole, RuleType, Severity
+from gatekeeper.contracts.rules import EffectiveRuleBinding, RuleRole, RuleType, Severity
 
 # Rule outcomes preserve evaluator failures and insufficient evidence.
 RuleOutcome = Literal["pass", "fail", "cannot_evaluate", "error"]
@@ -54,3 +54,4 @@ class AttemptEvaluationSummary(ExecutionAttempt):
 class AttemptEvaluationDetail(AttemptEvaluationSummary):
     automatic_tool_validation: list[CheckResult] = Field(default_factory=list)
     rule_results: list[RuleEvaluationResult] = Field(default_factory=list)
+    rule_configurations: list[EffectiveRuleBinding] = Field(default_factory=list)
