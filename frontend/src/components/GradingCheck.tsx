@@ -1,30 +1,31 @@
 import type { ReactElement } from "react";
-import type { CheckResult, RuleEvaluationResult } from "../types";
+import type {
+  CheckResult,
+  EffectiveRuleBinding,
+  RuleEvaluationResult,
+} from "../types";
+import { AuthoredRuleResult } from "./AuthoredRuleResult";
 import { ResultBadge } from "./ResultBadge";
 import "../styles/GradingCheck.css";
 
 // Keeps authored rule metadata and evidence pointers visible alongside a check's explanation.
 export function GradingCheck({
   check,
+  rule,
 }: {
   check: CheckResult | RuleEvaluationResult;
+  rule?: EffectiveRuleBinding;
 }): ReactElement {
+  if ("rule_key" in check) {
+    return <AuthoredRuleResult check={check} rule={rule} />;
+  }
+
   return (
     <article className={`grading-check grading-check--${check.outcome}`}>
       <header className="grading-check__heading">
-        <h4>{"rule_key" in check ? check.rule_key : "Tool-schema check"}</h4>
+        <h4>Tool-schema check</h4>
         <ResultBadge outcome={check.outcome} />
       </header>
-      {"rule_key" in check && (
-        <div className="grading-check__metadata">
-          <code>{check.rule_type}</code>
-          <span>{check.role}</span>
-          <span>Severity: {check.severity}</span>
-          <span>
-            Binding <code>{check.rule_binding_id}</code>
-          </span>
-        </div>
-      )}
       <p className="grading-check__explanation">Reason: {check.explanation}</p>
       <p className="grading-check__reason">
         Reason code: <code>{check.reason}</code>

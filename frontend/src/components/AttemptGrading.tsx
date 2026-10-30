@@ -1,8 +1,8 @@
-import type { ReactElement } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useState, type ReactElement } from "react";
 import { useAttemptGrade } from "../hooks/useAttemptGrade";
 import type { AttemptEvaluationSummary } from "../types";
 import { GradingCheck } from "./GradingCheck";
+import { AttemptResponseModal } from "./AttemptResponseModal";
 import { ResultBadge } from "./ResultBadge";
 import "../styles/AttemptGrading.css";
 
@@ -19,13 +19,9 @@ export function AttemptGrading({
   // Refreshes this grade when its evaluator timestamp or verdict changes.
   const { data, error, retry } = useAttemptGrade(projectId, runId, attempt);
 
-  // Preserves scenario selection when linking to the same attempt's evidence.
-  const [search] = useSearchParams();
+  // Opens evidence only for the selected attempt, without changing the Results URL.
+  const [evidenceId, setEvidenceId] = useState<string>();
 
-  const evidence = new URLSearchParams(search);
-  evidence.set("tab", "evidence");
-  evidence.set("scenario", attempt.scenario_id);
-  evidence.set("attempt", attempt.id);
   return (
     <section
       className="attempt-grading"
@@ -36,10 +32,22 @@ export function AttemptGrading({
           <h3>Attempt {attempt.attempt_number} grading</h3>
           {data && <ResultBadge outcome={data.verdict} prefix="Verdict" />}
         </div>
-        <Link className="button button-secondary" to={`?${evidence}`}>
+        <button
+          className="button button-secondary"
+          onClick={() => setEvidenceId(attempt.id)}
+        >
           View evidence
-        </Link>
+        </button>
       </header>
+      {evidenceId === attempt.id && (
+        <AttemptResponseModal
+          key={attempt.id}
+          projectId={projectId}
+          runId={runId}
+          executionId={attempt.id}
+          onClose={() => setEvidenceId(undefined)}
+        />
+      )}
       {error && (
         <p role="alert">
           Grade unavailable: {error}{" "}
@@ -70,7 +78,13 @@ export function AttemptGrading({
               <p>No authored rule results recorded.</p>
             )}
             {data.rule_results.map((check) => (
-              <GradingCheck key={check.rule_binding_id} check={check} />
+              <GradingCheck
+                key={check.rule_binding_id}
+                check={check}
+                rule={data.rule_configurations?.find(
+                  (rule) => rule.id === check.rule_binding_id,
+                )}
+              />
             ))}
           </section>
         </>

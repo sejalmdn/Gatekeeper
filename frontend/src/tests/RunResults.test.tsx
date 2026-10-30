@@ -178,13 +178,124 @@ it("shows scenario score warnings, zero rates and accessible threshold markers",
   expect(card.querySelector(".result-score__coverage")?.textContent).toContain(
     "Coverage Unavailable",
   );
-  expect(card.querySelector(".result-score__reason")?.textContent).toContain(
-    "No scored rules are configured.",
-  );
+  expect(card.querySelector(".result-score__reason")).toBeNull();
 });
 
-// Tests deep links, separate check families, evidence pointers and history restoration.
-it("opens a saved grade and links to the same attempt in Evidence with browser navigation", async () => {
+// Keeps the provider's stored diagnostics prominent without exposing configured regex syntax.
+it.each(["pass", "fail"] as const)(
+  "shows %s regex diagnostics without the expression",
+  async (outcome) => {
+    vi.mocked(api.getAttemptEvaluation).mockResolvedValue({
+      ...grade,
+      rule_results: [
+        {
+          ...grade.rule_results[0],
+          rule_type: "response.regex",
+          outcome,
+          reason: outcome === "pass" ? "regex_matched" : "regex_not_matched",
+          explanation:
+            'Response pattern "SECRET_REGEX_EXPRESSION" using search mode.',
+        },
+      ],
+    });
+    await renderPage("?scenario=s1&attempt=a1");
+    const card = container.querySelector(".authored-rule-result")!;
+    expect(card.textContent).toContain(
+      outcome === "pass"
+        ? "The response matches the configured regular expression."
+        : "The response does not match the configured regular expression.",
+    );
+    expect(card.textContent).not.toContain("SECRET_REGEX_EXPRESSION");
+    expect(card.textContent).toContain("/response_text");
+    expect(card.querySelector("summary")?.textContent).toBe("Rule reference");
+    expect(card.querySelector(".result-badge")?.textContent).toContain(outcome);
+  },
+);
+
+// Reports the supplied failure explanation rather than inventing a diagnostic from its code.
+it("shows saved rule failure reasons and keeps automatic checks separate", async () => {
+  vi.mocked(api.getAttemptEvaluation).mockResolvedValue({
+    ...grade,
+    rule_results: [
+      {
+        ...grade.rule_results[0],
+        outcome: "fail",
+        reason: "required_text_missing",
+        explanation: 'Missing required phrase: "return label".',
+      },
+    ],
+  });
+  await renderPage("?scenario=s1&attempt=a1");
+  const card = container.querySelector(".authored-rule-result")!;
+  expect(card.textContent).toContain(
+    'Missing required phrase: "return label".',
+  );
+  expect(card.textContent).toContain("required_text_missing");
+  expect(card.textContent).toContain("high");
+  expect(
+    container.querySelector(
+      '[aria-label="Automatic tool validation"] .authored-rule-result',
+    ),
+  ).toBeNull();
+});
+
+// Inspects immutable rule inputs in the existing editor, mounting it only when opened.
+it("shows frozen rule JSON in a lazy read-only editor", async () => {
+  vi.mocked(api.getAttemptEvaluation).mockResolvedValue({
+    ...grade,
+    rule_configurations: [
+      {
+        id: "b1",
+        dataset_id: "d",
+        scenario_id: "s1",
+        rule_key: "refund-content",
+        rule_type: "response.required_text",
+        role: "required",
+        severity: "high",
+        parameters: { values: ["Frozen return label"] },
+        applies_to: null,
+        created_at: "2026-10-29T00:00:00Z",
+        source: "scenario",
+        overridden_rule_id: null,
+      },
+    ],
+  });
+  await renderPage("?scenario=s1&attempt=a1");
+  const reference = container.querySelector<HTMLDetailsElement>(
+    ".authored-rule-result__details",
+  )!;
+  expect(reference.querySelector(".json-viewer")).toBeNull();
+  await act(async () => {
+    reference.open = true;
+    reference.dispatchEvent(new Event("toggle"));
+  });
+  const editor = reference.querySelector('[role="textbox"]')!;
+  expect(editor.getAttribute("aria-readonly")).toBe("true");
+  expect(editor.textContent).toContain("Frozen return label");
+  expect(editor.textContent).toContain('"values"');
+  expect(editor.textContent).not.toContain('"rule_key"');
+  expect(editor.textContent).not.toContain('"parameters"');
+  expect(reference.textContent).not.toContain("Binding");
+});
+
+// Missing historical configuration must remain unavailable rather than display a guessed rule.
+it("explains unavailable frozen rule configuration", async () => {
+  await renderPage("?scenario=s1&attempt=a1");
+  const reference = container.querySelector<HTMLDetailsElement>(
+    ".authored-rule-result__details",
+  )!;
+  await act(async () => {
+    reference.open = true;
+    reference.dispatchEvent(new Event("toggle"));
+  });
+  expect(reference.textContent).toContain(
+    "Frozen rule configuration is unavailable",
+  );
+  expect(reference.querySelector(".json-viewer")).toBeNull();
+});
+
+// Opens evidence lazily in a response modal without changing the selected Results route.
+it("opens a saved grade and shows its response in a modal", async () => {
   await renderPage("?tab=results&scenario=s1&attempt=a1");
   expect(api.getAttemptEvaluation).toHaveBeenCalledExactlyOnceWith(
     "p",
@@ -201,26 +312,237 @@ it("opens a saved grade and links to the same attempt in Evidence with browser n
       ?.textContent,
   ).toContain("refund-content");
   expect(container.textContent).toContain("/response_text");
-  const evidenceLink = [...container.querySelectorAll("a")].find(
-    (link) => link.textContent === "View evidence",
-  )!;
-  await click(evidenceLink);
+  vi.mocked(api.getExecutionAttempt).mockResolvedValue({
+    ...evaluatedAttempt,
+    evidence: null,
+    request: null,
+    response: { message: "A recorded response" },
+  });
+  button("View evidence").focus();
+  await click(button("View evidence"));
   expect(api.getExecutionAttempt).toHaveBeenCalledExactlyOnceWith(
     "p",
     "r",
     "a1",
   );
-  expect(container.querySelector("output")?.textContent).toContain(
-    "tab=evidence&scenario=s1&attempt=a1",
+  const modal = container.querySelector("dialog")!;
+  expect(modal.open).toBe(true);
+  expect(modal.textContent).toContain("A recorded response");
+  expect(container.querySelector("output")?.textContent).toBe(
+    "?tab=results&scenario=s1&attempt=a1",
   );
-  await click(button("Back"));
   expect(
     container.querySelector('[role="tab"][aria-selected="true"]')?.textContent,
   ).toBe("Results");
-  await click(button("Forward"));
+  await click(button("Close"));
+  expect(container.querySelector("dialog")).toBeNull();
+  expect(document.activeElement).toBe(button("View evidence"));
+});
+
+// A failed response read can be retried without leaving Results or rerunning the candidate.
+it("retries response reads and explains missing responses", async () => {
+  vi.mocked(api.getExecutionAttempt).mockRejectedValueOnce(
+    new Error("Evidence offline"),
+  );
+  await renderPage("?scenario=s1&attempt=a1");
+  await click(button("View evidence"));
+  expect(container.querySelector("dialog")?.textContent).toContain(
+    "Evidence offline",
+  );
+  await click(button("Retry response"));
+  expect(container.querySelector("dialog")?.textContent).toContain(
+    "No response was recorded for this attempt.",
+  );
+  expect(api.getExecutionAttempt).toHaveBeenCalledTimes(2);
+});
+
+// Closing the dialog invalidates pending evidence requests and restores the trigger's focus.
+it("closes the response with Escape and ignores late evidence", async () => {
+  let resolve!: (
+    value: Awaited<ReturnType<typeof api.getExecutionAttempt>>,
+  ) => void;
+  vi.mocked(api.getExecutionAttempt).mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  await renderPage("?scenario=s1&attempt=a1");
+  button("View evidence").focus();
+  await click(button("View evidence"));
+  expect(container.querySelector("dialog")?.textContent).toContain(
+    "Loading response",
+  );
+  await act(async () => {
+    container
+      .querySelector("dialog")!
+      .dispatchEvent(new Event("cancel", { cancelable: true }));
+  });
+  await act(async () =>
+    resolve({
+      ...evaluatedAttempt,
+      evidence: null,
+      request: null,
+      response: { message: "Obsolete response" },
+    }),
+  );
+  expect(container.querySelector("dialog")).toBeNull();
+  expect(container.textContent).not.toContain("Obsolete response");
+  expect(document.activeElement).toBe(button("View evidence"));
+});
+
+// Aggregate rule filters keep incomplete results out of Passing and preserve access to every rule.
+it("filters scenario rule summaries and lazily opens their details", async () => {
+  const base = report.scenarios[0].bindings[0];
+  vi.mocked(api.getRunSummary).mockResolvedValue({
+    ...report,
+    scenarios: [
+      {
+        ...report.scenarios[0],
+        bindings: [
+          {
+            ...base,
+            rule_key: "Failing rule",
+            outcome_counts: { pass: 1, fail: 2 },
+          },
+          {
+            ...base,
+            rule_binding_id: "passing",
+            rule_key: "Passing rule",
+            outcome_counts: { pass: 3 },
+          },
+          {
+            ...base,
+            rule_binding_id: "unknown",
+            rule_key: "Unknown rule",
+            outcome_counts: { pass: 1, cannot_evaluate: 2 },
+          },
+        ],
+      },
+    ],
+  });
+  await renderPage("?scenario=s1");
+  const section = container.querySelector(
+    '[aria-label="Binding outcome counts"]',
+  )!;
+  expect(section.querySelectorAll("article")).toHaveLength(3);
+  await click(button("Failing (1)"));
+  expect(section.querySelectorAll("article")).toHaveLength(1);
+  expect(section.textContent).toContain("Failing rule");
+  await click(button("Passing (1)"));
+  expect(section.textContent).toContain("Passing rule");
+  expect(section.textContent).not.toContain("Unknown rule");
+  await click(button("All (3)"));
+  const reference = section.querySelector("details")!;
+  expect(reference.querySelector(".json-viewer")).toBeNull();
+  await act(async () => {
+    reference.open = true;
+    reference.dispatchEvent(new Event("toggle"));
+  });
   expect(
-    container.querySelector('[role="tab"][aria-selected="true"]')?.textContent,
-  ).toBe("Evidence");
+    reference.querySelector('[aria-readonly="true"]')?.textContent,
+  ).toContain("Failing rule");
+  expect(api.getAttemptEvaluation).not.toHaveBeenCalled();
+});
+
+// Distinguishes incomplete measurements from observed zeros in the always-visible scenario table.
+it("shows the assessment matrix and scenario metrics without hiding missing values", async () => {
+  await renderPage("?scenario=s1");
+  const matrix = container.querySelector(
+    '[aria-label="Assessment and grading matrix"]',
+  )!;
+  expect(matrix.textContent).toContain("3 planned attempts");
+  expect(
+    matrix
+      .querySelector('meter[aria-label="Completed attempts"]')
+      ?.getAttribute("value"),
+  ).toBe("2");
+  const metrics = container.querySelector(
+    '[aria-label="Scenario operational metrics"]',
+  )!;
+  expect(metrics.querySelectorAll("tbody tr")).toHaveLength(4);
+  const rows = metrics.querySelectorAll("tbody tr");
+  expect(rows[0].textContent).toContain("Unavailable");
+  expect(
+    rows[2].querySelector(".scenario-operational-metrics__mean")?.textContent,
+  ).toBe("0");
+  expect(metrics.querySelector("details")).toBeNull();
+});
+
+// Terminal states stay visible at zero while active and unallocated states appear when relevant.
+it.each([
+  "completed",
+  "failed",
+  "timed_out",
+  "skipped",
+  "pending",
+  "running",
+  "not_allocated",
+])("keeps terminal states and nonzero %s execution states", async (status) => {
+  const counts = {
+    completed: 0,
+    failed: 0,
+    timed_out: 0,
+    skipped: 0,
+    pending: 0,
+    running: 0,
+    not_allocated: 0,
+    [status]: 3,
+  };
+  vi.mocked(api.getRunSummary).mockResolvedValue({
+    ...report,
+    scenarios: [
+      {
+        ...report.scenarios[0],
+        attempts: {
+          ...report.scenarios[0].attempts,
+          execution_status_counts: counts,
+        },
+      },
+    ],
+  });
+  await renderPage("?scenario=s1");
+  const execution = container.querySelector(
+    ".scenario-assessment__group .result-counts",
+  )!;
+  const persistentStates = ["completed", "failed", "timed_out", "skipped"];
+  expect(execution.children).toHaveLength(
+    persistentStates.includes(status) ? 4 : 5,
+  );
+  for (const terminal of persistentStates) {
+    expect(
+      execution.querySelector(`.result-counts__item--${terminal} dd`)
+        ?.textContent,
+    ).toBe(terminal === status ? "3" : "0");
+  }
+  expect(
+    execution.querySelector(`.result-counts__item--${status} dd`)?.textContent,
+  ).toBe("3");
+});
+
+// Normal assessments omit empty diagnostics and scenario-level automatic validation totals.
+it("hides empty assessment reasons and scenario tool validation", async () => {
+  vi.mocked(api.getRunSummary).mockResolvedValue({
+    ...report,
+    scenarios: [{ ...report.scenarios[0], reasons: [] }],
+  });
+  await renderPage("?scenario=s1");
+  const matrix = container.querySelector(
+    '[aria-label="Assessment and grading matrix"]',
+  )!;
+  expect(matrix.textContent).not.toContain("Automatic tool validation");
+  expect(matrix.textContent).not.toContain("Assessment reasons");
+});
+
+// Missing-evidence diagnostics remain visible when the backend supplies reasons.
+it("shows reported assessment reasons when present", async () => {
+  await renderPage("?scenario=s3");
+  const matrix = container.querySelector(
+    '[aria-label="Assessment and grading matrix"]',
+  )!;
+  expect(matrix.textContent).toContain("Assessment reasons");
+  expect(matrix.textContent).toContain("Execution evidence is missing.");
+  expect(matrix.textContent).toContain("missing_evidence");
 });
 
 // Invalid identifiers never trigger private artifact or grade reads.

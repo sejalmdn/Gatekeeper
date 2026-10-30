@@ -2,10 +2,11 @@ import type { ReactElement } from "react";
 import type { AttemptEvaluationSummary, ScenarioSummary } from "../types";
 import { percent, resultLabel, resultSymbol } from "../utils/results";
 import { AttemptGrading } from "./AttemptGrading";
-import { ResultMetrics } from "./ResultMetrics";
+import { ScenarioOperationalMetrics } from "./ScenarioOperationalMetrics";
+import { ScenarioAssessment } from "./ScenarioAssessment";
+import { ScenarioRuleCounts } from "./ScenarioRuleCounts";
 import { ResultScore } from "./ResultScore";
 import { ResultBadge } from "./ResultBadge";
-import { ResultCounts } from "./ResultCounts";
 import "../styles/ScenarioResults.css";
 
 interface ScenarioResultsProps {
@@ -166,6 +167,7 @@ export function ScenarioResults({
           {selected && (
             <div id={`grade-${selected.id}`}>
               <AttemptGrading
+                key={selected.id}
                 projectId={projectId}
                 runId={runId}
                 attempt={selected}
@@ -175,61 +177,10 @@ export function ScenarioResults({
           {summary && (
             <>
               <div className="scenario-results__diagnostics">
-                <section className="scenario-results__assessment">
-                  <h4>Assessment reasons</h4>
-                  {summary.reasons.length === 0 && (
-                    <p>No assessment reasons reported.</p>
-                  )}
-                  <ul>
-                    {summary.reasons.map((reason) => (
-                      <li key={reason}>
-                        {resultLabel(reason)} <code>{reason}</code>
-                      </li>
-                    ))}
-                  </ul>
-                  {summary.score.reason && <code>{summary.score.reason}</code>}
-                  <h4>Execution statuses</h4>
-                  <ResultCounts
-                    counts={summary.attempts.execution_status_counts}
-                  />
-                  <h4>Grading outcomes</h4>
-                  <ResultCounts
-                    counts={summary.attempts.evaluation_verdict_counts}
-                  />
-                  <h4>Automatic tool-validation counts</h4>
-                  {Object.keys(summary.automatic_tool_validation_counts)
-                    .length === 0 ? (
-                    <p>No automatic checks recorded.</p>
-                  ) : (
-                    <ResultCounts
-                      counts={summary.automatic_tool_validation_counts}
-                    />
-                  )}
-                </section>
-                <ResultMetrics metrics={summary.metrics} />
+                <ScenarioAssessment summary={summary} />
+                <ScenarioOperationalMetrics metrics={summary.metrics} />
               </div>
-              <section className="scenario-results__bindings">
-                <h4>Binding outcome counts</h4>
-                {summary.bindings.length === 0 && <p>No authored bindings.</p>}
-                {summary.bindings.map((binding) => (
-                  <article
-                    className="scenario-results__binding"
-                    key={binding.rule_binding_id}
-                  >
-                    <div className="scenario-results__binding-name">
-                      <strong>{binding.rule_key}</strong>
-                      <code>{binding.rule_type}</code>
-                    </div>
-                    <div className="scenario-results__binding-meta">
-                      <span>
-                        {binding.role} · {binding.severity}
-                      </span>
-                      <span>{binding.planned_results} planned results</span>
-                    </div>
-                    <ResultCounts counts={binding.outcome_counts} />
-                  </article>
-                ))}
-              </section>
+              <ScenarioRuleCounts rules={summary.bindings} />
             </>
           )}
         </div>

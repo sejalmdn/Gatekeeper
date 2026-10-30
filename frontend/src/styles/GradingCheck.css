@@ -25,19 +25,6 @@
   font-size: 12px;
 }
 
-.grading-check__metadata {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-  margin-top: 8px;
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.grading-check__metadata > code {
-  color: var(--cyan);
-}
-
 .grading-check__explanation {
   margin: 12px 0 8px;
   font-size: 13px;

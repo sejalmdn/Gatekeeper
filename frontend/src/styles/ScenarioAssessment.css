@@ -1,0 +1,99 @@
+.scenario-assessment {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.scenario-assessment header,
+.scenario-assessment__label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font: 10px/1.6 var(--font-code);
+  color: var(--muted);
+}
+
+.scenario-assessment h4,
+.scenario-assessment h5 {
+  margin: 0;
+  font: inherit;
+}
+
+.scenario-assessment h4 {
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.scenario-assessment__group {
+  margin-top: 22px;
+}
+
+.scenario-assessment__group meter {
+  display: block;
+  width: 100%;
+  height: 7px;
+  margin: 6px 0 10px;
+  border: 0;
+  background: var(--surface-raised);
+}
+
+.scenario-assessment meter::-webkit-meter-bar {
+  background: var(--surface-raised);
+  border: 0;
+}
+
+.scenario-assessment meter::-webkit-meter-optimum-value {
+  background: var(--run-pass);
+}
+
+.scenario-assessment meter::-moz-meter-bar {
+  background: var(--run-pass);
+}
+
+.scenario-assessment__group--grading meter::-webkit-meter-optimum-value {
+  background: var(--run-fail);
+}
+
+.scenario-assessment__group--grading meter::-moz-meter-bar {
+  background: var(--run-fail);
+}
+
+.scenario-assessment__group > .result-counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
+}
+
+.scenario-assessment .result-counts__item {
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 1px;
+  padding: 6px;
+}
+
+.scenario-assessment .result-counts__item dt {
+  font-size: 9px;
+}
+
+.scenario-assessment__reasons {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font: 11px/1.6 var(--font-code);
+}
+
+.scenario-assessment__reasons ul {
+  padding-left: 16px;
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.scenario-assessment__reasons code {
+  color: var(--cyan);
+}
