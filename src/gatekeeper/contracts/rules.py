@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
+from decimal import Decimal
 from enum import StrEnum
 from typing import Literal
 from uuid import UUID
@@ -83,7 +84,7 @@ class TokenParameters(Contract):
 
 # Cost limit parameters.
 class CostParameters(Contract):
-    max_usd: float = Field(gt=0)
+    max_usd: Decimal = Field(gt=0, allow_inf_nan=False)
 
 
 # Required-text parameters.

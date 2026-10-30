@@ -96,6 +96,7 @@ def compute_summary(
             """SELECT a.id, a.scenario_id, a.attempt_number, a.status,
             e.verdict, e.evaluator_version, e.automatic_tool_validation,
             x.execution_id IS NOT NULL AS has_evidence,
+            x.cost,
             json_extract(x.normalized, '$.duration_ms') AS duration_ms,
             json_extract(x.normalized, '$.input_tokens') AS input_tokens,
             json_extract(x.normalized, '$.output_tokens') AS output_tokens
@@ -131,6 +132,7 @@ def compute_summary(
                         row["automatic_tool_validation"] or "[]"
                     ),
                     "outcomes": by_execution.get(row["id"], {}),
+                    "cost": json.loads(row["cost"]) if row["cost"] else None,
                     "duration_ms": row["duration_ms"],
                     "input_tokens": row["input_tokens"],
                     "output_tokens": row["output_tokens"],
@@ -194,7 +196,7 @@ def persist_summary(connection: sqlite3.Connection, run_id: str) -> None:
             "INSERT INTO evaluation_run_summaries (run_id, summary, generated_at) VALUES (?, ?, ?)",
             (run_id, encoded, timestamp().isoformat()),
         )
-    except Exception as e:
+    except Exception:
         connection.execute("ROLLBACK TO terminal_summary")
         logger.error("report_storage_failed run_id=%s error_code=summary_persistence_error", run_id)
     finally:

@@ -240,7 +240,7 @@ def test_summary_api(client: ApiClient, monkeypatch: pytest.MonkeyPatch) -> None
 
     assert result.aggregates.attempts.planned_attempts == 18
     assert all(scenario.pass_threshold == 0.8 for scenario in result.scenarios)
-    assert result.evaluator_versions == ["deterministic-v1"]
+    assert result.evaluator_versions == ["deterministic-v2"]
     assert result.aggregates.metrics.input_tokens.sum == 216
     assert result.aggregates.metrics.output_tokens.sum == 0
     assert "PRIVATE_EXPECTATION_SENTINEL" not in response.text
@@ -394,7 +394,7 @@ def test_terminal_summary_matches_aggregation(
 
     if ending == "fatal":
         assert result.aggregates.attempts.evaluation_verdict_counts["cannot_evaluate"] == 1
-        assert result.evaluator_versions == ["deterministic-v1"]
+        assert result.evaluator_versions == ["deterministic-v2"]
 
     if ending == "unstarted":
         assert result.reason == "frozen_snapshot_unavailable"

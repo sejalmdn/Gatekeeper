@@ -1,6 +1,7 @@
 """Pure aggregation independent of invocation, evaluation, and persistence."""
 
 from collections import Counter
+from decimal import Decimal, localcontext
 from uuid import UUID
 
 from gatekeeper.contracts.evaluation_runs import EvaluationRunStatus
@@ -8,6 +9,7 @@ from gatekeeper.contracts.executions import ExecutionSnapshot
 from gatekeeper.contracts.reporting import (
     AttemptTotals,
     BindingSummary,
+    CostStatistics,
     MetricStatistics,
     OperationalMetrics,
     ReportingAttempt,
@@ -111,12 +113,44 @@ def statistics(values: list[float | int | None]) -> MetricStatistics:
     )
 
 
+# Summarize saved decimal estimates without looking up current deployment prices.
+def cost_statistics(attempts: list[ReportingAttempt]) -> CostStatistics:
+    """Summarize attempts' saved costs; return decimal statistics and tariff provenance."""
+    costs = [attempt.cost for attempt in attempts if attempt.cost is not None]
+    values = [cost.estimated_usd for cost in costs if cost.estimated_usd is not None]
+    entries = {
+        cost.pricing_entry.model_dump_json(): cost.pricing_entry
+        for cost in costs
+        if cost.pricing_entry is not None
+    }
+
+    with localcontext() as context:
+        context.prec = max(
+            28,
+            sum(len(v.as_tuple().digits) + abs(v.as_tuple().exponent) for v in values)
+            + len(str(len(values)))
+            + 10,
+        )
+        total = sum(values, Decimal(0)) if values else None
+
+        return CostStatistics(
+            observed_count=len(values),
+            missing_count=len(attempts) - len(values),
+            minimum=min(values) if values else None,
+            maximum=max(values) if values else None,
+            mean=total / len(values) if total is not None else None,
+            sum=total,
+            pricing_entries=list(entries.values()),
+        )
+
+
 # Separate invocation success from eligibility of each individual metric.
 def metrics(attempts: list[ReportingAttempt], planned: int) -> OperationalMetrics:
     """Aggregate completed attempts' observations with planned exclusion counts; return metrics."""
     completed = [attempt for attempt in attempts if attempt.status == "completed"]
 
     return OperationalMetrics(
+        estimated_cost_usd=cost_statistics(completed),
         completed_invocations=len(completed),
         excluded_unsuccessful_attempts=sum(
             attempt.status in {"failed", "timed_out"} for attempt in attempts

@@ -1,9 +1,10 @@
+import { CostMetricsRow } from "./CostMetricsRow";
 import type { ReactElement } from "react";
 import type { OperationalMetrics } from "../types";
 import { formatNumber } from "../utils/format";
 import "../styles/ScenarioOperationalMetrics.css";
 
-// Keeps completed-invocation statistics visible with explicit missing observation counts.
+// Keeps completed-invocation statistics and observed counts visible.
 export function ScenarioOperationalMetrics({
   metrics,
 }: {
@@ -45,19 +46,13 @@ export function ScenarioOperationalMetrics({
           <caption>Statistics from completed invocations only</caption>
           <thead>
             <tr>
-              {[
-                "Metric",
-                "Observed",
-                "Missing",
-                "Min",
-                "Max",
-                "Mean",
-                "Sum",
-              ].map((label) => (
-                <th scope="col" key={label}>
-                  {label}
-                </th>
-              ))}
+              {["Metric", "Observed", "Min", "Max", "Mean", "Sum"].map(
+                (label) => (
+                  <th scope="col" key={label}>
+                    {label}
+                  </th>
+                ),
+              )}
             </tr>
           </thead>
           <tbody>
@@ -75,7 +70,6 @@ export function ScenarioOperationalMetrics({
                     {label}
                   </th>
                   <td>{metric.observed_count}</td>
-                  <td>{metric.missing_count}</td>
                   <td>{formatNumber(metric.minimum)}</td>
                   <td>{formatNumber(metric.maximum)}</td>
                   <td className="scenario-operational-metrics__mean">
@@ -85,6 +79,7 @@ export function ScenarioOperationalMetrics({
                 </tr>
               );
             })}
+            <CostMetricsRow cost={metrics.estimated_cost_usd} showDot />
           </tbody>
         </table>
       </div>

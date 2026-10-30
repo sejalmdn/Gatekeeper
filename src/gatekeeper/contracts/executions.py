@@ -8,6 +8,7 @@ from pydantic import Field
 
 from gatekeeper.contracts.candidates import Candidate
 from gatekeeper.contracts.common import Contract, JsonObject
+from gatekeeper.contracts.pricing import ExecutionCost, Money, PricingCatalog
 from gatekeeper.contracts.providers import Provider
 from gatekeeper.contracts.rules import EffectiveRuleBinding
 from gatekeeper.contracts.run_settings import RunSettings
@@ -57,6 +58,7 @@ class ExecutionEvidence(Contract):
     tool_requests: list[ToolRequest] | None = None
     input_tokens: int | None = Field(default=None, ge=0, strict=True)
     output_tokens: int | None = Field(default=None, ge=0, strict=True)
+    provider_reported_usd: Money | None = None
     completeness_issues: list[str] = Field(default_factory=list)
     error: ExecutionError | None = None
 
@@ -78,6 +80,7 @@ class ExecutionAttempt(Contract):
 
 # Inspectable attempt with credential-free request and sanitized response artifacts.
 class ExecutionAttemptDetail(ExecutionAttempt):
+    cost: ExecutionCost | None = None
     evidence: ExecutionEvidence | None = None
     request: JsonObject | None = None
     response: JsonObject | None = None
@@ -91,3 +94,4 @@ class ExecutionSnapshot(Contract):
     settings: RunSettings
     scenarios: list[Scenario]
     effective_rules: dict[str, list[EffectiveRuleBinding]]
+    pricing_catalog: PricingCatalog | None = None

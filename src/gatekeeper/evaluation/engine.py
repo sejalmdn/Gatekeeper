@@ -3,6 +3,7 @@
 import logging
 import re
 from datetime import UTC, datetime
+from decimal import Decimal
 from time import perf_counter
 
 from jsonschema.validators import validator_for
@@ -18,6 +19,7 @@ from gatekeeper.contracts.evaluations import (
     RuleOutcome,
 )
 from gatekeeper.contracts.executions import ExecutionEvidence, ToolRequest
+from gatekeeper.contracts.pricing import ExecutionCost
 from gatekeeper.contracts.rules import EffectiveRuleBinding
 from gatekeeper.evaluation.explanations import (
     display_number,
@@ -28,7 +30,7 @@ from gatekeeper.evaluation.explanations import (
 from gatekeeper.evidence.normalization import parse_json
 
 # Version changes identify evaluator semantics without changing historical results.
-EVALUATOR_VERSION = "deterministic-v1"
+EVALUATOR_VERSION = "deterministic-v2"
 MISSING = object()
 logger = logging.getLogger(__name__)
 
@@ -213,7 +215,9 @@ def expected_calls_match(calls: list[ToolRequest], parameters: JsonObject) -> bo
 
 
 # Evaluate one binding without provider invocation or mutable configuration access.
-def evaluate_rule(rule: EffectiveRuleBinding, evidence: ExecutionEvidence) -> CheckResult:
+def evaluate_rule(
+    rule: EffectiveRuleBinding, evidence: ExecutionEvidence, cost: ExecutionCost | None = None
+) -> CheckResult:
     """Evaluate frozen rule against evidence, returning an outcome and safe reason."""
     kind = rule.rule_type
     parameters = rule.parameters
@@ -222,7 +226,18 @@ def evaluate_rule(rule: EffectiveRuleBinding, evidence: ExecutionEvidence) -> Ch
         return check("cannot_evaluate", "invocation_unsuccessful", "/status")
 
     if kind == "metric.cost":
-        return check("cannot_evaluate", "pricing_unavailable")
+        if cost is None or cost.estimated_usd is None:
+            return check("cannot_evaluate", cost.reason if cost else "pricing_unavailable")
+
+        passed = cost.estimated_usd <= Decimal(str(parameters["max_usd"]))
+
+        return assertion_result(
+            passed,
+            "/cost/estimated_usd",
+            "cost_within_limit" if passed else "cost_limit_exceeded",
+            f"Estimated standard-rate cost (USD) {cost.estimated_usd} "
+            f"is {'within' if passed else 'above'} the maximum of {parameters['max_usd']}.",
+        )
 
     if kind == "judge.rubric":
         return check("cannot_evaluate", "rubric_unsupported")
@@ -548,6 +563,7 @@ def evaluate_attempt(
     evidence: ExecutionEvidence,
     rules: list[EffectiveRuleBinding],
     tools: list[ToolDefinition],
+    cost: ExecutionCost | None = None,
 ) -> AttemptEvaluation:
     """Evaluate evidence using frozen rules/tools and return a complete versioned evaluation."""
     started = perf_counter()
@@ -556,7 +572,7 @@ def evaluate_attempt(
 
     for rule in rules:
         try:
-            result = evaluate_rule(rule, evidence)
+            result = evaluate_rule(rule, evidence, cost)
         except Exception:
             result = check("error", "rule_evaluator_error")
 
