@@ -23,6 +23,7 @@ class Database:
         schema = Path(__file__).with_name("schema.sql").read_text(encoding="utf-8")
         with self.connection() as connection:
             connection.executescript(schema)
+            migrate_execution_costs(connection)
 
         logger.info("storage_initialized duration_ms=%d", (perf_counter() - started) * 1000)
 
@@ -63,3 +64,37 @@ class Database:
             raise
         finally:
             connection.close()
+
+
+# Consolidate saved costs into evidence without recalculating historical estimates.
+def migrate_execution_costs(connection: sqlite3.Connection) -> None:
+    """Move legacy costs into connection's evidence table; preserve absent and saved records."""
+    connection.execute("BEGIN IMMEDIATE")
+    columns = {row["name"] for row in connection.execute("PRAGMA table_info(execution_evidence)")}
+
+    if "cost" not in columns:
+        connection.execute(
+            "ALTER TABLE execution_evidence ADD COLUMN cost TEXT "
+            "CHECK (cost IS NULL OR json_valid(cost))"
+        )
+
+    legacy = connection.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'execution_costs'"
+    ).fetchone()
+
+    if legacy is not None:
+        connection.execute(
+            "UPDATE execution_evidence SET cost = "
+            "(SELECT record FROM execution_costs WHERE execution_id = "
+            "execution_evidence.execution_id) WHERE cost IS NULL"
+        )
+        connection.execute("DROP TABLE execution_costs")
+
+    connection.execute(
+        "UPDATE execution_evidence SET cost = json_set(cost, '$.reason', NULL) "
+        "WHERE json_extract(cost, '$.reason') = 'manual_default'"
+    )
+    connection.execute(
+        "UPDATE execution_evidence SET cost = json_remove(cost, '$.calculation_version') "
+        "WHERE json_type(cost, '$.calculation_version') IS NOT NULL"
+    )

@@ -9,6 +9,7 @@ from gatekeeper.contracts.common import Contract
 from gatekeeper.contracts.evaluation_runs import EvaluationRunStatus
 from gatekeeper.contracts.evaluations import AttemptVerdict, CheckResult, RuleOutcome
 from gatekeeper.contracts.executions import AttemptStatus
+from gatekeeper.contracts.pricing import ExecutionCost, Money, PricingEntry
 from gatekeeper.contracts.rules import RuleRole, RuleType, Severity
 
 # Numeric report boundaries reject negative counts and rates outside zero through one.
@@ -33,6 +34,7 @@ class ReportingAttempt(Contract):
     has_evidence: bool = False
     automatic_tool_validation: list[CheckResult] = Field(default_factory=list)
     outcomes: dict[str, RuleOutcome] = Field(default_factory=dict)
+    cost: ExecutionCost | None = None
     duration_ms: Observation | None = None
     input_tokens: Count | None = None
     output_tokens: Count | None = None
@@ -79,8 +81,21 @@ class MetricStatistics(Contract):
     sum: Observation | None
 
 
+# Decimal monetary statistics preserve provenance and incomplete coverage.
+class CostStatistics(Contract):
+    observed_count: Count
+    missing_count: Count
+    minimum: Money | None
+    maximum: Money | None
+    mean: Money | None
+    sum: Money | None
+    sum_label: str = "Sum of known estimates"
+    pricing_entries: list[PricingEntry] = Field(default_factory=list)
+
+
 # Only completed invocations contribute metric observations.
 class OperationalMetrics(Contract):
+    estimated_cost_usd: CostStatistics | None = None
     completed_invocations: Count
     excluded_unsuccessful_attempts: Count
     excluded_unexecuted_attempts: Count

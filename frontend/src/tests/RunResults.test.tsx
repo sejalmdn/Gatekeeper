@@ -460,7 +460,7 @@ it("shows the assessment matrix and scenario metrics without hiding missing valu
   const metrics = container.querySelector(
     '[aria-label="Scenario operational metrics"]',
   )!;
-  expect(metrics.querySelectorAll("tbody tr")).toHaveLength(4);
+  expect(metrics.querySelectorAll("tbody tr")).toHaveLength(5);
   const rows = metrics.querySelectorAll("tbody tr");
   expect(rows[0].textContent).toContain("Unavailable");
   expect(

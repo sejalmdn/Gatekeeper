@@ -1,0 +1,26 @@
+{
+  "entries": [
+    {
+      "provider": "groq",
+      "api_destination": "https://api.groq.com/openai/v1/chat/completions",
+      "model": "openai/gpt-oss-20b",
+      "aliases": [],
+      "input_usd_per_million": "0.075",
+      "output_usd_per_million": "0.30",
+      "source_url": "https://console.groq.com/docs/models",
+      "verified_on": "2026-10-30",
+      "catalog_version": "2026-10-30.1"
+    },
+    {
+      "provider": "openrouter",
+      "api_destination": "https://openrouter.ai/api/v1/chat/completions",
+      "model": "nvidia/nemotron-3.5-lightning:free",
+      "aliases": [],
+      "input_usd_per_million": "0",
+      "output_usd_per_million": "0",
+      "source_url": "https://openrouter.ai/nvidia/nemotron-3.5-lightning:free",
+      "verified_on": "2026-10-30",
+      "catalog_version": "2026-10-30.2"
+    }
+  ]
+}

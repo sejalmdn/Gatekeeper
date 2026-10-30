@@ -12,6 +12,7 @@ from gatekeeper.contracts.candidates import ToolDefinition
 from gatekeeper.contracts.common import JsonObject
 from gatekeeper.contracts.evaluations import CheckResult
 from gatekeeper.contracts.executions import ExecutionEvidence, ToolRequest
+from gatekeeper.contracts.pricing import ExecutionCost
 from gatekeeper.contracts.rules import (
     RULE_SCENARIO_TYPES,
     EffectiveRuleBinding,
@@ -428,7 +429,7 @@ def test_frozen_results_and_scoped_reads(
         assert response.status_code == 200
         assert len(detail["rule_results"]) == 5
         assert detail["outcome_counts"] == item["outcome_counts"]
-        assert detail["evaluator_version"] == "deterministic-v1"
+        assert detail["evaluator_version"] == "deterministic-v2"
         assert detail["evaluated_at"]
         assert all(result["evidence_references"] for result in detail["rule_results"])
         required_text = next(
@@ -505,12 +506,14 @@ def test_evaluator_exception_preserves_evidence(
     original = evaluate_rule
 
     # Simulate private exception text that must never enter result messages or logs.
-    def faulty(rule: EffectiveRuleBinding, observed: ExecutionEvidence) -> CheckResult:
+    def faulty(
+        rule: EffectiveRuleBinding, observed: ExecutionEvidence, cost: ExecutionCost | None = None
+    ) -> CheckResult:
         """Raise for the required-text rule; evaluate other rule/observed pairs normally."""
         if rule.rule_type == "response.required_text":
             raise RuntimeError("PRIVATE_EVALUATOR_ERROR_CONTENT")
 
-        return original(rule, observed)
+        return original(rule, observed, cost)
 
     monkeypatch.setattr("gatekeeper.evaluation.engine.evaluate_rule", faulty)
     monkeypatch.setattr(logging.getLogger("gatekeeper"), "propagate", True)

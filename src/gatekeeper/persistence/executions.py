@@ -28,6 +28,7 @@ from gatekeeper.persistence.records import (
     timestamp,
 )
 from gatekeeper.persistence.reporting import TERMINAL_STATUSES, persist_summary
+from gatekeeper.pricing import load_catalog
 from gatekeeper.utils.json import canonical_json, digest
 from gatekeeper.utils.logging import safe_label
 from gatekeeper.utils.rules import resolve_effective_rules
@@ -128,6 +129,7 @@ def queue_run(database: Database, project_id: UUID, run_id: UUID) -> EvaluationR
             ).fetchall()
         ]
         configuration = {
+            "pricing_catalog": load_catalog(provider.provider_type).model_dump(mode="json"),
             "version": 1,
             "candidate": candidate.model_dump(mode="json"),
             "provider": provider.model_dump(mode="json"),
@@ -457,6 +459,7 @@ def attempt_detail(
     ).fetchone()
 
     return ExecutionAttemptDetail(
+        cost=json.loads(artifact["cost"]) if artifact and artifact["cost"] else None,
         **attempt_from_row(row).model_dump(),
         evidence=json.loads(artifact["normalized"]) if artifact else None,
         request=json.loads(artifact["request"]) if artifact and artifact["request"] else None,

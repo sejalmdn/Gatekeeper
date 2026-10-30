@@ -47,3 +47,8 @@ export function parseArray(value: string, field: string): unknown[] {
   }
   return parsed;
 }
+
+// Preserve decimal strings so tiny estimates never appear as zero.
+export function formatUsd(value: string | null | undefined): string {
+  return value == null ? "Unavailable" : value;
+}

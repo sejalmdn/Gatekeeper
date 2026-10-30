@@ -18,6 +18,7 @@ from gatekeeper.contracts.executions import (
     ExecutionEvidence,
     ExecutionSnapshot,
 )
+from gatekeeper.contracts.pricing import ExecutionCost
 from gatekeeper.contracts.providers import Provider
 from gatekeeper.contracts.scenarios import Scenario
 from gatekeeper.evaluation.engine import evaluate_attempt
@@ -26,6 +27,7 @@ from gatekeeper.integrations.chat import (
     InvocationFailure,
     build_request,
     configuration_failure,
+    endpoint,
     response_error,
     send_request,
 )
@@ -39,6 +41,7 @@ from gatekeeper.persistence.executions import (
 )
 from gatekeeper.persistence.records import timestamp
 from gatekeeper.persistence.reporting import refresh_summary
+from gatekeeper.pricing import calculate_cost
 from gatekeeper.resolver import CredentialUnavailableError, resolve_environment_credential
 from gatekeeper.utils.json import canonical_json
 from gatekeeper.utils.logging import safe_label
@@ -54,6 +57,7 @@ class AttemptOutcome:
     request: JsonObject | None
     response: JsonObject | None
     fatal: bool = False
+    cost: ExecutionCost | None = None
 
 
 # Capture one attempt, preserving failures without retrying or forwarding private run configuration.
@@ -212,13 +216,14 @@ def save_outcome(database: Database, outcome: AttemptOutcome) -> None:
 
     with database.connection() as connection:
         connection.execute(
-            "INSERT INTO execution_evidence (execution_id, normalized, request, response) "
-            "VALUES (?, ?, ?, ?)",
+            "INSERT INTO execution_evidence (execution_id, normalized, request, response, cost) "
+            "VALUES (?, ?, ?, ?, ?)",
             (
                 str(evidence.execution_id),
                 canonical_json(evidence.model_dump(mode="json")),
                 canonical_json(outcome.request) if outcome.request is not None else None,
                 canonical_json(outcome.response) if outcome.response is not None else None,
+                outcome.cost.model_dump_json() if outcome.cost is not None else None,
             ),
         )
         connection.execute(
@@ -297,11 +302,15 @@ async def execute_run(
             configuration.settings.timeout_ms,
         )
 
+        outcome.cost = calculate_cost(
+            outcome.evidence, configuration.pricing_catalog, endpoint(provider)
+        )
         save_outcome(database, outcome)
         evaluation = evaluate_attempt(
             outcome.evidence,
             configuration.effective_rules[str(attempt.scenario_id)],
             candidate.tool_definitions,
+            outcome.cost,
         )
         save_evaluation(database, outcome.evidence.run_id, evaluation)
 

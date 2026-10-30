@@ -199,7 +199,8 @@ CREATE TABLE IF NOT EXISTS execution_evidence (
     execution_id TEXT PRIMARY KEY REFERENCES execution_attempts (id),
     normalized TEXT NOT NULL CHECK (json_valid(normalized)),
     request TEXT CHECK (request IS NULL OR json_valid(request)),
-    response TEXT CHECK (response IS NULL OR json_valid(response))
+    response TEXT CHECK (response IS NULL OR json_valid(response)),
+    cost TEXT CHECK (cost IS NULL OR json_valid(cost))
 );
 
 -- Evaluation headers and automatic baseline checks are independent of invocation status.

@@ -197,6 +197,7 @@ export interface ToolRequest {
 
 // Transport-independent observations preserve unknown usage and incomplete output.
 export interface ExecutionEvidence {
+  provider_reported_usd?: string | null;
   version: number;
   execution_id: string;
   run_id: string;
@@ -224,6 +225,7 @@ export interface ExecutionEvidence {
 
 // Large evidence artifacts are loaded only when an attempt is opened.
 export interface ExecutionAttemptDetail extends ExecutionAttempt {
+  cost?: ExecutionCost | null;
   evidence: ExecutionEvidence | null;
   request: JsonObject | null;
   response: JsonObject | null;
@@ -308,6 +310,7 @@ export interface MetricStatistics {
 
 // Candidate operational observations exclude unsuccessful and unexecuted attempts.
 export interface OperationalMetrics {
+  estimated_cost_usd?: CostStatistics | null;
   completed_invocations: number;
   excluded_unsuccessful_attempts: number;
   excluded_unexecuted_attempts: number;
@@ -360,4 +363,40 @@ export interface RunSummary {
   reason: string | null;
   aggregates: RunAggregates | null;
   scenarios: ScenarioSummary[];
+}
+
+// Reviewed tariff provenance travels with saved monetary estimates.
+export interface PricingEntry {
+  provider: string;
+  api_destination: string;
+  model: string;
+  aliases: string[];
+  input_usd_per_million: string;
+  output_usd_per_million: string;
+  source_url: string;
+  verified_on: string;
+  catalog_version: string;
+}
+
+// Saved cost calculations remain separate from provider observations.
+export interface ExecutionCost {
+  estimated_usd: string | null;
+  input_usd: string | null;
+  output_usd: string | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  pricing_entry: PricingEntry | null;
+  reason: string | null;
+}
+
+// Monetary statistics are decimal strings, including tiny nonzero values.
+export interface CostStatistics {
+  observed_count: number;
+  missing_count: number;
+  minimum: string | null;
+  maximum: string | null;
+  mean: string | null;
+  sum: string | null;
+  sum_label: string;
+  pricing_entries: PricingEntry[];
 }

@@ -1,9 +1,10 @@
+import { CostMetricsRow } from "./CostMetricsRow";
 import type { ReactElement } from "react";
 import type { OperationalMetrics } from "../types";
-import { formatNumber } from "../utils/format";
+import { formatNumber, formatUsd } from "../utils/format";
 import "../styles/ResultMetrics.css";
 
-// Shows supplied metric statistics, missing observations, and explicit exclusions.
+// Shows supplied metric statistics and explicit exclusions.
 export function ResultMetrics({
   metrics,
 }: {
@@ -25,7 +26,16 @@ export function ResultMetrics({
             <dd>{formatNumber(metrics[key].mean)}</dd>
           </div>
         ))}
+        <div>
+          <dt>Total cost (USD)</dt>
+          <dd>{formatUsd(metrics.estimated_cost_usd?.sum)}</dd>
+        </div>
       </dl>
+      <p className="result-metrics__note">
+        Cost estimation excludes cache discounts, account discounts, taxes, and
+        fees. Total cost sums known standard-rate estimates; missing costs are
+        excluded.
+      </p>
       <details>
         <summary>Metric observations and exclusions</summary>
         <p>
@@ -41,7 +51,6 @@ export function ResultMetrics({
               <tr>
                 <th scope="col">Metric</th>
                 <th scope="col">Observed</th>
-                <th scope="col">Missing</th>
                 <th scope="col">Minimum</th>
                 <th scope="col">Maximum</th>
                 <th scope="col">Mean</th>
@@ -55,7 +64,6 @@ export function ResultMetrics({
                   <tr key={key}>
                     <th scope="row">{label}</th>
                     <td>{metric.observed_count}</td>
-                    <td>{metric.missing_count}</td>
                     <td>{formatNumber(metric.minimum)}</td>
                     <td>{formatNumber(metric.maximum)}</td>
                     <td>{formatNumber(metric.mean)}</td>
@@ -63,6 +71,7 @@ export function ResultMetrics({
                   </tr>
                 );
               })}
+              <CostMetricsRow cost={metrics.estimated_cost_usd} />
             </tbody>
           </table>
         </div>

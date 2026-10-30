@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 from typing import cast
 from uuid import UUID
 
@@ -233,6 +234,17 @@ def normalize(
     usage = raw.get("usage")
 
     if isinstance(usage, dict):
+        charge = usage.get("cost") if provider_type == "openrouter" else None
+
+        if type(charge) in {int, float, str}:
+            try:
+                amount = Decimal(str(charge))
+
+                if amount.is_finite() and amount >= 0:
+                    evidence.provider_reported_usd = amount
+            except InvalidOperation:
+                pass
+
         evidence.input_tokens = token_count(usage.get("prompt_tokens"))
         evidence.output_tokens = token_count(usage.get("completion_tokens"))
 
