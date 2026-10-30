@@ -45,6 +45,9 @@ function errorMessage(detail: unknown): string {
       )
       .join("; ");
   }
+  if (typeof detail === "object" && detail !== null && "reason" in detail) {
+    return String(detail.reason).replaceAll("_", " ");
+  }
   return "The request could not be completed.";
 }
 
@@ -285,4 +288,17 @@ export const getAttemptEvaluation = (
 ): Promise<AttemptEvaluationDetail> =>
   request<AttemptEvaluationDetail>(
     `/v1/projects/${projectId}/evaluation-runs/${runId}/attempts/${executionId}/evaluation`,
+  );
+
+// Compare saved evidence without invoking candidates or changing existing reports.
+export const getRunComparison = (
+  projectId: string,
+  runA: string,
+  runB: string,
+): Promise<import("./types").RunComparison> =>
+  request(
+    `/v1/projects/${projectId}/run-comparisons?${new URLSearchParams({
+      run_a_id: runA,
+      run_b_id: runB,
+    })}`,
   );

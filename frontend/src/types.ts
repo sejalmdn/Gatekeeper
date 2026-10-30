@@ -400,3 +400,69 @@ export interface CostStatistics {
   sum_label: string;
   pricing_entries: PricingEntry[];
 }
+
+// Safe comparison metadata and frozen run policy.
+export interface ComparisonRun {
+  id: string;
+  candidate_id: string;
+  candidate_name: string | null;
+  model: string | null;
+  dataset_id: string;
+  dataset_name: string;
+  status: EvaluationRun["status"];
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  settings: RunSettings | null;
+}
+
+// Shared-rule statistics retain independent repeats and coverage.
+export interface ComparisonSide {
+  attempts: AttemptTotals;
+  pass_rate: number | null;
+  reason: string | null;
+  score: WeightedScore;
+  metrics: OperationalMetrics;
+  included_scenarios: number;
+  excluded_scenarios: number;
+}
+
+// Signed differences use decimal strings for money and percentage points for rates.
+export interface ComparisonDifferences {
+  pass_rate_pp: number | null;
+  weighted_score_pp: number | null;
+  metrics: Record<string, Record<string, number | string | null>>;
+}
+
+// Each scenario matches binding IDs rather than rule keys.
+export interface ScenarioComparison {
+  scenario_id: string;
+  scenario_key: string;
+  scenario_name: string;
+  run_a: ComparisonSide;
+  run_b: ComparisonSide;
+  differences: ComparisonDifferences;
+  common_rules: {
+    run_a: BindingSummary;
+    run_b: BindingSummary;
+    pass_rate_a: number | null;
+    pass_rate_b: number | null;
+    pass_rate_difference_pp: number | null;
+  }[];
+  only_in_run_a: BindingSummary[];
+  only_in_run_b: BindingSummary[];
+}
+
+// Historical gaps are reported without reconstructing evaluation configuration.
+export interface RunComparison {
+  project_id: string;
+  run_a: ComparisonRun;
+  run_b: ComparisonRun;
+  availability: "available" | "unavailable";
+  reason: string | null;
+  warnings: string[];
+  aggregate_a: ComparisonSide | null;
+  aggregate_b: ComparisonSide | null;
+  differences: ComparisonDifferences | null;
+  scenarios: ScenarioComparison[];
+}

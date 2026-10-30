@@ -20,6 +20,7 @@ const NAVIGATION: { path: string; label: string; icon: IconName }[] = [
   { path: "candidates", label: "Candidates", icon: "candidate" },
   { path: "datasets", label: "Datasets", icon: "dataset" },
   { path: "evaluation-runs", label: "Executions", icon: "evaluation" },
+  { path: "compare-candidates", label: "Compare candidates", icon: "candidate" },
 ];
 
 // Reference navigation documents concepts shared across project records.

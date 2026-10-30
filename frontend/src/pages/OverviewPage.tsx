@@ -70,7 +70,7 @@ export function OverviewPage(): ReactElement {
       </div>
       <Notice>
         Start an execution from a candidate to collect scenario evidence.
-        Inspect saved runs in Executions. Rule grading is not available yet.
+        Inspect saved runs in Executions.
       </Notice>
     </section>
   );

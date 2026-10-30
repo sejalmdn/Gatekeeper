@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from gatekeeper.api.activity import ActivityLoggingMiddleware
 from gatekeeper.api.candidates import router as candidates_router
+from gatekeeper.api.comparisons import router as comparisons_router
 from gatekeeper.api.datasets import router as datasets_router
 from gatekeeper.api.evaluation_runs import router as evaluation_runs_router
 from gatekeeper.api.projects import router as projects_router
@@ -69,6 +70,7 @@ def create_app(
     application.include_router(rules_router)
     application.include_router(run_settings_router)
     application.include_router(evaluation_runs_router)
+    application.include_router(comparisons_router)
     assets = frontend_directory or Path(__file__).parent / "frontend_dist"
 
     register_frontend(application, assets)

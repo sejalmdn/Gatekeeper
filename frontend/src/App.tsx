@@ -14,6 +14,8 @@ import { OverviewPage } from "./pages/OverviewPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { ProviderDetail, ProviderForm, ProvidersPage } from "./pages/Providers";
 import { EvaluationSetup } from "./pages/EvaluationSetup";
+import { CompareCandidatesPage } from "./pages/CompareCandidatesPage";
+import { RunComparisonPage } from "./pages/RunComparisonPage";
 import { EvaluationRuns } from "./pages/EvaluationRuns";
 import { EvaluationRunDetail } from "./pages/EvaluationRunDetail";
 
@@ -31,7 +33,12 @@ export default function App(): ReactElement {
           <Route path="candidates" element={<CandidatesPage />} />
           <Route path="candidates/new" element={<CandidateForm />} />
           <Route path="candidates/:recordId" element={<CandidateDetail />} />
+          <Route path="compare-candidates" element={<CompareCandidatesPage />} />
           <Route path="evaluation-runs" element={<EvaluationRuns />} />
+          <Route
+            path="evaluation-runs/compare"
+            element={<RunComparisonPage />}
+          />
           <Route path="evaluation-runs/new" element={<EvaluationSetup />} />
           <Route
             path="evaluation-runs/:recordId"
