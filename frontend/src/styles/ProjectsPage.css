@@ -1,5 +1,9 @@
 /* Project selection shares the carbon grid and compact command header. */
 .projects-shell {
+  --accent: #00b4b6;
+  --accent-hover: #00a1a3;
+  --accent-soft: rgb(0 180 182 / 8%);
+  --accent-border: rgb(0 180 182 / 25%);
   min-height: 100vh;
 }
 .projects-header {
@@ -41,7 +45,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 20px 24px;
+  padding: var(--space-panel-compact) var(--space-panel);
   border-bottom: 1px solid var(--border);
 }
 

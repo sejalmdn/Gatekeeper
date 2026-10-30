@@ -6,7 +6,7 @@
 .record-form {
   display: grid;
   gap: 24px;
-  padding: 28px;
+  padding: var(--space-panel);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-panel);

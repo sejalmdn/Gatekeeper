@@ -14,7 +14,7 @@
   padding: 24px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
 }
 
 .evaluation-run-detail__progress h2 {
@@ -59,7 +59,7 @@
 
 .execution-attempts__scenario {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-panel);
   overflow: hidden;
   background: var(--surface);
 }
@@ -124,7 +124,7 @@
   margin: 0;
   background: var(--canvas);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   font: inherit;
@@ -133,7 +133,7 @@
 .attempt-evidence__tool {
   padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
 }
 
 .attempt-evidence__tool p {
@@ -151,7 +151,7 @@
 .evaluation-run-detail__snapshot {
   padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   overflow-wrap: anywhere;
 }
 

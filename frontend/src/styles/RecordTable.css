@@ -85,7 +85,7 @@
   min-height: 36px;
   padding: 6px 10px;
   border: 1px solid var(--accent-border);
-  border-radius: 5px;
+  border-radius: var(--radius-compact);
   background: var(--accent-soft);
   color: var(--accent);
   font-size: var(--font-size-link);
