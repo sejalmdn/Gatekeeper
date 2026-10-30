@@ -232,7 +232,7 @@ def test_summary_api(client: ApiClient, monkeypatch: pytest.MonkeyPatch) -> None
         pytest.fail("Summary attempted invocation or evaluation")
 
     monkeypatch.setattr(httpx.AsyncClient, "post", reject_execution)
-    monkeypatch.setattr("gatekeeper.execution.worker.evaluate_attempt", reject_execution)
+    monkeypatch.setattr("gatekeeper.evaluation.coordinator.evaluate_attempt", reject_execution)
     monkeypatch.setattr("gatekeeper.evaluation.engine.evaluate_attempt", reject_execution)
     response = client.get(f"{url}/summary")
     assert response.status_code == 200
@@ -659,7 +659,7 @@ def test_worker_failure_summary(
             """Reject evaluator inputs to exercise the worker's unexpected failure finalizer."""
             raise RuntimeError("test evaluation failure")
 
-        monkeypatch.setattr("gatekeeper.execution.worker.evaluate_attempt", reject)
+        monkeypatch.setattr("gatekeeper.evaluation.coordinator.evaluate_attempt", reject)
 
     # Exercise production failure handling rather than calling its persistence helper directly.
     async def run() -> None:

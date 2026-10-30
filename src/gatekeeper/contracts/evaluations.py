@@ -8,6 +8,7 @@ from pydantic import Field
 
 from gatekeeper.contracts.common import Contract
 from gatekeeper.contracts.executions import ExecutionAttempt
+from gatekeeper.contracts.judging import JudgeRecord
 from gatekeeper.contracts.rules import EffectiveRuleBinding, RuleRole, RuleType, Severity
 
 # Rule outcomes preserve evaluator failures and insufficient evidence.
@@ -30,6 +31,7 @@ class RuleEvaluationResult(CheckResult):
     rule_type: RuleType
     role: RuleRole
     severity: Severity
+    score: int | None = Field(default=None, strict=True, ge=1, le=5)
 
 
 # Complete evaluation committed atomically after evidence has been saved.
@@ -40,6 +42,7 @@ class AttemptEvaluation(Contract):
     evaluated_at: datetime
     automatic_tool_validation: list[CheckResult] = Field(default_factory=list)
     rule_results: list[RuleEvaluationResult] = Field(default_factory=list)
+    judge: JudgeRecord | None = None
 
 
 # Lightweight evaluation information retains execution progress as an independent field.
@@ -54,4 +57,5 @@ class AttemptEvaluationSummary(ExecutionAttempt):
 class AttemptEvaluationDetail(AttemptEvaluationSummary):
     automatic_tool_validation: list[CheckResult] = Field(default_factory=list)
     rule_results: list[RuleEvaluationResult] = Field(default_factory=list)
+    judge: JudgeRecord | None = None
     rule_configurations: list[EffectiveRuleBinding] = Field(default_factory=list)

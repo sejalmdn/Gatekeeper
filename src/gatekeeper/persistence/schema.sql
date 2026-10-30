@@ -211,7 +211,8 @@ CREATE TABLE IF NOT EXISTS attempt_evaluations (
     ),
     evaluator_version TEXT NOT NULL,
     evaluated_at TEXT NOT NULL,
-    automatic_tool_validation TEXT NOT NULL CHECK (json_valid(automatic_tool_validation))
+    automatic_tool_validation TEXT NOT NULL CHECK (json_valid(automatic_tool_validation)),
+    judge TEXT CHECK (judge IS NULL OR json_valid(judge))
 );
 
 -- Each frozen rule binding produces exactly one outcome for an evaluated attempt.
@@ -226,6 +227,7 @@ CREATE TABLE IF NOT EXISTS rule_evaluation_results (
     reason TEXT NOT NULL,
     explanation TEXT NOT NULL,
     evidence_references TEXT NOT NULL CHECK (json_valid(evidence_references)),
+    score INTEGER CHECK (score BETWEEN 1 AND 5),
     PRIMARY KEY (execution_id, rule_binding_id)
 );
 

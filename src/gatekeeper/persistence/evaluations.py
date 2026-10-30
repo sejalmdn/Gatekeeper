@@ -33,7 +33,9 @@ def save_evaluation(database: Database, run_id: UUID, evaluation: AttemptEvaluat
     try:
         with database.connection() as connection:
             connection.execute(
-                "INSERT INTO attempt_evaluations VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO attempt_evaluations "
+                "(execution_id, verdict, evaluator_version, evaluated_at, "
+                "automatic_tool_validation, judge) VALUES (?, ?, ?, ?, ?, ?)",
                 (
                     str(evaluation.execution_id),
                     evaluation.verdict,
@@ -42,10 +44,14 @@ def save_evaluation(database: Database, run_id: UUID, evaluation: AttemptEvaluat
                     canonical_json(
                         [item.model_dump() for item in evaluation.automatic_tool_validation]
                     ),
+                    evaluation.judge.model_dump_json() if evaluation.judge else None,
                 ),
             )
             connection.executemany(
-                "INSERT INTO rule_evaluation_results VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO rule_evaluation_results "
+                "(execution_id, rule_binding_id, rule_key, rule_type, role, severity, outcome, "
+                "reason, explanation, evidence_references, score) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 [
                     (
                         str(evaluation.execution_id),
@@ -58,6 +64,7 @@ def save_evaluation(database: Database, run_id: UUID, evaluation: AttemptEvaluat
                         result.reason,
                         result.explanation,
                         canonical_json(result.evidence_references),
+                        result.score,
                     )
                     for result in evaluation.rule_results
                 ],
@@ -173,6 +180,7 @@ def evaluation_detail(
         evaluated_at=header["evaluated_at"],
         automatic_tool_validation=json.loads(header["automatic_tool_validation"]),
         rule_results=results,
+        judge=json.loads(header["judge"]) if header["judge"] else None,
         rule_configurations=configurations,
         outcome_counts=dict(Counter(result.outcome for result in results)),
     )

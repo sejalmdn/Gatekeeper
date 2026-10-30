@@ -8,6 +8,7 @@ from pydantic import Field
 
 from gatekeeper.contracts.candidates import Candidate
 from gatekeeper.contracts.common import Contract, JsonObject
+from gatekeeper.contracts.judging import JudgeConfiguration
 from gatekeeper.contracts.pricing import ExecutionCost, Money, PricingCatalog
 from gatekeeper.contracts.providers import Provider
 from gatekeeper.contracts.rules import EffectiveRuleBinding
@@ -95,3 +96,4 @@ class ExecutionSnapshot(Contract):
     scenarios: list[Scenario]
     effective_rules: dict[str, list[EffectiveRuleBinding]]
     pricing_catalog: PricingCatalog | None = None
+    judge_configuration: JudgeConfiguration | None = None

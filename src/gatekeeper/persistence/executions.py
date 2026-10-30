@@ -16,6 +16,7 @@ from gatekeeper.contracts.executions import (
     ExecutionError,
     ExecutionSnapshot,
 )
+from gatekeeper.contracts.judging import JudgeConfiguration
 from gatekeeper.integrations.chat import InvocationFailure, build_request
 from gatekeeper.persistence.database import Database
 from gatekeeper.persistence.records import (
@@ -145,6 +146,13 @@ def queue_run(database: Database, project_id: UUID, run_id: UUID) -> EvaluationR
                 for scenario in scenarios
             },
         }
+        if any(
+            rule["rule_type"] == "judge.rubric"
+            for rules in configuration["effective_rules"].values()
+            for rule in rules
+        ):
+            configuration["judge_configuration"] = JudgeConfiguration().model_dump(mode="json")
+
         snapshot_digest = digest(configuration)
 
         connection.execute(
