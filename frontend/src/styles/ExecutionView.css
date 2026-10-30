@@ -93,6 +93,7 @@
 }
 
 .evaluation-run-header__context dt,
+.evaluation-run-detail dt,
 .attempt-evidence__evidence dt {
   color: var(--muted);
   font-size: var(--font-size-label);
@@ -215,14 +216,22 @@
   color: var(--muted);
 }
 
-.attempt-evidence__evidence details {
+.attempt-evidence__provenance {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.attempt-evidence__evidence details,
+.evaluation-run-detail__snapshot {
   padding: 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow-wrap: anywhere;
 }
 
-.attempt-evidence__evidence summary {
+.attempt-evidence__evidence summary,
+.evaluation-run-detail__snapshot summary {
   cursor: pointer;
   color: var(--muted);
   margin-bottom: 12px;
