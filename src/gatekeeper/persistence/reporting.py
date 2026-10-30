@@ -92,57 +92,64 @@ def compute_summary(
         )
     else:
         snapshot = ExecutionSnapshot.model_validate_json(frozen["configuration"])
-        rows = connection.execute(
-            """SELECT a.id, a.scenario_id, a.attempt_number, a.status,
-            e.verdict, e.evaluator_version, e.automatic_tool_validation,
-            x.execution_id IS NOT NULL AS has_evidence,
-            x.cost,
-            json_extract(x.normalized, '$.duration_ms') AS duration_ms,
-            json_extract(x.normalized, '$.input_tokens') AS input_tokens,
-            json_extract(x.normalized, '$.output_tokens') AS output_tokens
-            FROM execution_attempts a
-            LEFT JOIN attempt_evaluations e ON e.execution_id = a.id
-            LEFT JOIN execution_evidence x ON x.execution_id = a.id
-            WHERE a.run_id = ? ORDER BY a.position""",
-            (str(run_id),),
-        ).fetchall()
-        outcomes = connection.execute(
-            "SELECT r.execution_id, r.rule_binding_id, r.outcome "
-            "FROM rule_evaluation_results r JOIN execution_attempts a "
-            "ON a.id = r.execution_id WHERE a.run_id = ?",
-            (str(run_id),),
-        ).fetchall()
-        by_execution: dict[str, dict[str, str]] = {}
-
-        for outcome in outcomes:
-            by_execution.setdefault(outcome["execution_id"], {})[outcome["rule_binding_id"]] = (
-                outcome["outcome"]
-            )
-
-        attempts = [
-            ReportingAttempt.model_validate(
-                {
-                    "scenario_id": row["scenario_id"],
-                    "attempt_number": row["attempt_number"],
-                    "status": row["status"],
-                    "verdict": row["verdict"] or "not_evaluated",
-                    "evaluator_version": row["evaluator_version"],
-                    "has_evidence": bool(row["has_evidence"]),
-                    "automatic_tool_validation": json.loads(
-                        row["automatic_tool_validation"] or "[]"
-                    ),
-                    "outcomes": by_execution.get(row["id"], {}),
-                    "cost": json.loads(row["cost"]) if row["cost"] else None,
-                    "duration_ms": row["duration_ms"],
-                    "input_tokens": row["input_tokens"],
-                    "output_tokens": row["output_tokens"],
-                }
-            )
-            for row in rows
-        ]
+        attempts = read_reporting_attempts(connection, run_id)
         result = aggregate_run(project_id, run_id, status, snapshot, attempts)
 
     return result
+
+
+# Read lightweight saved observations using the caller's transaction.
+def read_reporting_attempts(connection: sqlite3.Connection, run_id: UUID) -> list[ReportingAttempt]:
+    """Read saved outcomes and metric inputs for run_id from connection; return attempts."""
+    rows = connection.execute(
+        """SELECT a.id, a.scenario_id, a.attempt_number, a.status,
+        e.verdict, e.evaluator_version, e.automatic_tool_validation,
+        e.execution_id IS NOT NULL AS has_evaluation,
+        x.execution_id IS NOT NULL AS has_evidence,
+        x.cost,
+        json_extract(x.normalized, '$.duration_ms') AS duration_ms,
+        json_extract(x.normalized, '$.input_tokens') AS input_tokens,
+        json_extract(x.normalized, '$.output_tokens') AS output_tokens
+        FROM execution_attempts a
+        LEFT JOIN attempt_evaluations e ON e.execution_id = a.id
+        LEFT JOIN execution_evidence x ON x.execution_id = a.id
+        WHERE a.run_id = ? ORDER BY a.position""",
+        (str(run_id),),
+    ).fetchall()
+    outcomes = connection.execute(
+        "SELECT r.execution_id, r.rule_binding_id, r.outcome "
+        "FROM rule_evaluation_results r JOIN execution_attempts a "
+        "ON a.id = r.execution_id WHERE a.run_id = ?",
+        (str(run_id),),
+    ).fetchall()
+    by_execution: dict[str, dict[str, str]] = {}
+
+    for outcome in outcomes:
+        by_execution.setdefault(outcome["execution_id"], {})[outcome["rule_binding_id"]] = outcome[
+            "outcome"
+        ]
+
+    attempts = [
+        ReportingAttempt.model_validate(
+            {
+                "scenario_id": row["scenario_id"],
+                "attempt_number": row["attempt_number"],
+                "status": row["status"],
+                "verdict": row["verdict"] or "not_evaluated",
+                "evaluator_version": row["evaluator_version"],
+                "has_evidence": bool(row["has_evidence"]),
+                "has_evaluation": bool(row["has_evaluation"]),
+                "automatic_tool_validation": json.loads(row["automatic_tool_validation"] or "[]"),
+                "outcomes": by_execution.get(row["id"], {}),
+                "cost": json.loads(row["cost"]) if row["cost"] else None,
+                "duration_ms": row["duration_ms"],
+                "input_tokens": row["input_tokens"],
+                "output_tokens": row["output_tokens"],
+            }
+        )
+        for row in rows
+    ]
+    return attempts
 
 
 # Read terminal reports without touching frozen inputs or attempt evidence.

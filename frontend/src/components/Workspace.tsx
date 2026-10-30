@@ -55,6 +55,13 @@ const NAVIGATION: NavigationItem[] = [
     icon: "evaluation",
     color: "executions",
   },
+  {
+    path: "compare-candidates",
+    label: "Compare candidates",
+    icon: "candidate",
+    color: "candidates",
+
+  },
 ];
 
 // Reference navigation documents concepts shared across project records.

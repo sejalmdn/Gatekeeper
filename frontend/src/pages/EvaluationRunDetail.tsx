@@ -1,5 +1,10 @@
 import { useRef, useState, type ReactElement } from "react";
-import { useLocation, useParams, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { cancelEvaluationRun, startEvaluationRun } from "../api";
 import { RunEvidence } from "../components/RunEvidence";
 import { RunResults } from "../components/RunResults";
@@ -101,6 +106,14 @@ export function EvaluationRunDetail(): ReactElement {
         settings={settings}
         actions={
           <>
+            {!active && (
+              <Link
+                className="button button-secondary"
+                to={`/projects/${projectId}/compare-candidates?runA=${run.id}`}
+              >
+                Compare candidates
+              </Link>
+            )}
             {run.status === "pending" && !run.queued_at && (
               <button
                 className="button"

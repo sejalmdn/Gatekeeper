@@ -31,6 +31,7 @@ class ReportingAttempt(Contract):
     status: AttemptStatus
     verdict: AttemptVerdict = "not_evaluated"
     evaluator_version: str | None = None
+    has_evaluation: bool = False
     has_evidence: bool = False
     automatic_tool_validation: list[CheckResult] = Field(default_factory=list)
     outcomes: dict[str, RuleOutcome] = Field(default_factory=dict)
