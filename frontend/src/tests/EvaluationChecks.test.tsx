@@ -11,6 +11,7 @@ let container: HTMLDivElement;
 let root: Root;
 
 const expectedCategories = {
+  "Semantic quality": ["Semantic rubric"],
   "Response content": [
     "Required text",
     "Forbidden text",
@@ -62,10 +63,10 @@ function checkRow(name: string): HTMLElement {
 }
 
 // List every authorable check once in its intended reference section.
-it("groups all authorable checks and excludes the unavailable semantic rubric", async () => {
+it("groups all authorable deterministic and semantic checks", async () => {
   await renderPage();
-  expect(container.querySelectorAll("table")).toHaveLength(4);
-  expect(container.querySelectorAll("tbody tr")).toHaveLength(13);
+  expect(container.querySelectorAll("table")).toHaveLength(5);
+  expect(container.querySelectorAll("tbody tr")).toHaveLength(14);
   const expectedHeaders = [
     "Check",
     "What it checks",
@@ -89,8 +90,9 @@ it("groups all authorable checks and excludes the unavailable semantic rubric", 
   const renderedChecks = [...container.querySelectorAll("tbody th")].map(
     (item) => item.textContent,
   );
-  expect(new Set(renderedChecks).size).toBe(13);
-  expect(container.textContent).not.toContain("Semantic rubric");
+  expect(new Set(renderedChecks).size).toBe(14);
+  expect(container.textContent).toContain("Semantic rubric");
+  expect(container.textContent).not.toContain("grading is not available");
 });
 
 // Reflect rule-authoring compatibility through visible scenario badges.
@@ -101,6 +103,7 @@ it("shows scenario compatibility for response, operational, and tool checks", as
       (item) => item.textContent,
     );
   for (const name of [
+    ...expectedCategories["Semantic quality"],
     ...expectedCategories["Response content"],
     ...expectedCategories["JSON structure"],
   ]) {

@@ -72,9 +72,11 @@ export function RuleBindingList({
                   <div className="rule-binding-list__identity">
                     <h4>{rule.rule_key}</h4>
                   </div>
-                  <p className="rule-binding-list__expectation">
-                    {summarizeRule(rule.rule_type, rule.parameters)}
-                  </p>
+                  {rule.rule_type !== "judge.rubric" && (
+                    <p className="rule-binding-list__expectation">
+                      {summarizeRule(rule.rule_type, rule.parameters)}
+                    </p>
+                  )}
                   <div className="rule-binding-list__metadata">
                     <span className="rule-binding-list__type">
                       Type: {definition?.label ?? rule.rule_type}

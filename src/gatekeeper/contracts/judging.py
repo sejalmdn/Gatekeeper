@@ -12,7 +12,7 @@ from gatekeeper.contracts.pricing import Money
 
 # Deployment policy is frozen only for new rubric-bearing runs.
 class JudgeConfiguration(Contract):
-    model: Literal["nvidia/nemotron-3.5-lightning:free"] = "nvidia/nemotron-3.5-lightning:free"
+    model: Literal["nvidia/nemotron-3.5-super-vl:free"] = "nvidia/nemotron-3.5-super-vl:free"
     endpoint: Literal["https://openrouter.ai/api/v1/chat/completions"] = (
         "https://openrouter.ai/api/v1/chat/completions"
     )

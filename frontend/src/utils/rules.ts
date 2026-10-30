@@ -1,3 +1,4 @@
+import { rubricCriterion } from "./rubrics";
 import type {
   JsonObject,
   RuleBindingCreate,
@@ -12,10 +13,11 @@ export interface RuleField {
   options?: string[];
   optional?: boolean;
   min?: number;
+  max?: number;
   integer?: boolean;
 }
 
-export type AuthorableRuleType = Exclude<RuleType, "judge.rubric">;
+export type AuthorableRuleType = RuleType;
 
 export interface RuleDefinition {
   type: AuthorableRuleType;
@@ -38,8 +40,28 @@ export interface RuleSeverityOption {
 const responseTypes: ScenarioType[] = ["single_turn", "multi_turn"];
 const allTypes: ScenarioType[] = [...responseTypes, "tool_use"];
 
-// Forms mirror the built-in deterministic parameter contracts; judges remain out of scope.
+// Forms mirror the supported private evaluator parameter contracts.
 export const RULE_DEFINITIONS: RuleDefinition[] = [
+  {
+    type: "judge.rubric",
+    label: "Semantic rubric",
+    types: responseTypes,
+    fields: [
+      {
+        key: "criterion",
+        label: "Criterion",
+        kind: "text",
+      },
+      {
+        key: "min_score",
+        label: "Minimum passing score",
+        kind: "number",
+        min: 1,
+        max: 5,
+        integer: true,
+      },
+    ],
+  },
   {
     type: "response.required_text",
     label: "Required text",
@@ -259,6 +281,10 @@ export const RULE_DEFINITIONS: RuleDefinition[] = [
 // Groups authorable checks by the evidence they inspect in every frontend view.
 export const RULE_CATEGORIES: RuleCategory[] = [
   {
+    label: "Semantic quality",
+    types: ["judge.rubric"],
+  },
+  {
     label: "Response content",
     types: [
       "response.required_text",
@@ -331,7 +357,10 @@ export function emptyAssertion(): AssertionDraft {
 export function initialRuleDraft(definition: RuleDefinition): RuleDraft {
   return {
     fields: Object.fromEntries(
-      definition.fields.map((field) => [field.key, field.options?.[0] ?? ""]),
+      definition.fields.map((field) => [
+        field.key,
+        field.key === "min_score" ? "4" : (field.options?.[0] ?? ""),
+      ]),
     ),
     lists: {},
     checks: {},
@@ -436,7 +465,8 @@ export function serializeParameters(
         !value.trim() ||
         !Number.isFinite(number) ||
         (field.integer && !Number.isInteger(number)) ||
-        (field.min !== undefined && number < field.min)
+        (field.min !== undefined && number < field.min) ||
+        (field.max !== undefined && number > field.max)
       ) {
         throw new Error(
           `${field.label} requires a valid ${field.integer ? "integer" : "number"}.`,
@@ -453,6 +483,12 @@ export function serializeParameters(
       if (!value.trim()) throw new Error(`${field.label} is required.`);
       result[field.key] = value;
     }
+  }
+  if (definition.type === "judge.rubric") {
+    result.criterion = rubricCriterion(
+      draft.fields.rubric_preset,
+      String(result.criterion),
+    );
   }
   if (definition.type === "response.regex") {
     result.flags = ["IGNORECASE", "MULTILINE", "DOTALL"].filter(

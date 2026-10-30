@@ -1,5 +1,6 @@
 import { useState, type ReactElement } from "react";
 import type { EffectiveRuleBinding, RuleEvaluationResult } from "../types";
+import { judgeFailureMessage } from "../utils/rubrics";
 import { ResultBadge } from "./ResultBadge";
 import { JsonViewer } from "./JsonViewer";
 import "../styles/AuthoredRuleResult.css";
@@ -15,7 +16,12 @@ export function AuthoredRuleResult({
   // Defers mounting the JSON editor until its rule reference is inspected.
   const [referenceOpen, setReferenceOpen] = useState(false);
 
+  const criterion = rule?.parameters.criterion;
+  const minimumScore = rule?.parameters.min_score;
   let explanation = check.explanation;
+  if (check.rule_type === "judge.rubric") {
+    explanation = judgeFailureMessage(check.reason) ?? check.explanation;
+  }
   if (check.rule_type === "response.regex" && check.outcome === "pass") {
     explanation = "The response matches the configured regular expression.";
   }
@@ -45,10 +51,12 @@ export function AuthoredRuleResult({
               <dt>Role</dt>
               <dd>{check.role}</dd>
             </div>
-            <div>
-              <dt>Severity</dt>
-              <dd>{check.severity}</dd>
-            </div>
+            {check.role === "scored" && (
+              <div>
+                <dt>Severity</dt>
+                <dd>{check.severity}</dd>
+              </div>
+            )}
           </dl>
         </div>
         <div className="authored-rule-result__evidence">
@@ -67,6 +75,21 @@ export function AuthoredRuleResult({
         </div>
       </header>
       <div className="authored-rule-result__body">
+        {check.rule_type === "judge.rubric" && (
+          <div className="authored-rule-result__rubric">
+            <p>
+              <strong>Criterion:</strong>{" "}
+              {typeof criterion === "string" ? criterion : "Unavailable"}
+            </p>
+            <p>
+              <strong>Judge score:</strong>{" "}
+              {check.score == null ? "Unavailable" : `${check.score}/5`}
+              {" · "}
+              <strong>Minimum passing score:</strong>{" "}
+              {typeof minimumScore === "number" ? minimumScore : "Unavailable"}
+            </p>
+          </div>
+        )}
         <div className="authored-rule-result__diagnostics">
           <h5>Evaluation reason</h5>
           <span className="authored-rule-result__reason-code">

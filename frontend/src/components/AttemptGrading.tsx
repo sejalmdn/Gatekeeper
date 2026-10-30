@@ -1,6 +1,7 @@
 import { useState, type ReactElement } from "react";
 import { useAttemptGrade } from "../hooks/useAttemptGrade";
 import type { AttemptEvaluationSummary } from "../types";
+import { JudgeDetails } from "./JudgeDetails";
 import { GradingCheck } from "./GradingCheck";
 import { AttemptResponseModal } from "./AttemptResponseModal";
 import { ResultBadge } from "./ResultBadge";
@@ -11,10 +12,12 @@ export function AttemptGrading({
   projectId,
   runId,
   attempt,
+  evaluationActive = false,
 }: {
   projectId: string;
   runId: string;
   attempt: AttemptEvaluationSummary;
+  evaluationActive?: boolean;
 }): ReactElement {
   // Refreshes this grade when its evaluator timestamp or verdict changes.
   const { data, error, retry } = useAttemptGrade(projectId, runId, attempt);
@@ -51,15 +54,22 @@ export function AttemptGrading({
       {error && (
         <p role="alert">
           Grade unavailable: {error}{" "}
-          <button onClick={retry}>Retry grade</button>
+          <button onClick={retry}>Reload results</button>
         </p>
       )}
       {!data && !error && <p role="status">Loading grading…</p>}
       {data && (
         <>
           {data.verdict === "not_evaluated" && (
-            <p>No stored evaluation is available for this attempt.</p>
+            <p role="status">
+              {evaluationActive &&
+              attempt.status === "completed" &&
+              !data.evaluated_at
+                ? "Candidate execution completed. Evaluation is pending; results refresh automatically."
+                : "No stored evaluation is available for this attempt."}
+            </p>
           )}
+          {data.judge && <JudgeDetails judge={data.judge} />}
           <section
             className="attempt-grading__automatic"
             aria-label="Automatic tool validation"

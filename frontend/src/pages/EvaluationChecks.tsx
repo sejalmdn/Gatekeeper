@@ -15,6 +15,12 @@ interface CheckDetail {
 }
 
 const CHECK_DETAILS: Record<AuthorableRuleType, CheckDetail> = {
+  "judge.rubric": {
+    purpose:
+      "Assesses response meaning against a private criterion using the fixed LLM judge.",
+    configuration:
+      "Criterion and minimum score (1–5). Multi-turn presets cover history values, earlier references, and conversation state.",
+  },
   "response.required_text": {
     purpose: "Checks that the response includes the expected phrases.",
     configuration: "Required phrases, match mode, and case sensitivity.",
@@ -73,6 +79,8 @@ const CHECK_DETAILS: Record<AuthorableRuleType, CheckDetail> = {
 };
 
 const CATEGORY_NOTES: Partial<Record<string, string>> = {
+  "Semantic quality":
+    "An external judge receives conversation content, candidate responses, and criteria. Use non-confidential development data. Judge usage and costs stay separate from candidate metrics.",
   "Tool requests":
     "Tool checks verify requests, not tool execution. Gatekeeper automatically validates requested arguments against the tool schemas declared by the candidate.",
 };
@@ -83,7 +91,7 @@ const SCENARIO_LABELS: Record<ScenarioType, string> = {
   tool_use: "Tool use",
 };
 
-// Documents the deterministic checks currently available in rule authoring.
+// Explains available deterministic and semantic checks and their evidence boundaries.
 export function EvaluationChecks(): ReactElement {
   const definitions = new Map(
     RULE_DEFINITIONS.map((definition) => [definition.type, definition]),

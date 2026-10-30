@@ -231,7 +231,7 @@ it("shows saved rule failure reasons and keeps automatic checks separate", async
     'Missing required phrase: "return label".',
   );
   expect(card.textContent).toContain("required_text_missing");
-  expect(card.textContent).toContain("high");
+  expect(card.textContent).not.toContain("Severity");
   expect(
     container.querySelector(
       '[aria-label="Automatic tool validation"] .authored-rule-result',
@@ -686,7 +686,9 @@ it("reloads an open completed-but-ungraded attempt when grading arrives", async 
     automatic_tool_validation: [],
   });
   await renderPage("?scenario=s1&attempt=a1");
-  expect(container.textContent).toContain("No stored evaluation is available");
+  expect(container.textContent).toContain(
+    "Evaluation is pending; results refresh automatically.",
+  );
   vi.mocked(api.listAttemptEvaluations).mockResolvedValue([evaluatedAttempt]);
   await act(async () => vi.advanceTimersByTimeAsync(2000));
   expect(api.getAttemptEvaluation).toHaveBeenCalledTimes(2);
@@ -756,7 +758,7 @@ it("retries an individual grade without fetching provider artifacts", async () =
   await renderPage("?scenario=s1&attempt=a1");
   expect(container.textContent).toContain("Grade read failed");
   expect(container.textContent).toContain("Scenario assessments");
-  await click(button("Retry grade"));
+  await click(button("Reload results"));
   expect(container.textContent).toContain("Required text found in response.");
   expect(api.getExecutionAttempt).not.toHaveBeenCalled();
 });

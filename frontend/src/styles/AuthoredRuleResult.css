@@ -176,3 +176,14 @@
     padding: 12px;
   }
 }
+
+.authored-rule-result__rubric {
+  padding: 0 0 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  white-space: pre-wrap;
+}
+
+.authored-rule-result__rubric p {
+  margin: 0 0 8px;
+}

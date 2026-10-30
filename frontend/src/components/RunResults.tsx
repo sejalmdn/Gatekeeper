@@ -111,6 +111,7 @@ export function RunResults({
             (attempt) => attempt.scenario_id === scenario.scenario_id,
           )}
           gradesAvailable={gradesAvailable}
+          evaluationActive={active}
           projectId={projectId}
           runId={run.id}
           opened={opened === scenario.scenario_id}

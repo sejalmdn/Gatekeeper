@@ -382,8 +382,9 @@ it("previews and inserts a sample JSON schema without overwriting input", async 
   });
   await submit();
   expect(create).not.toHaveBeenCalled();
-  const insert = [...container.querySelectorAll<HTMLButtonElement>("button")]
-    .find((button) => button.textContent === "Add sample schema")!;
+  const insert = [
+    ...container.querySelectorAll<HTMLButtonElement>("button"),
+  ].find((button) => button.textContent === "Add sample schema")!;
   expect(insert.disabled).toBe(false);
   await act(async () => insert.click());
   expect(container.querySelector(".cm-placeholder")).toBeNull();
@@ -544,3 +545,148 @@ it.each(["response.required_text", "response.forbidden_text"])(
     });
   },
 );
+
+// Multi-turn presets save explicit expectations as ordinary rubric bindings for every role.
+it.each([
+  [
+    "history_values",
+    "Use values from the supplied conversation history correctly.",
+    "required",
+  ],
+  [
+    "earlier_turns",
+    "Acknowledge the required information from earlier turns; paraphrasing is acceptable.",
+    "scored",
+  ],
+  [
+    "conversation_state",
+    "Respond consistently with the established conversation state.",
+    "informational",
+  ],
+] as const)(
+  "saves the %s preset with the %s focus and %s role",
+  async (preset, focus, role) => {
+    const create = vi
+      .spyOn(api, "createRuleBinding")
+      .mockResolvedValue({} as RuleBinding);
+    await renderEditor("multi", [], [multiTurnScenario]);
+    await enter("rule-type", "judge.rubric");
+    expect(
+      container.querySelector<HTMLInputElement>("#rule-param-min_score")?.value,
+    ).toBe("4");
+    await enter("rubric-preset", preset);
+    expect(
+      container.querySelector<HTMLTextAreaElement>("#rule-param-criterion")
+        ?.value,
+    ).toBe("");
+    await submit();
+    expect(create).not.toHaveBeenCalled();
+    expect(container.textContent).toContain("Criterion is required.");
+    await enter(
+      "rule-param-criterion",
+      "Explain the status of ORD-1 using the earlier context.",
+    );
+    await choose("rule-role", role);
+    await submit();
+    expect(create).toHaveBeenCalledWith(
+      "p",
+      "d",
+      expect.objectContaining({
+        scenario_id: "multi",
+        rule_type: "judge.rubric",
+        role,
+        parameters: {
+          criterion: `${focus} Specifically: Explain the status of ORD-1 using the earlier context.`,
+          min_score: 4,
+        },
+      }),
+    );
+    expect(onSaved).toHaveBeenCalledOnce();
+  },
+);
+
+// Custom rubrics work for single-turn responses, while tool-use remains incompatible.
+it("limits conversation presets to multi-turn and clears their focus on scope change", async () => {
+  await renderEditor("multi", [], [...scenarios, multiTurnScenario]);
+  await enter("rule-type", "judge.rubric");
+  await enter("rubric-preset", "conversation_state");
+  await enter("rule-param-criterion", "Respect the user's cancellation.");
+  await enter("rule-scenario", "single");
+  expect(container.querySelector("#rubric-preset")).toBeNull();
+  expect(
+    container.querySelector<HTMLTextAreaElement>("#rule-param-criterion")
+      ?.value,
+  ).toBe("Respect the user's cancellation.");
+  expect(container.textContent).not.toContain("Specifically:");
+  expect(availableChecks()).toContain("judge.rubric");
+  await enter("rule-scenario", "tool");
+  expect(availableChecks()).not.toContain("judge.rubric");
+  expect(container.querySelector("#rule-param-criterion")).toBeNull();
+});
+
+// Local validation prevents invalid score thresholds from reaching the backend.
+it.each(["", "0", "6", "3.5"])(
+  "rejects rubric threshold %s",
+  async (threshold) => {
+    const create = vi.spyOn(api, "createRuleBinding");
+    await renderEditor("single");
+    await enter("rule-type", "judge.rubric");
+    await enter("rule-param-criterion", "Explain the refund policy clearly.");
+    await enter("rule-param-min_score", threshold);
+    await submit();
+    expect(create).not.toHaveBeenCalled();
+    expect(container.textContent).toContain(
+      "Minimum passing score requires a valid integer.",
+    );
+  },
+);
+
+// Selecting guidance never overwrites a developer's existing expectation or passing threshold.
+it("preserves a completed rubric draft when changing presets", async () => {
+  await renderEditor("multi", [], [multiTurnScenario]);
+  await enter("rule-type", "judge.rubric");
+  await enter("rubric-preset", "history_values");
+  await enter(
+    "rule-param-criterion",
+    "Use ORD-1 to explain its refund status.",
+  );
+  await enter("rule-param-min_score", "5");
+  await enter("rubric-preset", "conversation_state");
+  expect(
+    container.querySelector<HTMLTextAreaElement>("#rule-param-criterion")
+      ?.value,
+  ).toBe("Use ORD-1 to explain its refund status.");
+  expect(
+    container.querySelector<HTMLInputElement>("#rule-param-min_score")?.value,
+  ).toBe("5");
+  expect(container.querySelector<HTMLInputElement>("#rule-key")?.value).toBe(
+    "follow_up_respect_conversation_state",
+  );
+  expect(container.textContent).toContain(
+    "Respond consistently with the established conversation state.",
+  );
+});
+
+// Single-turn authoring uses the same judge binding without any conversation preset prefix.
+it("saves a custom single-turn criterion with an explicit score threshold", async () => {
+  const create = vi
+    .spyOn(api, "createRuleBinding")
+    .mockResolvedValue({} as RuleBinding);
+  await renderEditor("single");
+  await enter("rule-type", "judge.rubric");
+  await enter("rule-param-criterion", "Explain the refund policy clearly.");
+  await enter("rule-param-min_score", "3");
+  await submit();
+  expect(create).toHaveBeenCalledWith(
+    "p",
+    "d",
+    expect.objectContaining({
+      rule_type: "judge.rubric",
+      scenario_id: "single",
+      parameters: {
+        criterion: "Explain the refund policy clearly.",
+        min_score: 3,
+      },
+    }),
+  );
+});

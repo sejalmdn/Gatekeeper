@@ -21,6 +21,7 @@ interface ScenarioResultsProps {
   runId: string;
   opened: boolean;
   gradesAvailable: boolean;
+  evaluationActive?: boolean;
   openedAttempt?: string;
   onToggle: () => void;
   onAttempt: (id: string) => void;
@@ -35,6 +36,7 @@ export function ScenarioResults({
   runId,
   opened,
   gradesAvailable,
+  evaluationActive,
   openedAttempt,
   onToggle,
   onAttempt,
@@ -171,6 +173,7 @@ export function ScenarioResults({
                 projectId={projectId}
                 runId={runId}
                 attempt={selected}
+                evaluationActive={evaluationActive}
               />
             </div>
           )}

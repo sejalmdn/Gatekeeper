@@ -21,14 +21,17 @@ export function EvaluationRuns(): ReactElement {
         title="Executions"
         detail="Run history and recorded attempt evidence."
         action={
-          <>
-            <Link className="button button-secondary" to={`/projects/${projectId}/compare-candidates`}>
+          <div className="evaluation-runs__actions">
+            <Link
+              className="button button-secondary"
+              to={`/projects/${projectId}/compare-candidates`}
+            >
               Compare candidates
             </Link>
             <Link className="button" to="new">
               New run
             </Link>
-          </>
+          </div>
         }
       />
       <LoadBoundary state={state}>
