@@ -49,3 +49,9 @@
   font-size: 12px;
   margin: 8px 0 0;
 }
+
+.attempt-grading__findings { display: grid; gap: 8px; }
+.attempt-grading__findings p { margin: 0; padding: 10px 0; border-bottom: 1px solid #35404b; font-size: 13px; }
+.attempt-grading__findings strong { color: #e8edf2; }
+.attempt-grading__technical { padding: 12px; border: 1px solid #35404b; background: #141a21; }
+.attempt-grading__technical summary { color: #80c7d8; cursor: pointer; }

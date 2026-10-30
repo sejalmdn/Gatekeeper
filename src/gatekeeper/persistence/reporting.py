@@ -43,6 +43,7 @@ def read_summary(database: Database, project_id: UUID, run_id: UUID) -> RunSumma
                 result = stored_summary(connection, project_id, run_id, status)
             else:
                 result = compute_summary(connection, project_id, run_id, status)
+
     except HTTPException:
         logger.info(
             "report_unavailable project_id=%s run_id=%s error_code=run_not_found duration_ms=%.2f",
@@ -106,6 +107,7 @@ def read_reporting_attempts(connection: sqlite3.Connection, run_id: UUID) -> lis
         e.verdict, e.evaluator_version, e.automatic_tool_validation,
         e.execution_id IS NOT NULL AS has_evaluation,
         x.execution_id IS NOT NULL AS has_evidence,
+        json_array_length(json_extract(x.normalized, '$.tool_requests')) AS tool_request_count,
         x.cost,
         json_extract(x.normalized, '$.duration_ms') AS duration_ms,
         json_extract(x.normalized, '$.input_tokens') AS input_tokens,
@@ -139,6 +141,7 @@ def read_reporting_attempts(connection: sqlite3.Connection, run_id: UUID) -> lis
                 "evaluator_version": row["evaluator_version"],
                 "has_evidence": bool(row["has_evidence"]),
                 "has_evaluation": bool(row["has_evaluation"]),
+                "tool_request_count": row["tool_request_count"],
                 "automatic_tool_validation": json.loads(row["automatic_tool_validation"] or "[]"),
                 "outcomes": by_execution.get(row["id"], {}),
                 "cost": json.loads(row["cost"]) if row["cost"] else None,

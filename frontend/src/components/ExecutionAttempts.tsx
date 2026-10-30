@@ -28,6 +28,7 @@ export function ExecutionAttempts({
   const scenarioIds = [
     ...new Set(attempts.map((attempt) => attempt.scenario_id)),
   ];
+  const selected = attempts.find((attempt) => attempt.id === opened);
   return (
     <div className="execution-attempts__scenarios">
       {scenarioIds.map((scenarioId) => {
@@ -40,47 +41,35 @@ export function ExecutionAttempts({
             <header>
               <div>
                 <h2>{scenario.scenario_name}</h2>
-                <p>
-                  {scenario.scenario_key} ·{" "}
-                  {scenario.scenario_type.replaceAll("_", " ")}
-                </p>
               </div>
-              <span>{group.length} attempts</span>
+              <span>{group.length} {group.length === 1 ? "attempt" : "attempts"}</span>
             </header>
             {group.map((attempt) => (
               <div className="execution-attempts__attempt" key={attempt.id}>
                 <button
                   type="button"
                   className="execution-attempts__attempt-heading"
-                  aria-expanded={opened === attempt.id}
-                  aria-controls={`attempt-${attempt.id}`}
-                  onClick={() =>
-                    onOpen(opened === attempt.id ? undefined : attempt.id)
-                  }
+                  aria-pressed={opened === attempt.id}
+                  onClick={() => onOpen(attempt.id)}
                 >
                   <span>Attempt {attempt.attempt_number}</span>
-                  <span className="execution-attempts__attempt-id">
-                    {attempt.id}
-                  </span>
                   <span className="badge">
                     {attempt.status.replaceAll("_", " ")}
                   </span>
-                  <span aria-hidden="true">
-                    {opened === attempt.id ? "−" : "+"}
-                  </span>
                 </button>
-                {opened === attempt.id && (
-                  <div id={`attempt-${attempt.id}`}>
-                    <AttemptEvidence
-                      key={`${attempt.id}-${attempt.status}`}
-                      projectId={projectId}
-                      runId={runId}
-                      executionId={attempt.id}
-                    />
-                  </div>
-                )}
               </div>
             ))}
+            {selected?.scenario_id === scenarioId && (
+              <section className="execution-attempts__selected" aria-label="Selected attempt evidence">
+                <h3>Attempt {selected.attempt_number} evidence</h3>
+                <AttemptEvidence
+                  key={`${selected.id}-${selected.status}`}
+                  projectId={projectId}
+                  runId={runId}
+                  executionId={selected.id}
+                />
+              </section>
+            )}
           </section>
         );
       })}

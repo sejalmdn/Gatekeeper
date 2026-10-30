@@ -33,6 +33,7 @@ class ReportingAttempt(Contract):
     evaluator_version: str | None = None
     has_evaluation: bool = False
     has_evidence: bool = False
+    tool_request_count: int | None = None
     automatic_tool_validation: list[CheckResult] = Field(default_factory=list)
     outcomes: dict[str, RuleOutcome] = Field(default_factory=dict)
     cost: ExecutionCost | None = None
@@ -120,6 +121,9 @@ class ScenarioSummary(Contract):
     bindings: list[BindingSummary]
     automatic_tool_validation_counts: dict[str, Count]
     score: WeightedScore
+    tool_requests_observed: Count | None = None
+    tool_requests_absent: Count | None = None
+    tool_requests_unknown: Count | None = None
     metrics: OperationalMetrics
 
 

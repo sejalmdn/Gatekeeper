@@ -149,7 +149,7 @@ it("opens response and tool request evidence on click", async () => {
   expect(container.textContent).toContain("Pass threshold");
   expect(api.getExecutionAttempt).not.toHaveBeenCalled();
   const open = container.querySelector<HTMLButtonElement>(
-    '[aria-controls="attempt-execution-1"]',
+    '.execution-attempts__attempt-heading',
   )!;
   await act(async () => open.click());
   expect(api.getExecutionAttempt).toHaveBeenCalledExactlyOnceWith(
@@ -159,15 +159,11 @@ it("opens response and tool request evidence on click", async () => {
   );
   expect(container.textContent).toContain("Your order is on its way.");
   expect(container.textContent).toContain(
-    "Requested only · tool was not executed",
+    "Requested; execution unverified",
   );
   expect(container.textContent).toContain("Unavailable");
   expect(container.textContent).not.toContain("Provenance and completeness");
-  expect(
-    container.querySelector('[aria-label="Provider request JSON"]'),
-  ).not.toBeNull();
-  await act(async () => open.click());
-  expect(container.textContent).not.toContain("Your order is on its way.");
+  expect(container.querySelector('.attempt-evidence__technical')).not.toBeNull();
 });
 
 // Active runs poll until terminal state, then stop issuing progress requests.

@@ -1,20 +1,16 @@
 import type { ReactElement } from "react";
 import type { AttemptEvaluationSummary, ScenarioSummary } from "../types";
-import { percent, resultLabel, resultSymbol } from "../utils/results";
+import { percent, resultLabel } from "../utils/results";
+import { formatNumber, formatUsd } from "../utils/format";
 import { AttemptGrading } from "./AttemptGrading";
-import { ScenarioOperationalMetrics } from "./ScenarioOperationalMetrics";
-import { ScenarioAssessment } from "./ScenarioAssessment";
-import { ScenarioRuleCounts } from "./ScenarioRuleCounts";
-import { ResultScore } from "./ResultScore";
 import { ResultBadge } from "./ResultBadge";
+import { ScenarioAssessment } from "./ScenarioAssessment";
+import { ScenarioOperationalMetrics } from "./ScenarioOperationalMetrics";
+import { ScenarioRuleCounts } from "./ScenarioRuleCounts";
 import "../styles/ScenarioResults.css";
 
 interface ScenarioResultsProps {
-  scenario: {
-    scenario_id: string;
-    scenario_name: string;
-    scenario_key: string;
-  };
+  scenario: { scenario_id: string; scenario_name: string; scenario_key: string };
   summary?: ScenarioSummary;
   attempts: AttemptEvaluationSummary[];
   projectId: string;
@@ -27,7 +23,7 @@ interface ScenarioResultsProps {
   onAttempt: (id: string) => void;
 }
 
-// Shows frozen scenario assessments with a compact strip of independently labeled attempt verdicts.
+// Shows one readable scenario row and the selected scenario's attempts and findings.
 export function ScenarioResults({
   scenario,
   summary,
@@ -42,130 +38,60 @@ export function ScenarioResults({
   onAttempt,
 }: ScenarioResultsProps): ReactElement {
   const selected = attempts.find((attempt) => attempt.id === openedAttempt);
+  const observed = summary?.tool_requests_observed;
+  const unknown = summary?.tool_requests_unknown;
+  let toolLabel = "Tool evidence unknown";
+
+  if (observed != null && unknown != null) {
+    if (observed > 0) {
+      toolLabel = `Requested in ${observed} of ${summary?.attempts.planned_attempts} attempts; execution unverified`;
+    } else if (unknown > 0) {
+      toolLabel = "Tool request evidence incomplete";
+    } else {
+      toolLabel = "No tool request observed";
+    }
+  }
+
   return (
-    <section
-      className={`scenario-results scenario-results--${summary?.assessment ?? "unavailable"}`}
-      data-open={opened}
-    >
-      <h3>
-        <button
-          className="scenario-results__heading"
-          aria-expanded={opened}
-          aria-controls={`scenario-results-${scenario.scenario_id}`}
-          onClick={onToggle}
-        >
-          <span className="scenario-results__disclosure" aria-hidden="true">
-            {opened ? "−" : "+"}
-          </span>
-          <span className="scenario-results__identity">
-            <span>{scenario.scenario_name}</span>
-            <code>{scenario.scenario_key}</code>
-          </span>
-          <ResultBadge
-            outcome={summary?.assessment ?? "Unavailable"}
-            prefix="Assessment"
-          />
-        </button>
-      </h3>
-      {summary && (
-        <div className="scenario-results__overview">
-          <dl className="scenario-results__stats">
-            <div>
-              <dt>Passing / planned</dt>
-              <dd>
-                {summary.attempts.passing_attempts} /{" "}
-                {summary.attempts.planned_attempts}
-              </dd>
-            </div>
-            <div>
-              <dt>Pass rate</dt>
-              <dd className="scenario-results__rate">
-                {percent(summary.attempts.pass_rate)}
-                {summary.attempts.pass_rate !== null && (
-                  <svg
-                    className="scenario-results__rate-bar"
-                    viewBox="0 0 100 12"
-                    role="img"
-                    aria-label={`Pass rate ${percent(summary.attempts.pass_rate)}; threshold ${percent(summary.pass_threshold)}`}
-                  >
-                    <rect
-                      className="scenario-results__track"
-                      y="3"
-                      width="100"
-                      height="6"
-                      rx="3"
-                    />
-                    <rect
-                      y="3"
-                      width={summary.attempts.pass_rate * 100}
-                      height="6"
-                      rx="3"
-                    />
-                    <line
-                      x1={summary.pass_threshold * 100}
-                      x2={summary.pass_threshold * 100}
-                      y1="1"
-                      y2="11"
-                    />
-                  </svg>
-                )}
-                <span className="scenario-results__sr-only">
-                  Threshold: {percent(summary.pass_threshold)}
-                </span>
-              </dd>
-            </div>
-            <div>
-              <dt>Stability</dt>
-              <dd
-                className={`scenario-results__stability scenario-results__stability--${summary.stability}`}
-              >
-                <span aria-hidden="true">● </span>
-                {resultLabel(summary.stability)}
-              </dd>
-            </div>
-          </dl>
-          <ResultScore score={summary.score} compact />
-        </div>
-      )}
+    <section className={`scenario-results scenario-results--${summary?.assessment ?? "unavailable"}`} data-open={opened}>
+      <button
+        className="scenario-results__heading"
+        aria-expanded={opened}
+        aria-controls={`scenario-results-${scenario.scenario_id}`}
+        onClick={onToggle}
+      >
+        <span className="scenario-results__name">{scenario.scenario_name}</span>
+        <ResultBadge outcome={summary?.assessment ?? "Unavailable"} />
+        <span className="scenario-results__field">
+          <small>Stability</small>{summary ? resultLabel(summary.stability) : "Unavailable"}
+        </span>
+        <span className="scenario-results__field">
+          <small>Score</small>{summary ? percent(summary.score.weighted_score) : "Unavailable"}
+        </span>
+        <span className="scenario-results__tool">{toolLabel}</span>
+      </button>
       {opened && (
-        <div
-          id={`scenario-results-${scenario.scenario_id}`}
-          className="scenario-results__body"
-        >
-          <div className="scenario-results__attempt-heading">
-            <h4>Repeated attempts</h4>
-            <span>Select an attempt to inspect its grading</span>
-          </div>
-          {attempts.length === 0 && (
-            <p>No attempts allocated for this scenario.</p>
-          )}
-          <div
-            className="scenario-results__attempts"
-            aria-label={`${scenario.scenario_name} attempts`}
-          >
+        <div id={`scenario-results-${scenario.scenario_id}`} className="scenario-results__body">
+          <p className="scenario-results__summary">
+            {summary?.attempts.passing_attempts ?? 0} / {summary?.attempts.planned_attempts ?? attempts.length} attempts passed
+            {summary && ` · Pass threshold ${percent(summary.pass_threshold)}`}
+          </p>
+          {summary?.reasons.length ? (
+            <p className="scenario-results__summary">Assessment unresolved: {summary.reasons.map(resultLabel).join(", ")}</p>
+          ) : null}
+          <div className="scenario-results__attempts" aria-label={`${scenario.scenario_name} attempts`}>
             {attempts.map((attempt) => (
               <button
                 key={attempt.id}
-                className={`scenario-results__attempt scenario-results__attempt--${gradesAvailable ? attempt.verdict : "unknown"}`}
-                aria-expanded={selected?.id === attempt.id}
-                aria-controls={`grade-${attempt.id}`}
+                className="scenario-results__attempt"
+                aria-pressed={selected?.id === attempt.id}
                 onClick={() => onAttempt(attempt.id)}
               >
-                <span>Attempt {attempt.attempt_number}</span>
-                <strong>
-                  <span aria-hidden="true">
-                    {resultSymbol(
-                      gradesAvailable ? attempt.verdict : "unknown",
-                    )}
-                  </span>
-                  {gradesAvailable
-                    ? resultLabel(attempt.verdict)
-                    : "Unknown grade"}
-                </strong>
-                <span>Execution: {resultLabel(attempt.status)}</span>
+                Attempt {attempt.attempt_number} · {gradesAvailable ? resultLabel(attempt.verdict) : "Grade unavailable"}
               </button>
             ))}
           </div>
+          {attempts.length === 0 && <p>No attempts allocated for this scenario.</p>}
           {selected && (
             <div id={`grade-${selected.id}`}>
               <AttemptGrading
@@ -179,11 +105,18 @@ export function ScenarioResults({
           )}
           {summary && (
             <>
-              <div className="scenario-results__diagnostics">
+              <div className="scenario-results__metrics">
+                <span>Mean latency: {formatNumber(summary.metrics.latency_ms.mean)} ms</span>
+                <span>Mean tokens: {formatNumber(summary.metrics.total_tokens.mean)}</span>
+                <span>Estimated cost: {formatUsd(summary.metrics.estimated_cost_usd?.sum)}</span>
+                <span>Score coverage: {percent(summary.score.coverage)}</span>
+              </div>
+              <details className="scenario-results__technical">
+                <summary>Detailed report</summary>
                 <ScenarioAssessment summary={summary} />
                 <ScenarioOperationalMetrics metrics={summary.metrics} />
-              </div>
-              <ScenarioRuleCounts rules={summary.bindings} />
+                <ScenarioRuleCounts rules={summary.bindings} />
+              </details>
             </>
           )}
         </div>

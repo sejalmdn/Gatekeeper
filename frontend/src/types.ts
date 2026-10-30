@@ -386,6 +386,9 @@ export interface ScenarioSummary {
   bindings: BindingSummary[];
   automatic_tool_validation_counts: Record<string, number>;
   score: WeightedScore;
+  tool_requests_observed?: number;
+  tool_requests_absent?: number;
+  tool_requests_unknown?: number;
   metrics: OperationalMetrics;
 }
 

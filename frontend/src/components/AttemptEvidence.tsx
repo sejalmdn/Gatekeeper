@@ -5,36 +5,23 @@ import { formatNumber } from "../utils/format";
 import { LoadBoundary } from "./Feedback";
 import { JsonViewer } from "./JsonViewer";
 
-// Reveals one attempt's observations and readable transport artifacts on demand.
+// Shows the selected response and tool requests with one technical detail area.
 export function AttemptEvidence({
-  projectId,
-  runId,
-  executionId,
+  projectId, runId, executionId,
 }: {
   projectId: string;
   runId: string;
   executionId: string;
 }): ReactElement {
-  // Loads large artifacts only for the opened attempt.
-  const state = useLoad(() =>
-    getExecutionAttempt(projectId, runId, executionId),
-  );
+  // Loads provider artifacts only for the selected attempt.
+  const state = useLoad(() => getExecutionAttempt(projectId, runId, executionId));
 
   return (
     <LoadBoundary state={state}>
       {({ evidence, request, response, error }) => (
         <div className="attempt-evidence__evidence">
-          {error && (
-            <p role="alert">
-              {error.message}{" "}
-              <code>
-                {error.source}/{error.code}
-              </code>
-            </p>
-          )}
-          {!evidence && (
-            <p>No provider evidence has been collected for this attempt.</p>
-          )}
+          {error && <p role="alert">{error.message}</p>}
+          {!evidence && <p>No provider evidence has been collected for this attempt.</p>}
           {evidence && (
             <>
               <dl className="attempt-evidence__metrics">
@@ -93,18 +80,26 @@ export function AttemptEvidence({
               ))}
             </>
           )}
-          {request !== null && (
-            <details>
-              <summary>Provider request</summary>
-              <JsonViewer value={request} label="Provider request JSON" />
-            </details>
-          )}
-          {response !== null && (
-            <details>
-              <summary>Provider response</summary>
-              <JsonViewer value={response} label="Provider response JSON" />
-            </details>
-          )}
+          <details className="attempt-evidence__technical">
+            <summary>Technical details</summary>
+            <p>Execution ID: <code>{executionId}</code></p>
+            {error && <p>Error: {error.source} / <code>{error.code}</code></p>}
+            {evidence && (
+              <>
+                <p>Source: {evidence.source.replaceAll("_", " ")}</p>
+                <p>Model: {evidence.returned_model ?? evidence.requested_model}</p>
+                <p>Finish reason: {evidence.finish_reason ?? "Unavailable"}</p>
+                {evidence.refusal !== null && <p>Refusal: {evidence.refusal}</p>}
+                <p>Provider charge: {formatUsd(evidence.provider_reported_usd)}</p>
+                <p>Input cost: {formatUsd(cost?.input_usd)} · Output cost: {formatUsd(cost?.output_usd)}</p>
+                {cost?.reason && <p>Cost reason: {cost.reason.replaceAll("_", " ")}</p>}
+                {cost?.pricing_entry && <JsonViewer value={cost} label="Saved cost calculation and pricing" />}
+                {evidence.completeness_issues.length > 0 && <p>Missing evidence: {evidence.completeness_issues.join(", ")}</p>}
+              </>
+            )}
+            {request !== null && <JsonViewer value={request} label="Provider request JSON" />}
+            {response !== null && <JsonViewer value={response} label="Provider response JSON" />}
+          </details>
         </div>
       )}
     </LoadBoundary>

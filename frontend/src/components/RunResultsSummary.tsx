@@ -1,12 +1,10 @@
 import type { ReactElement } from "react";
 import type { RunSummary } from "../types";
+import { formatNumber, formatUsd } from "../utils/format";
 import { percent, resultLabel } from "../utils/results";
-import { ResultCounts } from "./ResultCounts";
-import { ResultMetrics } from "./ResultMetrics";
-import { ResultScore } from "./ResultScore";
 import "../styles/RunResultsSummary.css";
 
-// Presents backend assessment counts and totals without inventing a run-wide verdict.
+// Presents the suite score, flakiness, and a short operational summary.
 export function RunResultsSummary({
   summary,
   notStarted,
@@ -20,61 +18,46 @@ export function RunResultsSummary({
         <h2>Summary unavailable</h2>
         <p>
           {notStarted
-            ? "This run has not started. Start it to freeze configuration and collect results."
+            ? "Start this run to collect results."
             : resultLabel(summary.reason ?? "unknown_reporting_state")}
         </p>
-        {summary.reason && <code>{summary.reason}</code>}
-        <p>
-          Available attempt grades and Evidence remain inspectable. Retry
-          repeats reads only.
-        </p>
+        <p>Attempt results and evidence may still be available below.</p>
       </section>
     );
   }
+
   const { aggregates } = summary;
+  const flaky = summary.scenarios.filter((item) => item.stability === "flaky").length;
+  const total = summary.scenarios.length;
+  const active = summary.execution_status === "pending" || summary.execution_status === "running";
+
   return (
     <section className="run-results-summary" aria-label="Run results summary">
-      <div className="run-results-summary__cards">
-        <article className="run-results-summary__card">
-          <h2>Scenario assessments</h2>
-          <p className="run-results-summary__value">
-            {summary.scenarios.length}
-            <span>scenarios</span>
-          </p>
-          <ResultCounts counts={aggregates.scenario_assessment_counts} />
-        </article>
-        <article className="run-results-summary__card">
-          <h2>Passing / planned attempts</h2>
-          <p className="run-results-summary__value">
-            {aggregates.attempts.passing_attempts}
-            <span>/ {aggregates.attempts.planned_attempts}</span>
-          </p>
-          <p className="run-results-summary__caption">
-            {aggregates.attempts.decisive_attempts} decisive grading outcomes
-          </p>
-        </article>
-        <article className="run-results-summary__card">
-          <h2>Attempt pass rate</h2>
-          <p className="run-results-summary__value">
-            {percent(aggregates.attempts.pass_rate)}
-          </p>
-          {aggregates.attempts.pass_rate !== null && (
-            <meter
-              min={0}
-              max={1}
-              value={aggregates.attempts.pass_rate}
-              aria-label="Attempt pass rate"
-            />
+      <div className="run-results-summary__primary">
+        <div>
+          <span>Suite score</span>
+          <strong>{percent(aggregates.score.weighted_score)}</strong>
+          {aggregates.score.weighted_score === null && (
+            <small>{aggregates.score.reason === "no_scored_rules" ? "No scored rules" : "Scored results incomplete"}</small>
           )}
-          <p className="run-results-summary__caption">
-            Across all planned attempts
-          </p>
-        </article>
-        <article className="run-results-summary__card">
-          <ResultScore score={aggregates.score} />
-        </article>
+        </div>
+        <div>
+          <span>Flaky scenarios{active ? " · partial" : ""}</span>
+          <strong>{total ? percent(flaky / total) : "Unavailable"}</strong>
+          <small>{flaky} of {total} scenarios</small>
+        </div>
+        <div>
+          <span>Scenarios assessed</span>
+          <strong>{total - (aggregates.scenario_assessment_counts.pending ?? 0)} / {total}</strong>
+          <small>{aggregates.attempts.passing_attempts} / {aggregates.attempts.planned_attempts} attempts passed</small>
+        </div>
       </div>
-      <ResultMetrics metrics={aggregates.metrics} />
+      <p className="run-results-summary__metrics">
+        <span>Score coverage: {percent(aggregates.score.coverage)}</span>
+        <span>Mean latency: {formatNumber(aggregates.metrics.latency_ms.mean)} ms</span>
+        <span>Mean tokens: {formatNumber(aggregates.metrics.total_tokens.mean)}</span>
+        <span>Estimated cost: {formatUsd(aggregates.metrics.estimated_cost_usd?.sum)}</span>
+      </p>
     </section>
   );
 }

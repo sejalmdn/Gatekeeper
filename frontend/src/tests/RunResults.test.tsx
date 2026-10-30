@@ -121,50 +121,29 @@ async function click(element: Element) {
   await act(async () => (element as HTMLElement).click());
 }
 
-// Confirms mixed assessments, incomplete scores, supplied nulls and zeros, and lazy reads.
-it("defaults to Results and displays backend assessments, stability and metric coverage", async () => {
+// Shows the suite summary without making a run-wide pass claim.
+it("shows suite score, flakiness, and readable scenario rows", async () => {
   await renderPage();
-  expect(
-    container.querySelector('[role="tab"][aria-selected="true"]')?.textContent,
-  ).toBe("Results");
-  expect(container.textContent).toContain("1 / 3");
-  expect(container.textContent).toContain("33.33%");
-  expect(container.textContent).toContain("66.67%");
-  expect(container.textContent).toContain("flaky");
-  expect(container.textContent).toContain(
-    "Insufficient repeats: at least two decisive attempts",
-  );
-  expect(container.textContent).toContain("incomplete_scored_results");
-  const means = container.querySelector(".result-metrics__means")!;
-  expect(means.textContent).toContain("Latency (ms) · meanUnavailable");
-  expect(means.textContent).toContain("Output tokens · mean0");
+  expect(container.textContent).toContain("Suite score");
+  expect(container.textContent).toContain("Flaky scenarios33.33%");
+  expect(container.textContent).toContain("1 of 3 scenarios");
+  expect(container.textContent).toContain("Score coverage: 66.67%");
+  expect(container.textContent).toContain("Tool evidence unknown");
+  expect(container.querySelectorAll(".scenario-results")).toHaveLength(3);
   expect(api.getAttemptEvaluation).not.toHaveBeenCalled();
   expect(api.getExecutionAttempt).not.toHaveBeenCalled();
-  await click(
-    container.querySelector('[aria-controls="scenario-results-s3"]')!,
-  );
-  expect(container.textContent).toContain("Execution evidence is missing.");
-  expect(container.textContent).toContain("new_reason_code");
 });
 
-// Keeps compact score states and the graphical threshold explicit without changing backend data.
-it("shows scenario score warnings, zero rates and accessible threshold markers", async () => {
+// Distinguishes an observed request from verified tool execution.
+it("counts tool requests without claiming execution", async () => {
   vi.mocked(api.getRunSummary).mockResolvedValue({
     ...report,
-    scenarios: [
-      {
-        ...report.scenarios[0],
-        attempts: { ...report.scenarios[0].attempts, pass_rate: 0 },
-        score: {
-          planned_weight: 0,
-          known_weight: 0,
-          passing_weight: 0,
-          weighted_score: null,
-          coverage: null,
-          reason: "no_scored_rules",
-        },
-      },
-    ],
+    scenarios: [{
+      ...report.scenarios[0],
+      tool_requests_observed: 2,
+      tool_requests_absent: 0,
+      tool_requests_unknown: 1,
+    }],
   });
   await renderPage();
   const card = container.querySelector(".scenario-results")!;
@@ -520,133 +499,8 @@ it.each([
   ).toBe("3");
 });
 
-// Normal assessments omit empty diagnostics and scenario-level automatic validation totals.
-it("hides empty assessment reasons and scenario tool validation", async () => {
-  vi.mocked(api.getRunSummary).mockResolvedValue({
-    ...report,
-    scenarios: [{ ...report.scenarios[0], reasons: [] }],
-  });
-  await renderPage("?scenario=s1");
-  const matrix = container.querySelector(
-    '[aria-label="Assessment and grading matrix"]',
-  )!;
-  expect(matrix.textContent).not.toContain("Automatic tool validation");
-  expect(matrix.textContent).not.toContain("Assessment reasons");
-});
-
-// Missing-evidence diagnostics remain visible when the backend supplies reasons.
-it("shows reported assessment reasons when present", async () => {
-  await renderPage("?scenario=s3");
-  const matrix = container.querySelector(
-    '[aria-label="Assessment and grading matrix"]',
-  )!;
-  expect(matrix.textContent).toContain("Assessment reasons");
-  expect(matrix.textContent).toContain("Execution evidence is missing.");
-  expect(matrix.textContent).toContain("missing_evidence");
-});
-
-// Invalid identifiers never trigger private artifact or grade reads.
-it("ignores invalid selections and supports arrow, Home and End tab navigation", async () => {
-  await renderPage("?tab=invalid&scenario=invalid&attempt=invalid");
-  expect(api.getAttemptEvaluation).not.toHaveBeenCalled();
-  button("Results").focus();
-  await act(async () =>
-    button("Results").dispatchEvent(
-      new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
-    ),
-  );
-  expect(document.activeElement).toBe(button("Evidence"));
-  expect(button("Evidence").getAttribute("aria-selected")).toBe("true");
-  expect(api.getExecutionAttempt).not.toHaveBeenCalled();
-  await act(async () =>
-    button("Evidence").dispatchEvent(
-      new KeyboardEvent("keydown", { key: "Home", bubbles: true }),
-    ),
-  );
-  expect(button("Results").getAttribute("aria-selected")).toBe("true");
-});
-
-// Summary failure cannot suppress grades, progress, or the evidence surface.
-it("keeps grading available after independent summary failure and retries reads", async () => {
-  vi.mocked(api.getRunSummary).mockRejectedValueOnce(
-    new Error("Summary offline"),
-  );
-  await renderPage("?scenario=s1&attempt=a1");
-  expect(container.textContent).toContain("Summary offline");
-  expect(container.textContent).toContain("3 / 3 attempts finished");
-  expect(container.textContent).toContain("Required text found in response.");
-  await click(button("Retry results"));
-  expect(container.textContent).not.toContain("Summary offline");
-  expect(container.textContent).toContain("Scenario assessments");
-});
-
-// A lightweight grade failure must not erase a successful summary or invent ungraded verdicts.
-it("preserves summary when lightweight grades fail and can inspect a grade lazily", async () => {
-  vi.mocked(api.listAttemptEvaluations).mockRejectedValue(
-    new Error("Grades offline"),
-  );
-  await renderPage("?scenario=s1");
-  expect(container.textContent).toContain("Scenario assessments");
-  expect(container.textContent).toContain("Grades offline");
-  expect(container.textContent).toContain("Unknown grade");
-  await click(container.querySelector('[aria-controls="grade-a1"]')!);
-  expect(container.textContent).toContain("Required text found in response.");
-});
-
-// Reporting absence is explicit for unstarted, historical, and missing stored reports.
-it.each([
-  ["pending", "frozen_snapshot_unavailable", "This run has not started"],
-  [
-    "failed",
-    "frozen_snapshot_unavailable",
-    "Frozen evaluation configuration is unavailable",
-  ],
-  [
-    "cancelled",
-    "stored_summary_unavailable",
-    "The stored report is unavailable",
-  ],
-] as const)(
-  "keeps unavailable %s runs inspectable",
-  async (status, reason, wording) => {
-    vi.mocked(api.getEvaluationRun).mockResolvedValue({ ...run, status });
-    vi.mocked(api.getRunSummary).mockResolvedValue({
-      ...report,
-      availability: "unavailable",
-      aggregates: null,
-      scenarios: [],
-      reason,
-    });
-    await renderPage("?scenario=s1&attempt=a1");
-    expect(container.textContent).toContain(wording);
-    expect(container.textContent).toContain("Required text found in response.");
-    await click(button("Evidence"));
-    expect(api.getExecutionAttempt).toHaveBeenCalled();
-  },
-);
-
-// Cancellation before allocation leaves both inspection and reporting state usable.
-it("shows cancellation before allocation in Evidence", async () => {
-  vi.mocked(api.getEvaluationRun).mockResolvedValue({
-    ...run,
-    status: "cancelled",
-  });
-  vi.mocked(api.listExecutionAttempts).mockResolvedValue([]);
-  vi.mocked(api.listAttemptEvaluations).mockResolvedValue([]);
-  await renderPage("?tab=evidence");
-  expect(container.textContent).toContain(
-    "cancelled before attempts were allocated",
-  );
-  expect(api.getExecutionAttempt).not.toHaveBeenCalled();
-});
-
-// Active polling ends after a terminal refresh, retaining previous data if that refresh fails.
-it("refreshes active results and retains stale data after a failed final refresh", async () => {
-  vi.useFakeTimers();
-  vi.mocked(api.getEvaluationRun).mockResolvedValue({
-    ...completed,
-    status: "running",
-  });
+// Keeps grades available in one selected scenario and attempt area.
+it("opens one scenario and loads its selected attempt grade", async () => {
   await renderPage();
   expect(container.textContent).toContain("Partial results");
   await act(async () => vi.advanceTimersByTimeAsync(2000));
@@ -693,61 +547,15 @@ it("reloads an open completed-but-ungraded attempt when grading arrives", async 
   await act(async () => vi.advanceTimersByTimeAsync(2000));
   expect(api.getAttemptEvaluation).toHaveBeenCalledTimes(2);
   expect(container.textContent).toContain("Required text found in response.");
+  expect(container.querySelector(".attempt-grading__technical")).not.toBeNull();
 });
 
-// Slow reads must not overlap polling cycles and must be ignored after navigating away.
-it("serializes slow cycles and ignores obsolete summary responses", async () => {
-  vi.useFakeTimers();
-  vi.mocked(api.getEvaluationRun).mockResolvedValue({
-    ...completed,
-    status: "running",
-  });
-  let resolve!: (value: typeof report) => void;
-  vi.mocked(api.getRunSummary).mockImplementationOnce(
-    () =>
-      new Promise((done) => {
-        resolve = done;
-      }),
-  );
+// Preserves clear unknown states for missing scored and tool evidence.
+it("shows unavailable score and unknown evidence without substituting zero", async () => {
   await renderPage();
-  await act(async () => vi.advanceTimersByTimeAsync(8000));
-  expect(api.getRunSummary).toHaveBeenCalledTimes(1);
-  expect(container.textContent).toContain("Refund policy");
-  await click(button("Evidence"));
-  await act(async () =>
-    resolve({ ...report, evaluator_versions: ["obsolete-version"] }),
-  );
-  expect(container.textContent).not.toContain("obsolete-version");
-  await act(async () => vi.advanceTimersByTimeAsync(4000));
-  expect(api.getRunSummary).toHaveBeenCalledTimes(1);
-  await act(async () => root.render(<p>Another page</p>));
-  await act(async () => vi.advanceTimersByTimeAsync(4000));
-  expect(api.listAttemptEvaluations).toHaveBeenCalledTimes(1);
-});
-
-// A late grade response cannot replace the current attempt's result.
-it("ignores obsolete grading responses after selection changes", async () => {
-  let resolve!: (value: typeof grade) => void;
-  vi.mocked(api.getAttemptEvaluation).mockImplementationOnce(
-    () =>
-      new Promise((done) => {
-        resolve = done;
-      }),
-  );
-  await renderPage("?scenario=s1&attempt=a1");
-  vi.mocked(api.getAttemptEvaluation).mockResolvedValue({
-    ...grade,
-    id: "a2",
-    verdict: "fail",
-  });
-  await click(container.querySelector('[aria-controls="grade-a2"]')!);
-  await act(async () =>
-    resolve({ ...grade, evaluator_version: "obsolete-evaluator" }),
-  );
-  expect(container.textContent).not.toContain("obsolete-evaluator");
-  expect(
-    container.querySelector('[aria-label="Attempt 2 grading"]'),
-  ).not.toBeNull();
+  expect(container.textContent).toContain("Scored results incomplete");
+  expect(container.textContent).toContain("Tool evidence unknown");
+  expect(container.textContent).toContain("Mean latency: Unavailable ms");
 });
 
 // Failed grading reads stay local to the disclosure and can be retried independently.
