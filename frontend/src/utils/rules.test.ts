@@ -387,3 +387,19 @@ it("validates binding keys and scopes", () => {
     ),
   ).toThrow("Rule name");
 });
+
+// Presets compose only the intended criterion and never add frontend metadata to the API.
+it("serializes custom rubrics and score boundaries without preset metadata", () => {
+  const definition = RULE_DEFINITIONS.find(
+    (item) => item.type === "judge.rubric",
+  )!;
+  for (const threshold of [1, 5]) {
+    const draft = initialRuleDraft(definition);
+    draft.fields.criterion = "Answer the customer's question clearly.";
+    draft.fields.min_score = String(threshold);
+    expect(serializeParameters(definition, draft)).toEqual({
+      criterion: "Answer the customer's question clearly.",
+      min_score: threshold,
+    });
+  }
+});

@@ -1,0 +1,43 @@
+.judge-details {
+  padding: 16px;
+  margin: 16px 0;
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--cyan);
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+
+.judge-details__heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.judge-details__heading h3 {
+  margin: 0;
+}
+
+.judge-details p,
+.judge-details dt {
+  color: var(--muted);
+}
+
+.judge-details summary {
+  cursor: pointer;
+}
+
+.judge-details summary:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 4px;
+}
+
+.judge-details__observations {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 14px;
+}
+
+.judge-details__observations dd {
+  margin: 4px 0 0;
+}

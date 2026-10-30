@@ -8,6 +8,7 @@ import type {
 } from "../types";
 import { messageFor } from "../utils/format";
 import { defaultRuleName } from "../utils/ruleNames";
+import { MULTI_TURN_RUBRIC_PRESETS } from "../utils/rubrics";
 import {
   initialRuleDraft,
   RULE_DEFINITIONS,
@@ -92,10 +93,21 @@ export function RuleEditor({
   );
 
   const scenario = scenarios.find((item) => item.id === scenarioId);
+  const selectedPreset =
+    definition?.type === "judge.rubric"
+      ? MULTI_TURN_RUBRIC_PRESETS.find(
+          (item) => item.id === draft?.fields.rubric_preset,
+        )
+      : undefined;
   const ruleKey =
     customRuleKey ??
     (scenario && definition
-      ? defaultRuleName(scenario.id, scenario.name, definition.label, bindings)
+      ? defaultRuleName(
+          scenario.id,
+          scenario.name,
+          selectedPreset?.label ?? definition.label,
+          bindings,
+        )
       : "");
   const compatibleDefinitions = RULE_DEFINITIONS.filter((item) =>
     scenario ? item.types.includes(scenario.scenario_type) : false,
@@ -138,6 +150,18 @@ export function RuleEditor({
   function chooseScenario(nextScenarioId: string): void {
     const nextScenario = scenarios.find((item) => item.id === nextScenarioId);
     setScenarioId(nextScenarioId);
+    if (
+      nextScenario?.scenario_type !== "multi_turn" &&
+      draft?.fields.rubric_preset
+    ) {
+      setDraft({
+        ...draft,
+        fields: {
+          ...draft.fields,
+          rubric_preset: "",
+        },
+      });
+    }
     if (
       !nextScenario ||
       (definition && !definition.types.includes(nextScenario.scenario_type))
@@ -273,6 +297,7 @@ export function RuleEditor({
         onChoose={chooseDefinition}
       />
       <RuleExpectationSection
+        multiTurn={scenario?.scenario_type === "multi_turn"}
         definition={definition}
         draft={draft}
         saving={saving}

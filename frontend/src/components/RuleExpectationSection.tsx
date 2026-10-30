@@ -1,11 +1,13 @@
 import type { ReactElement } from "react";
 import type { RuleDefinition, RuleDraft } from "../utils/rules";
+import { RubricFields } from "./RubricFields";
 import { RuleParameterFields } from "./RuleParameterFields";
 
 interface RuleExpectationSectionProps {
   definition?: RuleDefinition;
   draft?: RuleDraft;
   saving: boolean;
+  multiTurn: boolean;
   error?: string;
   sectionRef: (node: HTMLDetailsElement | null) => void;
   onChange: (draft: RuleDraft) => void;
@@ -16,6 +18,7 @@ export function RuleExpectationSection({
   definition,
   draft,
   saving,
+  multiTurn,
   error,
   sectionRef,
   onChange,
@@ -36,13 +39,21 @@ export function RuleExpectationSection({
         </legend>
         {definition && draft ? (
           <div className="rule-form__expectation-workspace">
-            <RuleParameterFields
-              key={definition.type}
-              disabled={saving}
-              definition={definition}
-              draft={draft}
-              onChange={onChange}
-            />
+            {definition.type === "judge.rubric" ? (
+              <RubricFields
+                draft={draft}
+                multiTurn={multiTurn}
+                onChange={onChange}
+              />
+            ) : (
+              <RuleParameterFields
+                key={definition.type}
+                disabled={saving}
+                definition={definition}
+                draft={draft}
+                onChange={onChange}
+              />
+            )}
           </div>
         ) : (
           <p className="rule-form__note">

@@ -245,6 +245,7 @@ export interface CheckResult {
 
 // Frozen authored rule identity attached to one result.
 export interface RuleEvaluationResult extends CheckResult {
+  score?: number | null;
   rule_binding_id: string;
   rule_key: string;
   rule_type: RuleType;
@@ -260,8 +261,43 @@ export interface AttemptEvaluationSummary extends ExecutionAttempt {
   outcome_counts: Record<string, number>;
 }
 
+// Saved judge observations stay independent of candidate operational evidence.
+export interface JudgeRecord {
+  configuration: {
+    model: string;
+    endpoint: string;
+    provider: string;
+    prompt_version: string;
+    temperature: number;
+    timeout_seconds: number;
+    max_output_tokens: number;
+    pricing_version: string;
+    input_usd_per_million: number;
+    output_usd_per_million: number;
+  };
+  outcome: "completed" | "cannot_evaluate" | "error";
+  reason: string | null;
+  requested_model: string;
+  requested_provider: string;
+  reported_model: string | null;
+  reported_provider: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  latency_ms: number | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  estimated_usd: string | null;
+  provider_reported_usd: string | null;
+  results: {
+    binding_id: string;
+    score: number;
+    reason: string;
+  }[];
+}
+
 // Full grades are fetched only for an opened attempt.
 export interface AttemptEvaluationDetail extends AttemptEvaluationSummary {
+  judge?: JudgeRecord | null;
   automatic_tool_validation: CheckResult[];
   rule_results: RuleEvaluationResult[];
   rule_configurations?: EffectiveRuleBinding[];

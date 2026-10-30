@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { getExecutionAttempt } from "../api";
 import { useLoad } from "../hooks/useLoad";
-import { formatNumber, formatUsd } from "../utils/format";
+import { formatNumber } from "../utils/format";
 import { LoadBoundary } from "./Feedback";
 import { JsonViewer } from "./JsonViewer";
 
@@ -22,7 +22,7 @@ export function AttemptEvidence({
 
   return (
     <LoadBoundary state={state}>
-      {({ evidence, request, response, error, cost }) => (
+      {({ evidence, request, response, error }) => (
         <div className="attempt-evidence__evidence">
           {error && (
             <p role="alert">
@@ -59,26 +59,6 @@ export function AttemptEvidence({
                   <dd>{evidence.finish_reason ?? "Unavailable"}</dd>
                 </div>
               </dl>
-              <h3>Estimated standard-rate cost (USD)</h3>
-              <p>{formatUsd(cost?.estimated_usd)}</p>
-              {cost?.reason && <p>{cost.reason.replaceAll("_", " ")}</p>}
-              <p>
-                Input: {formatUsd(cost?.input_usd)} · Output:{" "}
-                {formatUsd(cost?.output_usd)}
-              </p>
-              <p>
-                Provider-reported charge (USD):{" "}
-                {formatUsd(evidence.provider_reported_usd)}
-              </p>
-              <p>
-                Excludes cache discounts, account discounts, taxes, and fees.
-              </p>
-              {cost?.pricing_entry && (
-                <JsonViewer
-                  value={cost}
-                  label="Saved cost calculation and pricing"
-                />
-              )}
               <h3>Response</h3>
               <pre className="attempt-evidence__response">
                 {evidence.response_text ?? "No response text was produced."}
