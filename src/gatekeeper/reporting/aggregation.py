@@ -303,6 +303,13 @@ def aggregate_run(
                 bindings=bindings,
                 automatic_tool_validation_counts=automatic_counts(observed),
                 score=weighted_score(bindings),
+                tool_requests_observed=sum(
+                    attempt.tool_request_count is not None and attempt.tool_request_count > 0
+                    for attempt in observed
+                ),
+                tool_requests_absent=sum(attempt.tool_request_count == 0 for attempt in observed),
+                tool_requests_unknown=planned
+                - sum(attempt.tool_request_count is not None for attempt in observed),
                 metrics=metrics(observed, planned),
             )
         )

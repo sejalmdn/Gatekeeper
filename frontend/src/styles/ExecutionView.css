@@ -114,7 +114,7 @@
 
 .execution-attempts__attempt-heading {
   display: grid;
-  grid-template-columns: 110px minmax(0, 1fr) auto 18px;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 16px;
   width: 100%;
@@ -125,6 +125,20 @@
   color: var(--text);
   text-align: left;
 }
+
+.execution-attempts__attempt-heading[aria-pressed="true"] {
+  background: #242c36;
+  box-shadow: inset 3px 0 #80c7d8;
+}
+
+.execution-attempts__selected {
+  padding: 20px;
+  border: 1px solid #35404b;
+  border-radius: 8px;
+  background: #1a2028;
+}
+
+.execution-attempts__selected h3 { margin: 0 0 16px; }
 
 .execution-attempts__attempt-heading:hover,
 .execution-attempts__attempt-heading[aria-expanded="true"] {
@@ -144,6 +158,13 @@
   padding: 18px;
   min-width: 0;
 }
+
+.attempt-evidence__evidence h3 { margin: 0 0 10px; font-size: 15px; }
+.attempt-evidence__evidence section { display: grid; gap: 8px; }
+.attempt-evidence__evidence section > p { margin: 0; color: #aab5c0; }
+.attempt-evidence__technical { background: #141a21; }
+.attempt-evidence__technical summary { margin: 0; color: #80c7d8; }
+.attempt-evidence__technical[open] summary { margin-bottom: 14px; }
 
 .attempt-evidence__response {
   padding: 18px;
@@ -222,7 +243,7 @@
   }
 
   .execution-attempts__attempt-heading {
-    grid-template-columns: 1fr auto 18px;
+    grid-template-columns: 1fr auto;
   }
 
   .execution-attempts__attempt-id {
