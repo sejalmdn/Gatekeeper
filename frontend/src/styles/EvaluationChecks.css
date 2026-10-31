@@ -1,9 +1,9 @@
 /* Uniform reference tables keep check behavior and evidence compatibility comparable. */
 .evaluation-checks {
-  --evaluation-checks-accent: #cbfb16;
-  --evaluation-checks-ink: #07120a;
-  --evaluation-checks-soft: rgb(203 251 22 / 12%);
-  --evaluation-checks-border: rgb(203 251 22 / 32%);
+  --evaluation-checks-accent: #d9f99d;
+  --evaluation-checks-ink: #1b2614;
+  --evaluation-checks-soft: rgb(217 249 157 / 12%);
+  --evaluation-checks-border: rgb(217 249 157 / 32%);
 }
 
 .evaluation-checks > .boundary-note {

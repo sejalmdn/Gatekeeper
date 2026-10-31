@@ -29,7 +29,7 @@ export function OverviewPage(): ReactElement {
   const candidates = useLoad(() => listCandidates(project.id));
   const datasets = useLoad(() => listDatasets(project.id));
   return (
-    <section className="page-content">
+    <section className="page-content overview-page">
       <PageHeading
         title={`${project.name}`}
         detail="Provider connections, evaluation candidates, and scenario datasets."
@@ -72,9 +72,11 @@ export function OverviewPage(): ReactElement {
           footer="Single-turn, multi-turn, and tool use"
         />
       </div>
-      <Notice>
-        Start an execution from a candidate to collect scenario evidence. Inspect saved runs in Executions.
-      </Notice>
+      <div className="overview-page__notice">
+        <Notice>
+          Start an execution from a candidate to collect scenario evidence. Inspect saved runs in Executions.
+        </Notice>
+      </div>
     </section>
   );
 }
@@ -92,19 +94,23 @@ function RecordCount({
 }: RecordCountProps): ReactElement {
   return (
     <Link to={to} className={`record-count record-count--${tone}`}>
-      <div className="record-count-icon">
-        <Icon name={icon} />
-      </div>
       <div className="record-count-content">
-        <div className="record-count-heading">
-          <span>{label}</span>
-          <span className="badge">{badge}</span>
-        </div>
-        <div className="record-count-value">
-          <strong>
-            {state.data ? String(state.data.length).padStart(2, "0") : "—"}
-          </strong>
-          <span>{unit}</span>
+        <div className="record-count-main">
+          <div className="record-count-icon">
+            <Icon name={icon} />
+          </div>
+          <div className="record-count-detail">
+            <div className="record-count-heading">
+              <span>{label}</span>
+              <span className="badge">{badge}</span>
+            </div>
+            <div className="record-count-value">
+              <strong>
+                {state.data ? String(state.data.length).padStart(2, "0") : "—"}
+              </strong>
+              <span>{unit}</span>
+            </div>
+          </div>
         </div>
         <p>
           {state.error ? (
@@ -113,10 +119,10 @@ function RecordCount({
             "Loading records…"
           ) : null}
         </p>
-        <div className="record-count-footer">
-          <span>{footer}</span>
-          <Icon name="arrow" />
-        </div>
+      </div>
+      <div className="record-count-footer">
+        <span>{footer}</span>
+        <Icon name="arrow" />
       </div>
     </Link>
   );

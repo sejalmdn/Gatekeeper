@@ -5,37 +5,30 @@
   gap: 16px;
   margin-bottom: 24px;
 }
+
+.overview-page { display: flex; flex-direction: column; min-height: calc(100vh - 130px); }
+.overview-page__notice { margin-top: auto; padding-top: 24px; }
+.overview-page__notice .boundary-note { margin-top: 0; }
+.overview-page__notice .boundary-note p { max-width: none; white-space: nowrap; }
 .record-count {
-  --record-card-ink: #07120a;
+  --record-card-ink: #e5e7eb;
   display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
-  border: 1px solid rgb(0 0 0 / 25%);
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 200px;
+  border: 1px solid color-mix(in srgb, #4ade80, transparent 70%);
   border-radius: var(--radius-panel);
-  background: var(--record-card-content);
+  background: linear-gradient(180deg, rgb(74 222 128 / 16%) 0%, rgb(34 197 94 / 8%) 32%, rgb(13 20 16 / 88%) 72%, rgb(9 13 11 / 96%) 100%);
+  box-shadow: inset 0 1px 0 rgb(74 222 128 / 50%), 0 12px 28px -8px rgb(0 0 0 / 60%);
+  backdrop-filter: blur(12px);
   color: var(--record-card-ink);
   text-decoration: none;
   min-width: 0;
   overflow: hidden;
 }
 
-.record-count--providers {
-  --record-card-icon: #5fed68;
-  --record-card-content: #77f26e;
-}
-
-.record-count--candidates {
-  --record-card-icon: #77f252;
-  --record-card-content: #8cf64c;
-}
-
-.record-count--datasets {
-  --record-card-icon: #8df63d;
-  --record-card-content: #a5f932;
-}
-
 .record-count:hover {
-  border-color: var(--action);
-  color: var(--record-card-ink);
+  border-color: color-mix(in srgb, #4ade80, transparent 45%);
+  color: var(--text);
 }
 
 .record-count:focus-visible {
@@ -47,8 +40,8 @@
   align-items: center;
   justify-content: center;
   min-width: 0;
-  background: var(--record-card-icon);
-  color: var(--record-card-ink);
+  background: transparent;
+  color: var(--muted);
 }
 
 .record-count-icon .icon {
@@ -58,7 +51,27 @@
 
 .record-count-content {
   min-width: 0;
-  padding: 20px;
+  padding: 18px 20px 0;
+}
+.record-count-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.record-count-detail { min-width: 0; flex: 1; }
+.record-count-icon { flex: 0 0 32px; }
+.record-count-icon .icon { width: 24px; height: 24px; }
+.record-count-content > p { margin: 4px 0 0; min-height: 0; }
+.record-count-content > p:empty { display: none; }
+.record-count-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px 20px;
+  border-top: 1px solid rgb(255 255 255 / 12%);
+  color: var(--muted);
+  font-size: var(--font-size-label);
 }
 
 .record-count-heading {
@@ -72,36 +85,36 @@
   font-size: var(--font-size-label);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: rgb(7 18 10 / 76%);
+  color: var(--muted);
 }
 .record-count-heading .badge {
   font-size: var(--font-size-label);
   padding: 2px 6px;
-  border-color: rgb(0 0 0 / 18%);
-  background: rgb(0 0 0 / 12%);
-  color: var(--record-card-ink);
+  border-color: rgb(255 255 255 / 12%);
+  background: rgb(255 255 255 / 6%);
+  color: var(--text);
 }
 .record-count-value {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 8px;
 }
 .record-count-value strong {
   font-family: var(--font-display);
   font-size: var(--font-size-stat-large);
   line-height: 1.3;
-  color: var(--record-card-ink);
+  color: #fff;
   font-variant-numeric: tabular-nums;
 }
 .record-count-value > span {
-  color: rgb(7 18 10 / 76%);
+  color: var(--muted);
   font-size: var(--font-size-label);
 }
 .record-count p {
-  min-height: 36px;
+  min-height: 0;
   font-size: var(--font-size-body);
-  color: rgb(7 18 10 / 76%);
+  color: var(--muted);
   margin: 8px 0 12px;
   overflow-wrap: anywhere;
 }
@@ -109,18 +122,9 @@
   font-weight: 500;
   color: var(--record-card-ink);
 }
-.record-count-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  border-top: 1px solid rgb(0 0 0 / 18%);
-  padding-top: 12px;
-  color: rgb(7 18 10 / 76%);
-  font-size: var(--font-size-label);
-}
 .record-count-footer .icon {
   width: 13px;
-  color: var(--record-card-ink);
+  color: var(--muted);
 }
 .overview-records {
   min-width: 0;

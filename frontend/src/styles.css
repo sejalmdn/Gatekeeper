@@ -22,7 +22,9 @@
   --cyan: #01b7ee;
   --cyan-soft: rgb(1 183 238 / 8%);
   --error: #f87171;
-  --warning: #ddfc18;
+  --warning: #f59e0b;
+  --warning-soft: rgb(245 158 11 / 8%);
+  --warning-border: rgb(245 158 11 / 28%);
   --radius: 8px;
   --radius-panel: 12px;
   --radius-compact: 4px;

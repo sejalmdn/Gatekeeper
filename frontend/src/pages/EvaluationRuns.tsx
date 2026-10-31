@@ -4,8 +4,10 @@ import { listEvaluationRuns } from "../api";
 import { LoadBoundary } from "../components/Feedback";
 import { PageHeading } from "../components/PageHeading";
 import { useLoad } from "../hooks/useLoad";
+import { Icon } from "../components/Icon";
 import { timestamp } from "../utils/format";
 import "../styles/ExecutionView.css";
+import "../styles/RecordList.css";
 
 // Lists saved executions so their evidence can be revisited after navigation or refresh.
 export function EvaluationRuns(): ReactElement {
@@ -21,53 +23,60 @@ export function EvaluationRuns(): ReactElement {
         title="Executions"
         detail="Run history and recorded attempt evidence."
         action={
-          <div className="evaluation-runs__actions">
-            <Link
-              className="button button-secondary"
-              to={`/projects/${projectId}/compare-candidates`}
-            >
-              Compare candidates
-            </Link>
-            <Link className="button" to="new">
-              New run
-            </Link>
-          </div>
+          <Link className="button" to="new">
+            <Icon name="plus" />
+            New run
+          </Link>
         }
       />
-      <LoadBoundary state={state}>
-        {(runs) => {
-          if (runs.length === 0)
+      <div className="record-list evaluation-runs__list">
+        <div className="record-list-header">
+          <h2>
+            All records
+            <span>{state.data?.length ?? "—"}</span>
+          </h2>
+          <span className="record-list-note">Project scoped</span>
+        </div>
+        <div className="evaluation-runs__ledger-header" aria-hidden="true">
+          <span>Run</span>
+          <span>Attempts</span>
+          <span>Status</span>
+        </div>
+        <LoadBoundary state={state}>
+          {(runs) => {
+            if (runs.length === 0)
+              return (
+                <p className="empty-state">
+                  No executions yet. Start a run to collect scenario evidence.
+                </p>
+              );
             return (
-              <p className="empty-state">
-                No executions yet. Start a run to collect scenario evidence.
-              </p>
+              <div className="evaluation-runs__ledger">
+                {[...runs].reverse().map((run) => (
+                  <Link
+                    key={run.id}
+                    to={run.id}
+                    className="evaluation-runs__ledger-row"
+                  >
+                    <div>
+                      <strong>{run.id.slice(0, 8)}</strong>
+                      <p>{timestamp(run.created_at)}</p>
+                    </div>
+                    <span>
+                      {run.finished_attempts} / {run.total_attempts}
+                    </span>
+                    <span className="badge">
+                      {run.status === "pending" && run.queued_at
+                        ? "queued"
+                        : run.status}
+                    </span>
+                  </Link>
+                ))}
+              </div>
             );
-          return (
-            <div className="evaluation-runs__ledger">
-              {[...runs].reverse().map((run) => (
-                <Link
-                  key={run.id}
-                  to={run.id}
-                  className="evaluation-runs__ledger-row"
-                >
-                  <div>
-                    <strong>Run {run.id.slice(0, 8)}</strong>
-                    <p>{timestamp(run.created_at)}</p>
-                  </div>
-                  <span>
-                    {run.finished_attempts} / {run.total_attempts} attempts
-                  </span>
-                  <span className="badge">
-                    {run.status === "pending" && run.queued_at
-                      ? "queued"
-                      : run.status}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          );
-        }}
-      </LoadBoundary>
+          }}
+        </LoadBoundary>
+      </div>
     </section>
   );
 }

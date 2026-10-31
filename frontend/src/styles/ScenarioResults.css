@@ -16,7 +16,10 @@
   --scenario-signal: var(--run-fail);
 }
 
-.scenario-results--inconclusive,
+.scenario-results--inconclusive {
+  --scenario-signal: var(--warning);
+}
+
 .scenario-results--pending {
   --scenario-signal: var(--accent);
 }

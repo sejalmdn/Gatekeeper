@@ -19,6 +19,7 @@ type NavigationColor =
   | "candidates"
   | "datasets"
   | "executions"
+  | "compare"
   | "evaluation-checks";
 
 interface NavigationItem {
@@ -59,7 +60,7 @@ const NAVIGATION: NavigationItem[] = [
     path: "compare-candidates",
     label: "Compare candidates",
     icon: "candidate",
-    color: "candidates",
+    color: "compare",
 
   },
 ];

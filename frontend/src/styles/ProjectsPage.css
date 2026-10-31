@@ -27,6 +27,13 @@
   padding: 40px 24px;
 }
 
+.projects-page > .page-heading {
+  padding: 24px;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 24px rgb(0 0 0 / 50%);
+}
+
 .projects-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
