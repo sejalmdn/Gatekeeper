@@ -41,10 +41,12 @@
 }
 
 .project-directory {
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--section-title-color, var(--accent)), transparent 78%);
   border-radius: var(--radius-panel);
   overflow: hidden;
-  background: var(--surface);
+  background: transparent;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 60%);
   align-self: start;
 }
 
@@ -53,7 +55,7 @@
   align-items: center;
   gap: 12px;
   padding: var(--space-panel-compact) var(--space-panel);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid color-mix(in srgb, var(--section-title-color, var(--accent)), transparent 86%);
 }
 
 .project-directory-heading h2 {
@@ -73,7 +75,7 @@
 }
 
 .project-directory li + li {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid color-mix(in srgb, var(--section-title-color, var(--accent)), transparent 86%);
 }
 
 .project-directory a {
@@ -132,10 +134,11 @@
 }
 
 .project-create {
-  background: var(--surface);
+  background: transparent;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 60%);
   padding: 28px;
-  border: 1px solid var(--border);
-  border-top-color: var(--accent-border);
+  border: 1px solid color-mix(in srgb, var(--section-title-color, var(--accent)), transparent 78%);
   border-radius: var(--radius-panel);
 }
 

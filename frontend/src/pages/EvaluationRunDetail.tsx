@@ -106,14 +106,6 @@ export function EvaluationRunDetail(): ReactElement {
         settings={settings}
         actions={
           <>
-            {!active && (
-              <Link
-                className="button button-secondary"
-                to={`/projects/${projectId}/compare-candidates?runA=${run.id}`}
-              >
-                Compare candidates
-              </Link>
-            )}
             {run.status === "pending" && !run.queued_at && (
               <button
                 className="button"

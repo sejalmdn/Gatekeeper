@@ -1,19 +1,22 @@
 /* Stitch's carbon panels, cyan identifiers, and compact monospace telemetry. */
 .run-comparison {
-  --comparison-canvas: #131315;
-  --comparison-panel: #1c1b1d;
-  --comparison-inset: #0e0e10;
-  --comparison-line: #2a2a2c;
-  --comparison-text: #e5e1e4;
-  --comparison-muted: #a6afb4;
-  --comparison-cyan: #4cd7f6;
+  --comparison-panel: var(--surface);
+  --comparison-inset: var(--surface-raised);
+  --comparison-line: var(--border);
+  --comparison-text: var(--text);
+  --comparison-muted: var(--muted);
+  --comparison-cyan: var(--cyan);
   color: var(--comparison-text);
-  background: var(--comparison-canvas);
+  background: transparent;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 60%);
   font-family: "Geist", system-ui, sans-serif;
-  font-size: 13px;
+  font-size: var(--font-size-body);
   line-height: 1.5;
   padding: 28px;
   min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--section-title-color), transparent 78%);
+  border-radius: var(--radius-panel);
 }
 
 
@@ -51,35 +54,20 @@
   color: var(--comparison-muted);
 }
 
-.run-comparison button {
-  border: 1px solid transparent;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.run-comparison button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
 .run-comparison a {
   font-size: inherit;
-  color: var(--comparison-cyan);
   text-decoration: none;
 }
 
-.run-comparison a:hover {
-  text-decoration: underline;
-}
-
 .run-comparison :is(button, select, summary, a):focus-visible {
-  outline: 2px solid var(--comparison-cyan);
-  outline-offset: 4px;
+  outline: 1px solid color-mix(in srgb, var(--section-title-color), transparent 78%);
+  outline-offset: 2px;
 }
 
 .run-comparison__hero {
   padding: 20px;
-  border-radius: 8px;
+  border: 1px solid var(--comparison-line);
+  border-radius: var(--radius-panel);
   background: var(--comparison-panel);
   margin-bottom: 24px;
 }
@@ -116,7 +104,7 @@
   padding: 8px 14px;
   color: var(--comparison-text);
   background: var(--comparison-line);
-  border-radius: 3px;
+  border-radius: var(--radius-compact);
 }
 
 .run-comparison__selectors {
@@ -125,7 +113,8 @@
   gap: 40px;
   padding: 16px;
   background: var(--comparison-inset);
-  border-radius: 4px;
+  border: 1px solid var(--comparison-line);
+  border-radius: var(--radius-panel);
   margin-top: 20px;
 }
 
@@ -150,7 +139,7 @@
   background: var(--comparison-panel);
   color: var(--comparison-text);
   border: 1px solid var(--comparison-line);
-  border-radius: 3px;
+  border-radius: var(--radius);
   padding: 10px;
   font-size: 12px;
   text-overflow: ellipsis;
@@ -179,7 +168,7 @@
 .run-comparison__warning {
   background: rgb(255 185 95 / 10%);
   padding: 5px 8px;
-  border-radius: 2px;
+  border-radius: var(--radius-compact);
 }
 
 .run-comparison__run-cards {
@@ -191,7 +180,8 @@
 
 .comparison-run-card {
   min-width: 0;
-  border-radius: 6px;
+  border: 1px solid var(--comparison-line);
+  border-radius: var(--radius-panel);
   border-top: 3px solid #869397;
   background: var(--comparison-inset);
   padding: 16px;
@@ -212,6 +202,8 @@
 .comparison-run-card__label,
 .comparison-run-card__status {
   padding: 3px 6px;
+  border: 1px solid var(--comparison-line);
+  border-radius: var(--radius-compact);
   background: var(--comparison-panel);
   text-transform: uppercase;
   font-size: 10px;
@@ -248,9 +240,10 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+  border: 1px solid var(--comparison-line);
   background: var(--comparison-panel);
   padding: 10px;
-  border-radius: 4px;
+  border-radius: var(--radius);
   margin: 14px 0;
 }
 
@@ -282,8 +275,9 @@
 }
 
 .comparison-summary__card {
+  border: 1px solid var(--comparison-line);
   background: var(--comparison-panel);
-  border-radius: 6px;
+  border-radius: var(--radius-panel);
   padding: 14px;
   min-width: 0;
   overflow-wrap: anywhere;
@@ -322,8 +316,9 @@
 
 .comparison-statistics,
 .comparison-scenario__rules {
+  border: 1px solid var(--comparison-line);
   background: var(--comparison-panel);
-  border-radius: 7px;
+  border-radius: var(--radius-panel);
   padding: 18px;
   margin-bottom: 16px;
 }
@@ -353,7 +348,7 @@
   flex-wrap: wrap;
   gap: 3px;
   padding: 3px;
-  border-radius: 4px;
+  border-radius: var(--radius);
   background: var(--comparison-inset);
 }
 
@@ -363,7 +358,7 @@
   padding: 6px 10px;
   color: var(--comparison-muted);
   background: transparent;
-  border-radius: 2px;
+  border-radius: var(--radius-compact);
   font-size: 11px;
 }
 
@@ -387,7 +382,7 @@
 .comparison-results__filters button span {
   background: var(--comparison-inset);
   color: var(--comparison-text);
-  border-radius: 10px;
+  border-radius: var(--radius-compact);
   padding: 1px 5px;
   margin-left: 4px;
   font-size: 10px;
@@ -485,8 +480,9 @@
 }
 
 .comparison-scenario {
+  border: 1px solid var(--comparison-line);
   background: var(--comparison-panel);
-  border-radius: 6px;
+  border-radius: var(--radius-panel);
   min-width: 0;
 }
 
@@ -497,7 +493,7 @@
   padding: 16px;
   cursor: pointer;
   list-style: none;
-  border-radius: 6px;
+  border-radius: var(--radius-panel);
 }
 
 .comparison-scenario__trigger::-webkit-details-marker {
@@ -516,7 +512,7 @@
   flex-shrink: 0;
   color: var(--comparison-muted);
   background: var(--comparison-line);
-  border-radius: 3px;
+  border-radius: var(--radius);
 }
 
 .comparison-scenario__identity {
@@ -540,7 +536,7 @@
   background: var(--comparison-line);
   color: var(--comparison-muted);
   font: 10px var(--font-code);
-  border-radius: 2px;
+  border-radius: var(--radius-compact);
   overflow-wrap: anywhere;
 }
 
@@ -595,7 +591,7 @@
 .comparison-scenario__content {
   padding: 16px;
   background: var(--comparison-inset);
-  border-radius: 0 0 6px 6px;
+  border-radius: 0 0 var(--radius-panel) var(--radius-panel);
 }
 
 .comparison-scenario__toolbar {
@@ -635,7 +631,8 @@
 .comparison-results__footer {
   padding: 18px;
   margin-top: 24px;
-  border-radius: 5px;
+  border: 1px solid var(--comparison-line);
+  border-radius: var(--radius-panel);
   background: var(--comparison-inset);
   color: var(--comparison-muted);
   font: 11px var(--font-code);
@@ -644,7 +641,8 @@
 .run-comparison__notice {
   padding: 18px;
   background: var(--comparison-panel);
-  border-radius: 5px;
+  border: 1px solid var(--comparison-line);
+  border-radius: var(--radius-panel);
 }
 
 @media (max-width: 1200px) {

@@ -4,7 +4,7 @@
   border: 1px solid color-mix(in srgb, var(--record-list-hue), transparent 78%);
   border-radius: 8px;
   overflow: hidden;
-  background: color-mix(in srgb, var(--record-list-hue), transparent 96%);
+  background: transparent;
   backdrop-filter: blur(4px);
   box-shadow: 0 8px 32px rgb(0 0 0 / 60%);
 }
@@ -17,7 +17,7 @@
   gap: 16px;
   padding: 16px 24px;
   border-bottom: 1px solid color-mix(in srgb, var(--heading-hue), transparent 82%);
-  background: color-mix(in srgb, var(--heading-hue), transparent 96%);
+  background: transparent;
 }
 
 .record-list-header h2 {

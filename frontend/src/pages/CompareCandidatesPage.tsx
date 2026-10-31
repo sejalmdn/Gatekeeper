@@ -210,13 +210,13 @@ export function CompareCandidatesPage() {
             <p>Use distinct runs. Both sides may use the same candidate.</p>
             {ready ? (
               <Link
-                className="compare-candidates__submit"
+                className="button"
                 to={`/projects/${projectId}/evaluation-runs/compare?${selection}`}
               >
                 Compare runs →
               </Link>
             ) : (
-              <button className="compare-candidates__submit" disabled>
+              <button className="button" disabled>
                 Compare runs →
               </button>
             )}

@@ -86,8 +86,8 @@ textarea {
   -webkit-tap-highlight-color: transparent;
 }
 :focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 4px;
+  outline: 1px solid color-mix(in srgb, var(--section-title-color), transparent 78%);
+  outline-offset: 2px;
 }
 ::selection {
   background: var(--accent);
@@ -174,7 +174,7 @@ button:focus-visible,
   outline-color: var(--action);
 }
 button:disabled {
-  opacity: 0.5;
+  color: var(--muted);
   cursor: not-allowed;
 }
 .quiet-button,

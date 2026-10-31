@@ -51,26 +51,11 @@ export function AttemptGrading({
             </p>
           )}
           {data.judge && <JudgeDetails judge={data.judge} />}
-          <section className="attempt-grading__findings" aria-label="Rule results">
-            <h3>Checks</h3>
+          <section className="attempt-grading__technical">
+            <h3>Technical details</h3>
             {data.automatic_tool_validation.length === 0 && data.rule_results.length === 0 && (
-              <p>No checks recorded.</p>
+              <p>No technical details recorded.</p>
             )}
-            {data.automatic_tool_validation.map((check, index) => (
-              <p className={`attempt-grading__finding attempt-grading__finding--${check.outcome}`} key={`automatic-${index}`}>
-                <span className="attempt-grading__dot" aria-label={check.outcome} />
-                <strong>Tool schema check</strong>
-              </p>
-            ))}
-            {data.rule_results.map((check) => (
-              <p className={`attempt-grading__finding attempt-grading__finding--${check.outcome}`} key={check.rule_binding_id}>
-                <span className="attempt-grading__dot" aria-label={check.outcome} />
-                <strong>{check.rule_key}</strong>
-              </p>
-            ))}
-          </section>
-          <details className="attempt-grading__technical">
-            <summary>Technical details</summary>
             {data.automatic_tool_validation.map((check, index) => (
               <GradingCheck key={index} check={check} />
             ))}
@@ -83,7 +68,7 @@ export function AttemptGrading({
                 )}
               />
             ))}
-          </details>
+          </section>
         </>
       )}
     </section>

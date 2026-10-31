@@ -61,7 +61,7 @@ export function RecordForm({
             >
               Cancel
             </button>
-            <button type="submit" disabled={saving || submitDisabled}>
+            <button className="button" type="submit" disabled={saving || submitDisabled}>
               <Icon name="plus" />
               {saving ? pendingLabel : submitLabel}
             </button>

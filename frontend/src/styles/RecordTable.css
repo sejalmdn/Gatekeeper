@@ -19,7 +19,8 @@
 }
 
 .record-table th {
-  background: color-mix(in srgb, var(--record-list-hue, var(--accent)), transparent 96%);
+  background: transparent;
+  border-bottom: 1px solid color-mix(in srgb, var(--record-list-hue, var(--accent)), transparent 86%);
   padding: 12px 24px;
   font-size: 11px;
   color: color-mix(in srgb, var(--record-list-hue, var(--accent)), #718b7c 45%);
@@ -40,9 +41,10 @@
   overflow-wrap: anywhere;
 }
 
-.record-table tbody tr:hover {
-  background: color-mix(in srgb, var(--record-list-hue, var(--accent)), transparent 94%);
-}
+.record-table thead,
+.record-table tbody,
+.record-table tbody tr,
+.record-table tbody tr:hover { background: transparent; }
 
 .record-table td:first-child {
   color: var(--text);

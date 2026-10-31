@@ -264,7 +264,7 @@
 .evaluation-runs__ledger-header {
   padding: 12px 24px;
   border-bottom: 1px solid color-mix(in srgb, var(--record-list-hue, var(--accent)), transparent 86%);
-  background: color-mix(in srgb, var(--record-list-hue, var(--accent)), transparent 96%);
+  background: transparent;
   color: color-mix(in srgb, var(--record-list-hue, var(--accent)), #718b7c 45%);
   font-size: 11px;
   font-weight: 600;

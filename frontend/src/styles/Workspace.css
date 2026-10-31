@@ -188,6 +188,7 @@
   --heading-hue: var(--section-title-color);
 }
 .workspace-content .page-heading {
+  color: var(--section-title-color); 
   padding: 24px;
   border-radius: 8px;
   backdrop-filter: blur(4px);

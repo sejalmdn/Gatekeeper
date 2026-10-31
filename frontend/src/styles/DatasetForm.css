@@ -4,7 +4,7 @@
   grid-template-columns: minmax(220px, 0.8fr) minmax(300px, 1.2fr);
   gap: 14px;
   padding-bottom: 18px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid color-mix(in srgb, var(--record-form-hue), transparent 78%);
 }
 
 .dataset-form__workspace {
@@ -12,10 +12,6 @@
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 18px;
-}
-
-.form-page:has(.dataset-creation-form) {
-  max-width: 1400px;
 }
 
 .dataset-creation-form {
@@ -29,7 +25,7 @@
   z-index: 4;
   margin: 0 -22px -22px;
   padding: 14px 22px;
-  border-top-color: var(--border-strong);
+  border-top-color: color-mix(in srgb, var(--record-form-hue), transparent 78%);
   background: var(--surface);
   box-shadow: 0 -12px 24px rgb(0 0 0 / 24%);
   backdrop-filter: blur(10px);

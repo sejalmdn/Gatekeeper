@@ -60,5 +60,6 @@
 .attempt-grading__finding--error .attempt-grading__dot { background: #fda4af; }
 .attempt-grading__finding--cannot_evaluate .attempt-grading__dot,
 .attempt-grading__finding--not_evaluated .attempt-grading__dot { background: #fbbf24; }
-.attempt-grading__technical { padding: 14px; border: 1px solid #35404b; border-radius: 6px; background: #141a21; }
-.attempt-grading__technical summary { color: #80c7d8; cursor: pointer; }
+.attempt-grading__technical { display: grid; gap: 12px; padding: 14px; border: 1px solid #35404b; border-radius: 6px; background: #141a21; }
+.attempt-grading__technical h3 { color: var(--muted); font-size: 12px; }
+.attempt-grading__technical > p { margin: 0; color: var(--muted); font-size: 13px; }
