@@ -327,7 +327,7 @@ def test_saved_rubric_evaluation(client: ApiClient, monkeypatch: pytest.MonkeyPa
         snapshot = json.loads(
             connection.execute("SELECT configuration FROM execution_snapshots").fetchone()[0]
         )
-        assert snapshot["judge_configuration"] == JudgeConfiguration().model_dump(mode="json")
+        assert "judge_configuration" not in snapshot
         assert "judge-secret" not in json.dumps(snapshot)
         connection.execute(
             "UPDATE rule_bindings SET parameters = ? WHERE rule_type = 'judge.rubric'",
@@ -456,10 +456,10 @@ def test_mixed_attempt_failures(
     assert attempt["evidence"]["error"] is None
 
 
-# Historical snapshots and unsuccessful or incompatible executions never trigger a judge call.
-@pytest.mark.parametrize("mode", ["historical", "failed", "incompatible", "deterministic"])
+# Unsuccessful or incompatible executions never trigger a judge call.
+@pytest.mark.parametrize("mode", ["failed", "incompatible", "deterministic"])
 def test_no_implicit_judging(client: ApiClient, monkeypatch: pytest.MonkeyPatch, mode: str) -> None:
-    """Use a frozen snapshot in mode and assert the coordinator leaves judging unavailable."""
+    """Use a frozen snapshot in mode and assert the coordinator skips ineligible judging."""
     _, url, _ = rubric_fixture(client)
     client.post(f"{url}/start")
     claimed = claim_run(client.app.state.database)
@@ -468,9 +468,7 @@ def test_no_implicit_judging(client: ApiClient, monkeypatch: pytest.MonkeyPatch,
     observed = evidence()
     selected = next(s for s in configuration.scenarios if s.scenario_type == "single_turn")
 
-    if mode == "historical":
-        configuration = configuration.model_copy(update={"judge_configuration": None})
-    elif mode == "failed":
+    if mode == "failed":
         observed = observed.model_copy(update={"status": "failed"})
     elif mode == "incompatible":
         selected = selected.model_copy(update={"scenario_type": "tool_use"})
