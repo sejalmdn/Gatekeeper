@@ -51,7 +51,14 @@
 }
 
 .attempt-grading__findings { display: grid; gap: 8px; }
-.attempt-grading__findings p { margin: 0; padding: 10px 0; border-bottom: 1px solid #35404b; font-size: 13px; }
+.attempt-grading__findings p { margin: 0; padding: 10px 0; border-bottom: 1px solid #35404b; font-size: 15px; }
 .attempt-grading__findings strong { color: #e8edf2; }
-.attempt-grading__technical { padding: 12px; border: 1px solid #35404b; background: #141a21; }
+.attempt-grading__finding { display: flex; align-items: center; gap: 10px; }
+.attempt-grading__dot { width: 9px; height: 9px; flex: 0 0 9px; border-radius: 50%; background: #aab5c0; }
+.attempt-grading__finding--pass .attempt-grading__dot { background: #4edea3; }
+.attempt-grading__finding--fail .attempt-grading__dot,
+.attempt-grading__finding--error .attempt-grading__dot { background: #fda4af; }
+.attempt-grading__finding--cannot_evaluate .attempt-grading__dot,
+.attempt-grading__finding--not_evaluated .attempt-grading__dot { background: #fbbf24; }
+.attempt-grading__technical { padding: 14px; border: 1px solid #35404b; border-radius: 6px; background: #141a21; }
 .attempt-grading__technical summary { color: #80c7d8; cursor: pointer; }

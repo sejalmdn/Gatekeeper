@@ -2,22 +2,26 @@
   display: grid;
   gap: 14px;
   min-width: 0;
+  font-size: 15px;
 }
 
 .run-results__tabs {
   display: flex;
-  gap: 24px;
-  border-bottom: 1px solid var(--border);
+  gap: 8px;
+  padding: 5px;
+  width: fit-content;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
 .run-results__tabs button {
   background: transparent;
   color: var(--muted);
-  padding: 10px 2px 12px;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  font-family: var(--font-code);
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-family: var(--font-body);
 }
 
 .run-results__tabs button:hover {
@@ -27,7 +31,8 @@
 
 .run-results__tabs [aria-selected="true"] {
   color: var(--cyan);
-  border-bottom-color: var(--cyan);
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
 }
 
 .run-results button:focus-visible,

@@ -5,23 +5,34 @@ import { formatNumber } from "../utils/format";
 import { LoadBoundary } from "./Feedback";
 import { JsonViewer } from "./JsonViewer";
 
-// Shows the selected response and tool requests with one technical detail area.
+// Reveals one attempt's observations and readable transport artifacts on demand.
 export function AttemptEvidence({
-  projectId, runId, executionId,
+  projectId,
+  runId,
+  executionId,
 }: {
   projectId: string;
   runId: string;
   executionId: string;
 }): ReactElement {
-  // Loads provider artifacts only for the selected attempt.
-  const state = useLoad(() => getExecutionAttempt(projectId, runId, executionId));
+  // Loads large artifacts only for the opened attempt.
+  const state = useLoad(() =>
+    getExecutionAttempt(projectId, runId, executionId),
+  );
 
   return (
     <LoadBoundary state={state}>
       {({ evidence, request, response, error }) => (
         <div className="attempt-evidence__evidence">
-          {error && <p role="alert">{error.message}</p>}
-          {!evidence && <p>No provider evidence has been collected for this attempt.</p>}
+          {error && (
+            <div className="attempt-evidence__error" role="alert">
+              <p>{error.message}</p>
+              <code>{error.source}/{error.code}</code>
+            </div>
+          )}
+          {!evidence && (
+            <p>No provider evidence has been collected for this attempt.</p>
+          )}
           {evidence && (
             <>
               <dl className="attempt-evidence__metrics">
@@ -46,17 +57,20 @@ export function AttemptEvidence({
                   <dd>{evidence.finish_reason ?? "Unavailable"}</dd>
                 </div>
               </dl>
+              <section className="attempt-evidence__response-section">
               <h3>Response</h3>
               <pre className="attempt-evidence__response">
                 {evidence.response_text ?? "No response text was produced."}
               </pre>
               {evidence.refusal !== null && <p>Refusal: {evidence.refusal}</p>}
+              </section>
+              <section className="attempt-evidence__tools-section">
               <h3>Requested tools</h3>
               {evidence.tool_requests === null && (
-                <p>Tool request evidence is unavailable.</p>
+                <p className="attempt-evidence__tools-empty">Tool request evidence is unavailable.</p>
               )}
               {evidence.tool_requests?.length === 0 && (
-                <p>No tools were requested.</p>
+                <p className="attempt-evidence__tools-empty">No tools were requested.</p>
               )}
               {evidence.tool_requests?.map((tool, index) => (
                 <article
@@ -78,28 +92,21 @@ export function AttemptEvidence({
                   {tool.issues.length > 0 && <p>{tool.issues.join(" · ")}</p>}
                 </article>
               ))}
+              </section>
             </>
           )}
-          <details className="attempt-evidence__technical">
-            <summary>Technical details</summary>
-            <p>Execution ID: <code>{executionId}</code></p>
-            {error && <p>Error: {error.source} / <code>{error.code}</code></p>}
-            {evidence && (
-              <>
-                <p>Source: {evidence.source.replaceAll("_", " ")}</p>
-                <p>Model: {evidence.returned_model ?? evidence.requested_model}</p>
-                <p>Finish reason: {evidence.finish_reason ?? "Unavailable"}</p>
-                {evidence.refusal !== null && <p>Refusal: {evidence.refusal}</p>}
-                <p>Provider charge: {formatUsd(evidence.provider_reported_usd)}</p>
-                <p>Input cost: {formatUsd(cost?.input_usd)} · Output cost: {formatUsd(cost?.output_usd)}</p>
-                {cost?.reason && <p>Cost reason: {cost.reason.replaceAll("_", " ")}</p>}
-                {cost?.pricing_entry && <JsonViewer value={cost} label="Saved cost calculation and pricing" />}
-                {evidence.completeness_issues.length > 0 && <p>Missing evidence: {evidence.completeness_issues.join(", ")}</p>}
-              </>
-            )}
-            {request !== null && <JsonViewer value={request} label="Provider request JSON" />}
-            {response !== null && <JsonViewer value={response} label="Provider response JSON" />}
-          </details>
+          {request !== null && (
+            <details className="scenario-results__technical">
+              <summary>Provider request</summary>
+              <JsonViewer value={request} label="Provider request JSON" />
+            </details>
+          )}
+          {response !== null && (
+            <details className="scenario-results__technical">
+              <summary>Provider response</summary>
+              <JsonViewer value={response} label="Provider response JSON" />
+            </details>
+          )}
         </div>
       )}
     </LoadBoundary>

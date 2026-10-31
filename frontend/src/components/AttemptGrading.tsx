@@ -1,20 +1,10 @@
-import { useState, type ReactElement } from "react";
+import { type ReactElement } from "react";
 import { useAttemptGrade } from "../hooks/useAttemptGrade";
 import type { AttemptEvaluationSummary } from "../types";
 import { JudgeDetails } from "./JudgeDetails";
 import { GradingCheck } from "./GradingCheck";
-import { AttemptResponseModal } from "./AttemptResponseModal";
 import { ResultBadge } from "./ResultBadge";
-import { resultLabel } from "../utils/results";
-import type { RuleEvaluationResult } from "../types";
 import "../styles/AttemptGrading.css";
-
-// Keeps configured regular expressions out of readable result explanations.
-function readableExplanation(check: RuleEvaluationResult): string {
-  if (check.rule_type !== "response.regex") return check.explanation;
-  if (check.outcome === "pass") return "The response matches the configured regular expression.";
-  return "The response does not match the configured regular expression.";
-}
 
 // Opens one attempt's full grading without fetching provider artifacts.
 export function AttemptGrading({
@@ -31,9 +21,6 @@ export function AttemptGrading({
   // Refreshes this grade when its evaluator timestamp or verdict changes.
   const { data, error, retry } = useAttemptGrade(projectId, runId, attempt);
 
-  // Opens evidence only for the selected attempt, without changing the Results URL.
-  const [evidenceId, setEvidenceId] = useState<string>();
-
   return (
     <section
       className="attempt-grading"
@@ -44,22 +31,7 @@ export function AttemptGrading({
           <h3>Attempt {attempt.attempt_number} grading</h3>
           {data && <ResultBadge outcome={data.verdict} prefix="Verdict" />}
         </div>
-        <button
-          className="button button-secondary"
-          onClick={() => setEvidenceId(attempt.id)}
-        >
-          View evidence
-        </button>
       </header>
-      {evidenceId === attempt.id && (
-        <AttemptResponseModal
-          key={attempt.id}
-          projectId={projectId}
-          runId={runId}
-          executionId={attempt.id}
-          onClose={() => setEvidenceId(undefined)}
-        />
-      )}
       {error && (
         <p role="alert">
           Grade unavailable: {error}{" "}
@@ -85,13 +57,15 @@ export function AttemptGrading({
               <p>No checks recorded.</p>
             )}
             {data.automatic_tool_validation.map((check, index) => (
-              <p key={`automatic-${index}`}>
-                <strong>Tool check</strong> · {resultLabel(check.outcome)} · {check.explanation}
+              <p className={`attempt-grading__finding attempt-grading__finding--${check.outcome}`} key={`automatic-${index}`}>
+                <span className="attempt-grading__dot" aria-label={check.outcome} />
+                <strong>Tool schema check</strong>
               </p>
             ))}
             {data.rule_results.map((check) => (
-              <p key={check.rule_binding_id}>
-                <strong>{check.rule_key}</strong> · {resultLabel(check.outcome)} · {readableExplanation(check)}
+              <p className={`attempt-grading__finding attempt-grading__finding--${check.outcome}`} key={check.rule_binding_id}>
+                <span className="attempt-grading__dot" aria-label={check.outcome} />
+                <strong>{check.rule_key}</strong>
               </p>
             ))}
           </section>

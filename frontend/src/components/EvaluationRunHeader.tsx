@@ -4,6 +4,7 @@ import type { Candidate, Dataset, EvaluationRun, RunSettings } from "../types";
 import { formatNumber, timestamp } from "../utils/format";
 import { percent } from "../utils/results";
 import { Icon } from "./Icon";
+import { CopyButton } from "./CopyButton";
 import "../styles/EvaluationRunHeader.css";
 
 interface EvaluationRunHeaderProps {
@@ -49,16 +50,19 @@ export function EvaluationRunHeader({
             </span>
           </div>
           <p className="evaluation-run-header__identity">
-            <span>
-              Run <code>{run.id}</code>
-            </span>
-            <span>
-              Created{" "}
-              <time dateTime={run.created_at}>{timestamp(run.created_at)}</time>
+            <span className="evaluation-run-header__run-id">
+              <span>Run ID:</span>
+              <code>{run.id}</code>
+              <CopyButton value={run.id} label="Copy run ID" />
             </span>
           </p>
         </div>
-        <div className="evaluation-run-header__actions">{actions}</div>
+        <div className="evaluation-run-header__meta-actions">
+          <span className="evaluation-run-header__created">
+            Created <time dateTime={run.created_at}>{timestamp(run.created_at)}</time>
+          </span>
+          <div className="evaluation-run-header__actions">{actions}</div>
+        </div>
       </div>
       <div className="evaluation-run-header__context">
         <dl>
@@ -83,12 +87,8 @@ export function EvaluationRunHeader({
             </dd>
           </div>
           <div>
-            <dt>Attempts per scenario</dt>
-            <dd>{settings.attempts_per_scenario}</dd>
-          </div>
-          <div>
-            <dt>Timeout per attempt</dt>
-            <dd>{formatNumber(settings.timeout_ms / 1000)} seconds</dd>
+            <dt>Attempt Rules</dt>
+            <dd>{settings.attempts_per_scenario} attempts <span>/ scenario</span> • {formatNumber(settings.timeout_ms / 1000)}s <span>timeout</span></dd>
           </div>
           <div>
             <dt>Pass threshold</dt>

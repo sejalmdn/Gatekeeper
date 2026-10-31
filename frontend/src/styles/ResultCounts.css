@@ -5,6 +5,14 @@
   margin: 0;
 }
 
+.result-counts--compact {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
 .result-counts__item {
   display: inline-flex;
   align-items: baseline;
@@ -49,4 +57,13 @@
 .result-counts__item[data-empty="true"] {
   color: var(--muted);
   background: transparent;
+}
+
+.result-counts--compact .result-counts__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
 }
