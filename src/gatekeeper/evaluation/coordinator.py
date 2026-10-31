@@ -6,7 +6,7 @@ import httpx
 
 from gatekeeper.contracts.evaluations import AttemptEvaluation
 from gatekeeper.contracts.executions import ExecutionEvidence, ExecutionSnapshot
-from gatekeeper.contracts.judging import JudgeRecord
+from gatekeeper.contracts.judging import JudgeConfiguration, JudgeRecord
 from gatekeeper.contracts.pricing import ExecutionCost
 from gatekeeper.contracts.scenarios import Scenario
 from gatekeeper.evaluation.engine import attempt_verdict, evaluate_attempt
@@ -26,11 +26,10 @@ async def coordinate_evaluation(
     rules = configuration.effective_rules[str(scenario.id)]
     evaluation = evaluate_attempt(evidence, rules, configuration.candidate.tool_definitions, cost)
     rubric_rules = [rule for rule in rules if rule.rule_type == "judge.rubric"]
-    judge_configuration = configuration.judge_configuration
+    judge_configuration = JudgeConfiguration()
 
     if (
         not rubric_rules
-        or judge_configuration is None
         or evidence.status != "completed"
         or scenario.scenario_type not in {"single_turn", "multi_turn"}
     ):
