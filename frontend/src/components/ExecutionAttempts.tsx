@@ -28,7 +28,6 @@ export function ExecutionAttempts({
   const scenarioIds = [
     ...new Set(attempts.map((attempt) => attempt.scenario_id)),
   ];
-  const selected = attempts.find((attempt) => attempt.id === opened);
   return (
     <div className="execution-attempts__scenarios">
       {scenarioIds.map((scenarioId) => {
@@ -41,35 +40,49 @@ export function ExecutionAttempts({
             <header>
               <div>
                 <h2>{scenario.scenario_name}</h2>
+                <p>
+                  <span>{scenario.scenario_key}</span>
+                  <span aria-hidden="true">•</span>
+                  <span>{scenario.scenario_type.replaceAll("_", " ")}</span>
+                </p>
               </div>
-              <span>{group.length} {group.length === 1 ? "attempt" : "attempts"}</span>
+              <span className="execution-attempts__count">{group.length} attempts</span>
             </header>
             {group.map((attempt) => (
               <div className="execution-attempts__attempt" key={attempt.id}>
                 <button
                   type="button"
                   className="execution-attempts__attempt-heading"
-                  aria-pressed={opened === attempt.id}
-                  onClick={() => onOpen(attempt.id)}
+                  aria-expanded={opened === attempt.id}
+                  aria-controls={`attempt-${attempt.id}`}
+                  onClick={() =>
+                    onOpen(opened === attempt.id ? undefined : attempt.id)
+                  }
                 >
-                  <span>Attempt {attempt.attempt_number}</span>
-                  <span className="badge">
-                    {attempt.status.replaceAll("_", " ")}
+                  <span className="execution-attempts__attempt-main">
+                    <span className="execution-attempts__chevron" aria-hidden="true">›</span>
+                    <span className="execution-attempts__attempt-number">Attempt {attempt.attempt_number}</span>
+                    <span className="execution-attempts__attempt-status">{attempt.status.replaceAll("_", " ")}</span>
+                  </span>
+                  <span className="execution-attempts__attempt-side">
+                    <span className="execution-attempts__attempt-id">{attempt.id}</span>
+                    <span className="execution-attempts__toggle" aria-hidden="true">
+                      {opened === attempt.id ? "−" : "+"}
+                    </span>
                   </span>
                 </button>
+                {opened === attempt.id && (
+                  <div id={`attempt-${attempt.id}`}>
+                    <AttemptEvidence
+                      key={`${attempt.id}-${attempt.status}`}
+                      projectId={projectId}
+                      runId={runId}
+                      executionId={attempt.id}
+                    />
+                  </div>
+                )}
               </div>
             ))}
-            {selected?.scenario_id === scenarioId && (
-              <section className="execution-attempts__selected" aria-label="Selected attempt evidence">
-                <h3>Attempt {selected.attempt_number} evidence</h3>
-                <AttemptEvidence
-                  key={`${selected.id}-${selected.status}`}
-                  projectId={projectId}
-                  runId={runId}
-                  executionId={selected.id}
-                />
-              </section>
-            )}
           </section>
         );
       })}

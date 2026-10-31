@@ -11,7 +11,7 @@
   --run-fail: #fda4af;
   --run-fail-soft: rgb(253 164 175 / 7%);
   --run-fail-border: rgb(253 164 175 / 30%);
-  --font-size-body: 13px;
+  --font-size-body: 15px;
   --font-size-label: 12px;
   --font-size-h2: 18px;
   --font-size-h3: 14px;
@@ -61,9 +61,35 @@
 .evaluation-run-detail__metrics,
 .attempt-evidence__metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
   margin: 0;
+}
+
+.attempt-evidence__metrics > div { padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.attempt-evidence__metrics dt { color: var(--subtle); font-size: 12px; font-weight: 500; }
+.attempt-evidence__metrics dd { margin-top: 2px; color: var(--text); font: 600 15px var(--font-code); }
+.attempt-evidence__cost { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.attempt-evidence__cost-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; }
+.attempt-evidence__cost-row + .attempt-evidence__cost-row { padding-top: 8px; border-top: 1px solid var(--border); }
+.attempt-evidence__cost-row > span:first-child { color: var(--muted); }
+.attempt-evidence__cost-row > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; text-align: right; }
+.attempt-evidence__cost-row strong { color: var(--text); font: 600 13px var(--font-code); }
+.attempt-evidence__cost-row > div > span,
+.attempt-evidence__cost-row > span:last-child { color: var(--muted); font: 13px var(--font-code); }
+.attempt-evidence__cost > p { margin: 0; color: var(--subtle); font-size: 12px; }
+.attempt-evidence__error { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 14px; border: 1px solid var(--accent-border); border-radius: 8px; background: var(--accent-soft); color: var(--accent); }
+.attempt-evidence__error p { margin: 0; font-size: 14px; }
+.attempt-evidence__error code { flex: 0 0 auto; color: var(--cyan); font-size: 12px; text-align: right; }
+.attempt-evidence__response-section,
+.attempt-evidence__tools-section { display: grid; gap: 8px; }
+.attempt-evidence__response-section h3,
+.attempt-evidence__tools-section h3 { margin: 0; color: #d1d5db; font: 600 11px var(--font-code); text-transform: uppercase; letter-spacing: 0.06em; }
+.attempt-evidence__response { padding: 16px; border-radius: 8px; background: var(--canvas); font-family: var(--font-body); font-size: 15px; line-height: 1.7; }
+.attempt-evidence__tools-empty { margin: 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--muted); font: 13px var(--font-code); }
+
+@media (min-width: 600px) {
+  .attempt-evidence__metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
 .evaluation-run-header__context dt,
@@ -93,7 +119,9 @@
 .execution-attempts__scenario > header {
   border: 0;
   border-radius: 0;
-  border-left: 3px solid var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  background: var(--surface);
 }
 
 .execution-attempts__scenario > header h2,
@@ -101,24 +129,27 @@
   margin: 0;
 }
 
-.execution-attempts__scenario header p,
-.execution-attempts__scenario header > span {
-  margin-top: 8px;
+.execution-attempts__scenario header p {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
   color: var(--muted);
-  font-size: var(--font-size-label);
+  font: 11px var(--font-code);
 }
+
+.execution-attempts__scenario header .execution-attempts__count { color: var(--muted); font: 11px var(--font-code); }
 
 .execution-attempts__attempt {
   border-top: 1px solid var(--border);
 }
 
 .execution-attempts__attempt-heading {
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
   width: 100%;
-  padding: 12px 18px;
+  padding: 12px 16px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -126,19 +157,18 @@
   text-align: left;
 }
 
-.execution-attempts__attempt-heading[aria-pressed="true"] {
-  background: #242c36;
-  box-shadow: inset 3px 0 #80c7d8;
-}
-
-.execution-attempts__selected {
-  padding: 20px;
-  border: 1px solid #35404b;
-  border-radius: 8px;
-  background: #1a2028;
-}
-
-.execution-attempts__selected h3 { margin: 0 0 16px; }
+.execution-attempts__attempt-main,
+.execution-attempts__attempt-side { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.execution-attempts__attempt-number,
+.execution-attempts__attempt-status,
+.execution-attempts__attempt-id,
+.execution-attempts__toggle { font: 11px var(--font-code); }
+.execution-attempts__attempt-number { color: #e5e7eb; font-weight: 600; text-transform: uppercase; }
+.execution-attempts__attempt-status { color: var(--muted); text-transform: capitalize; }
+.execution-attempts__chevron { color: var(--subtle); font-size: 18px; transition: transform 120ms ease; }
+.execution-attempts__attempt-heading[aria-expanded="true"] .execution-attempts__chevron { transform: rotate(90deg); }
+.execution-attempts__attempt-id { max-width: 260px; }
+.execution-attempts__toggle { color: var(--subtle); font-size: 16px; }
 
 .execution-attempts__attempt-heading:hover,
 .execution-attempts__attempt-heading[aria-expanded="true"] {
@@ -149,7 +179,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--muted);
-  font-size: var(--font-size-label);
 }
 
 .attempt-evidence__evidence {
@@ -159,12 +188,10 @@
   min-width: 0;
 }
 
-.attempt-evidence__evidence h3 { margin: 0 0 10px; font-size: 15px; }
 .attempt-evidence__evidence section { display: grid; gap: 8px; }
 .attempt-evidence__evidence section > p { margin: 0; color: #aab5c0; }
-.attempt-evidence__technical { background: #141a21; }
-.attempt-evidence__technical summary { margin: 0; color: #80c7d8; }
-.attempt-evidence__technical[open] summary { margin-bottom: 14px; }
+.attempt-evidence__response-section > p,
+.attempt-evidence__tool p { font-size: 15px; }
 
 .attempt-evidence__response {
   padding: 18px;
@@ -240,10 +267,6 @@
   .evaluation-runs__ledger-row {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .execution-attempts__attempt-heading {
-    grid-template-columns: 1fr auto;
   }
 
   .execution-attempts__attempt-id {

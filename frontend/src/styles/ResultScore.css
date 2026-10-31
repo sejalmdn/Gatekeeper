@@ -32,7 +32,6 @@
 
 .result-score__reason code {
   display: inline-block;
-  margin-left: 5px;
   color: var(--cyan);
   font-size: 10px;
 }
@@ -73,4 +72,6 @@
 
 .result-score--compact .result-score__reason > span {
   color: var(--accent);
+  font-size: 14px;
+  line-height: 1;
 }

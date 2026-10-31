@@ -1,12 +1,16 @@
 .evaluation-run-header {
   display: grid;
-  gap: 18px;
+  gap: 20px;
   min-width: 0;
 }
 
 .evaluation-run-header__back {
   justify-self: start;
   color: var(--muted);
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
   font-size: 12px;
   text-decoration: none;
 }
@@ -19,6 +23,18 @@
   flex-wrap: wrap;
   gap: 12px;
 }
+
+.evaluation-run-header__title-row { align-items: flex-end; }
+
+.evaluation-run-header__meta-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.evaluation-run-header__created { color: var(--muted); font-size: 12px; }
 
 .evaluation-run-header__title {
   justify-content: flex-start;
@@ -68,6 +84,18 @@
   font-size: 12px;
 }
 
+.evaluation-run-header__run-id {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  font-family: var(--font-code);
+}
+
+.evaluation-run-header__run-id > span:first-child { color: var(--muted); }
+.evaluation-run-header__run-id code { color: var(--text); overflow-wrap: anywhere; }
+.evaluation-run-header__run-id .copy-button { font-family: var(--font-body); }
+
 .evaluation-run-header__identity code {
   color: var(--cyan);
   font-size: 11px;
@@ -80,15 +108,16 @@
 }
 
 .evaluation-run-header__context {
-  padding: 16px 18px 12px;
-  background: var(--surface);
+  padding: 20px;
+  background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 24%);
 }
 
 .evaluation-run-header__context dl {
   display: grid;
-  grid-template-columns: 1.2fr 1.2fr 1fr 1fr 0.8fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px 20px;
   margin: 0;
 }
@@ -98,6 +127,9 @@
   align-items: center;
   gap: 6px;
   font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .evaluation-run-header__context .icon {
@@ -106,9 +138,14 @@
 }
 
 .evaluation-run-header__context dd {
-  font-family: var(--font-code);
-  font-size: 12px;
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
 }
+
+.evaluation-run-header__context dd span { color: var(--muted); font-weight: 400; }
 
 .evaluation-run-header__context a {
   color: var(--cyan);
@@ -127,6 +164,7 @@
   margin-top: 14px;
   padding-top: 12px;
   border-top: 1px solid var(--border);
+  padding-top: 16px;
   color: var(--muted);
   font: 11px var(--font-code);
 }
@@ -134,12 +172,13 @@
 .evaluation-run-header__progress progress {
   flex: 1;
   min-width: 40px;
-  height: 4px;
+  height: 8px;
   border: 0;
   border-radius: 2px;
   overflow: hidden;
   background: var(--surface-hover);
   accent-color: var(--cyan);
+  border: 1px solid var(--border);
 }
 
 .evaluation-run-header__progress progress::-webkit-progress-bar {
@@ -161,7 +200,7 @@
 
 @media (max-width: 1050px) {
   .evaluation-run-header__context dl {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -173,6 +212,8 @@
   .evaluation-run-header__context dl {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .evaluation-run-header__meta-actions { justify-content: flex-start; }
 
   .evaluation-run-header__progress {
     align-items: stretch;
