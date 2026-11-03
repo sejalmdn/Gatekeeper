@@ -16,7 +16,10 @@
   --scenario-signal: var(--run-fail);
 }
 
-.scenario-results--inconclusive,
+.scenario-results--inconclusive {
+  --scenario-signal: var(--warning);
+}
+
 .scenario-results--pending {
   --scenario-signal: var(--accent);
 }
@@ -236,9 +239,14 @@
   color: var(--run-fail);
 }
 
+.scenario-results__attempt--error,
+.scenario-results__attempt--cannot_evaluate {
+  border: 1px solid var(--warning-border);
+}
+
 .scenario-results__attempt--error strong,
 .scenario-results__attempt--cannot_evaluate strong {
-  color: var(--accent);
+  color: var(--warning);
 }
 
 .scenario-results__attempt:hover {
@@ -248,8 +256,6 @@
 
 .scenario-results__attempt[aria-expanded="true"] {
   background: var(--surface-raised);
-  outline: 1px solid var(--cyan);
-  outline-offset: 2px;
 }
 
 .scenario-results__attempt > span:last-child {

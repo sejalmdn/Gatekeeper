@@ -1,5 +1,9 @@
 /* Fixed terminal sidebar, compact command ribbon, and gridded workspace. */
 .workspace {
+  --accent: #00b4b6;
+  --accent-hover: #00a1a3;
+  --accent-soft: rgb(0 180 182 / 8%);
+  --accent-border: rgb(0 180 182 / 25%);
   min-height: 100vh;
 }
 .workspace-sidebar {
@@ -69,8 +73,8 @@
   color: var(--text);
 }
 .workspace-nav a.active {
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--nav-color-soft);
+  color: var(--nav-color);
 }
 .workspace-nav a.active::after {
   content: "";
@@ -78,7 +82,35 @@
   height: 5px;
   margin-left: auto;
   border-radius: 50%;
-  background: var(--accent);
+  background: currentColor;
+}
+.workspace-nav a[data-nav-color="overview"] {
+  --nav-color: #62ed80;
+  --nav-color-soft: rgb(98 237 128 / 8%);
+}
+.workspace-nav a[data-nav-color="providers"] {
+  --nav-color: #77f26e;
+  --nav-color-soft: rgb(119 242 110 / 8%);
+}
+.workspace-nav a[data-nav-color="candidates"] {
+  --nav-color: #8cf64c;
+  --nav-color-soft: rgb(140 246 76 / 8%);
+}
+.workspace-nav a[data-nav-color="datasets"] {
+  --nav-color: #8cf64c;
+  --nav-color-soft: rgb(140 246 76 / 8%);
+}
+.workspace-nav a[data-nav-color="executions"] {
+  --nav-color: #77f26e;
+  --nav-color-soft: rgb(119 242 110 / 8%);
+}
+.workspace-nav a[data-nav-color="compare"] {
+  --nav-color: #62ed80;
+  --nav-color-soft: rgb(98 237 128 / 8%);
+}
+.workspace-nav a[data-nav-color="evaluation-checks"] {
+  --nav-color: #d9f99d;
+  --nav-color-soft: rgb(203 251 22 / 8%);
 }
 .workspace-note {
   padding: 20px 16px;
@@ -108,7 +140,7 @@
   justify-content: space-between;
   gap: 16px;
   border-bottom: 1px solid var(--border);
-  background: rgb(13 14 19 / 96%);
+  background: rgb(0 0 0 / 96%);
   backdrop-filter: blur(12px);
 }
 .workspace-breadcrumb {
@@ -130,6 +162,37 @@
   max-width: 1660px;
   margin: auto;
   padding: 24px 24px 48px;
+}
+.workspace-content[data-section-color="overview"] {
+  --section-title-color: #62ed80;
+}
+.workspace-content[data-section-color="providers"] {
+  --section-title-color: #77f26e;
+}
+.workspace-content[data-section-color="candidates"] {
+  --section-title-color: #8cf64c;
+}
+.workspace-content[data-section-color="datasets"] {
+  --section-title-color: #8cf64c;
+}
+.workspace-content[data-section-color="executions"] {
+  --section-title-color: #77f26e;
+}
+.workspace-content[data-section-color="compare"] {
+  --section-title-color: #62ed80;
+}
+.workspace-content[data-section-color="evaluation-checks"] {
+  --section-title-color: #d9f99d;
+}
+.workspace-content .page-heading {
+  --heading-hue: var(--section-title-color);
+}
+.workspace-content .page-heading {
+  color: var(--section-title-color); 
+  padding: 24px;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 24px rgb(0 0 0 / 50%);
 }
 .skip-link {
   position: fixed;

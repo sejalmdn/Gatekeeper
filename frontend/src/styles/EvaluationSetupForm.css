@@ -3,7 +3,7 @@
   min-width: 0;
   margin: 0;
   padding: 20px;
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--record-form-hue), transparent 78%);
   border-radius: var(--radius);
 }
 

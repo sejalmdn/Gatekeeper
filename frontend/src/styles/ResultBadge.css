@@ -28,7 +28,8 @@
 .result-badge--cannot_evaluate,
 .result-badge--error,
 .result-badge--pending {
-  color: var(--accent);
-  border-color: var(--accent-border);
-  background: var(--accent-soft);
+  color: var(--warning);
+  border-color: var(--warning-border);
+  background: var(--warning-soft);
 }
+

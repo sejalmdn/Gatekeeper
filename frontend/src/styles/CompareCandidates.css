@@ -2,9 +2,11 @@
 .compare-candidates__dataset,
 .compare-candidates__candidate {
   padding: 24px;
-  background: var(--comparison-panel);
-  border: 1px solid var(--comparison-line);
-  border-radius: 6px;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--section-title-color, var(--accent)), transparent 78%);
+  border-radius: var(--radius-panel);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 60%);
   min-width: 0;
 }
 
@@ -25,7 +27,7 @@
   color: var(--comparison-text);
   background: var(--comparison-inset);
   border: 1px solid var(--comparison-line);
-  border-radius: 3px;
+  border-radius: var(--radius);
   font-size: 12px;
   text-overflow: ellipsis;
 }
@@ -72,13 +74,13 @@
   padding: 16px 12px;
   margin-bottom: 8px;
   border: 1px solid var(--comparison-line);
-  border-radius: 4px;
+  border-radius: var(--radius);
   cursor: pointer;
 }
 
 .compare-candidates__run:hover,
 .compare-candidates__run:has(input:checked) {
-  border-color: var(--comparison-cyan);
+  border-color: var(--section-title-color);
   background: var(--comparison-inset);
 }
 
@@ -88,13 +90,13 @@
   min-height: 0;
   padding: 0;
   margin: 0;
-  accent-color: var(--comparison-cyan);
+  accent-color: var(--section-title-color);
   flex-shrink: 0;
 }
 
 .compare-candidates__run input:focus-visible {
-  outline: 2px solid var(--comparison-cyan);
-  outline-offset: 4px;
+  outline: 1px solid color-mix(in srgb, var(--section-title-color), transparent 78%);
+  outline-offset: 2px;
 }
 
 .compare-candidates__run strong,
@@ -133,7 +135,7 @@
 
 .compare-candidates__submit {
   padding: 12px 24px;
-  border-radius: 4px;
+  border-radius: var(--radius);
   font: 12px var(--font-display);
   white-space: nowrap;
 }

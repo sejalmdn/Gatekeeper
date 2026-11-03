@@ -1,14 +1,18 @@
 /* Shared form surfaces and source groups. */
 .form-page {
-  max-width: 1120px;
+  width: 100%;
+  max-width: none;
 }
 
 .record-form {
+  --record-form-hue: var(--section-title-color, var(--accent));
   display: grid;
   gap: 24px;
-  padding: 28px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  padding: var(--space-panel);
+  background: transparent;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 60%);
+  border: 1px solid color-mix(in srgb, var(--record-form-hue), transparent 78%);
   border-radius: var(--radius-panel);
 }
 
@@ -18,7 +22,7 @@
   gap: 8px;
   font-size: var(--font-size-label);
   color: var(--muted);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid color-mix(in srgb, var(--record-form-hue), transparent 78%);
   padding-bottom: 16px;
 }
 
@@ -34,7 +38,7 @@
   justify-content: flex-end;
   gap: 12px;
   padding-top: 20px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid color-mix(in srgb, var(--record-form-hue), transparent 78%);
 }
 
 .record-form-action-summary {

@@ -1,6 +1,6 @@
 /* Empty, loading, and error states remain visible on dark surfaces. */
 .page-state {
-  padding: 24px;
+  padding: var(--space-panel);
   margin: 24px 0;
   background: var(--surface);
   border: 1px solid var(--border);

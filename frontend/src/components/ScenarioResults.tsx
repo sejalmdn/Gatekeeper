@@ -148,7 +148,7 @@ export function ScenarioResults({
           )}
           {summary && (
             <details className="scenario-results__technical">
-              <summary>Detailed report</summary>
+              <summary>Summary</summary>
               <div className="scenario-results__diagnostics">
                 <ScenarioAssessment summary={summary} />
                 <ScenarioOperationalMetrics metrics={summary.metrics} />

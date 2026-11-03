@@ -103,10 +103,7 @@ export function EvaluationChecks(): ReactElement {
         detail="What each rule checks and which scenario types it supports."
       />
       <Notice>
-        Expectations stay private and never enter candidate requests. Missing
-        required evidence yields cannot_evaluate. Semantic rubrics return a 1–5
-        score and reason; Gatekeeper applies the saved minimum score to
-        determine pass or fail.
+        Expectations stay private and never enter candidate requests. Missing required evidence yields cannot_evaluate when grading is implemented.
       </Notice>
       <div className="evaluation-checks__categories">
         {RULE_CATEGORIES.map((category) => (

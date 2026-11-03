@@ -1,5 +1,9 @@
 /* Project selection shares the carbon grid and compact command header. */
 .projects-shell {
+  --accent: #00b4b6;
+  --accent-hover: #00a1a3;
+  --accent-soft: rgb(0 180 182 / 8%);
+  --accent-border: rgb(0 180 182 / 25%);
   min-height: 100vh;
 }
 .projects-header {
@@ -23,6 +27,13 @@
   padding: 40px 24px;
 }
 
+.projects-page > .page-heading {
+  padding: 24px;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 24px rgb(0 0 0 / 50%);
+}
+
 .projects-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
@@ -30,10 +41,12 @@
 }
 
 .project-directory {
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--section-title-color, var(--accent)), transparent 78%);
   border-radius: var(--radius-panel);
   overflow: hidden;
-  background: var(--surface);
+  background: transparent;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 60%);
   align-self: start;
 }
 
@@ -41,8 +54,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border);
+  padding: var(--space-panel-compact) var(--space-panel);
+  border-bottom: 1px solid color-mix(in srgb, var(--section-title-color, var(--accent)), transparent 86%);
 }
 
 .project-directory-heading h2 {
@@ -62,7 +75,7 @@
 }
 
 .project-directory li + li {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid color-mix(in srgb, var(--section-title-color, var(--accent)), transparent 86%);
 }
 
 .project-directory a {
@@ -121,10 +134,11 @@
 }
 
 .project-create {
-  background: var(--surface);
+  background: transparent;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 60%);
   padding: 28px;
-  border: 1px solid var(--border);
-  border-top-color: var(--accent-border);
+  border: 1px solid color-mix(in srgb, var(--section-title-color, var(--accent)), transparent 78%);
   border-radius: var(--radius-panel);
 }
 

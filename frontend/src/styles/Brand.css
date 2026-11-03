@@ -10,7 +10,7 @@
   height: 38px;
   padding: 4px;
   border: 1px solid var(--accent-border);
-  border-radius: 9px;
+  border-radius: var(--radius);
   background: var(--accent-soft);
   color: var(--accent);
   flex-shrink: 0;

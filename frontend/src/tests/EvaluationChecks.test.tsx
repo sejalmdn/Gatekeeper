@@ -150,6 +150,7 @@ it("registers the project route and marks its reference link active", async () =
   expect(reference?.getAttribute("href")).toBe(
     "/projects/project-1/evaluation-checks",
   );
+  expect(reference?.getAttribute("data-nav-color")).toBe("evaluation-checks");
   expect(reference?.classList.contains("active")).toBe(true);
   expect(
     container.querySelector('.workspace-breadcrumb [aria-current="page"]')

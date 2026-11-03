@@ -8,6 +8,7 @@ import {
 } from "../api";
 import { ComparisonCandidatePicker } from "../components/ComparisonCandidatePicker";
 import { Icon } from "../components/Icon";
+import { PageHeading } from "../components/PageHeading";
 import type { Candidate, Dataset, EvaluationRun, RunSettings } from "../types";
 import { messageFor } from "../utils/format";
 import "../styles/RunComparison.css";
@@ -55,8 +56,10 @@ export function CompareCandidatesPage() {
 
   if (error)
     return (
+      <>
+      <PageHeading title="Compare candidates" detail="Compare saved evaluation runs across candidates." />
       <section className="page-content run-comparison">
-        <h1>Compare candidates</h1>
+        
         <p role="alert">{error}</p>
         <button
           onClick={() => {
@@ -67,6 +70,7 @@ export function CompareCandidatesPage() {
           Retry
         </button>
       </section>
+      </>
     );
   if (!catalog)
     return (
@@ -117,17 +121,13 @@ export function CompareCandidatesPage() {
   const selection = new URLSearchParams({ runA, runB });
 
   return (
+    <>
+    <PageHeading
+        title="Compare candidates"
+        detail="Start with a dataset, then choose a candidate and a saved run for each side."
+      />
     <section className="page-content run-comparison compare-candidates">
-      <header className="run-comparison__hero">
-        <span className="run-comparison__eyebrow">
-          Saved evaluation evidence
-        </span>
-        <h1>Compare candidates</h1>
-        <p>
-          Start with a dataset, then choose a candidate and a saved run for each
-          side.
-        </p>
-      </header>
+      
       {((runA && !validA) || (runB && !validB) || (runA && runA === runB)) && (
         <p role="alert" className="compare-candidates__notice">
           Linked selections are unavailable or incompatible. Choose two distinct
@@ -210,13 +210,13 @@ export function CompareCandidatesPage() {
             <p>Use distinct runs. Both sides may use the same candidate.</p>
             {ready ? (
               <Link
-                className="compare-candidates__submit"
+                className="button"
                 to={`/projects/${projectId}/evaluation-runs/compare?${selection}`}
               >
                 Compare runs →
               </Link>
             ) : (
-              <button className="compare-candidates__submit" disabled>
+              <button className="button" disabled>
                 Compare runs →
               </button>
             )}
@@ -224,5 +224,6 @@ export function CompareCandidatesPage() {
         </>
       )}
     </section>
+    </>
   );
 }

@@ -1,10 +1,12 @@
 /* Scenario summaries open into a transcript with a distinct new-message boundary. */
 .added-scenarios {
   min-width: 0;
-  border: 1px solid var(--border-strong);
   border-radius: var(--radius-panel);
-  background: var(--surface);
   overflow: hidden;
+  background: transparent;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 60%);
+  border: 1px solid color-mix(in srgb, var(--record-form-hue), transparent 78%);
 }
 
 .added-scenarios__heading {
